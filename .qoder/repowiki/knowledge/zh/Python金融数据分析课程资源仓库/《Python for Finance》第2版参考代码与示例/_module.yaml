@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: py4fi2nd_reference
-title: 《Python for Finance》第2版参考代码与示例
-scope:
-    - py4fi2nd-master/
-source_files: []
-depends_on: []
-related_to:
-    - path: code_notebooks

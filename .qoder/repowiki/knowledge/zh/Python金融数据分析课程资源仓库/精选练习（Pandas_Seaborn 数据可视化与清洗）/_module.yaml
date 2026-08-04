@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: selected_exercises
-title: 精选练习（Pandas/Seaborn 数据可视化与清洗）
-scope:
-    - 精选练习 上课修改/
-source_files: []
-depends_on: []
-related_to:
-    - path: exercises

@@ -2,6 +2,7 @@
 .venv/
 .vscode/
 .workbuddy/
+.qoder/
 
 # ---- 手工备份 ----
 Backups/

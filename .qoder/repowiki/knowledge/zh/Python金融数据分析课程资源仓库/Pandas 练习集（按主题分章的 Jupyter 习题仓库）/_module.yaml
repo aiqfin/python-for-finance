@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: pandas_exercises
-title: Pandas 练习集（按主题分章的 Jupyter 习题仓库）
-scope:
-    - pandas_exercises-master/
-source_files: []
-depends_on: []
-related_to:
-    - path: exercises
