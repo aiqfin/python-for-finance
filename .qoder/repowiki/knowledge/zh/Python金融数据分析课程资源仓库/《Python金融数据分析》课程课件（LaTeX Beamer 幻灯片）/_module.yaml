@@ -1,0 +1,15 @@
+schema_version: 1
+module_path: chapter_slides
+title: 《Python金融数据分析》课程课件（LaTeX Beamer 幻灯片）
+scope:
+    - Chapter1 slides/
+    - Chapter2 slides/
+    - Chapter3 slides/
+    - Chapter4 slides/
+    - Chapter5 slides/
+    - Chapter6 slides/
+source_files: []
+depends_on: []
+related_to:
+    - path: class_code
+    - path: template_slides

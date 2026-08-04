@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: template_slides
+title: 章节幻灯片模板（上海大学 Beamer 主题）
+scope:
+    - 章节幻灯片模板/
+source_files: []
+depends_on: []
+related_to:
+    - path: chapter_slides

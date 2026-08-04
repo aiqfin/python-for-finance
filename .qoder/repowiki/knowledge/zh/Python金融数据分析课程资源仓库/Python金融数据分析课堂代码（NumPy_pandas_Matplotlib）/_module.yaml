@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: class_code
+title: Python金融数据分析课堂代码（NumPy/pandas/Matplotlib）
+scope:
+    - 章节课堂代码/
+source_files: []
+depends_on: []
+related_to:
+    - path: chapter_slides
+    - path: code_notebooks
