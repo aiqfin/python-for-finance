@@ -1,0 +1,743 @@
+% !TeX program = xelatex
+%==============================================================
+%  Python金融数据分析 · 第2章 Python基础语法
+%  基于《Python金融大数据分析（第2版）》第3章内容改编
+%  授课对象：本科金融系学生（零编程基础）
+%  编译：xelatex chapter2.tex（编译两遍）
+%==============================================================
+\documentclass[9pt]{ctexbeamer}
+
+%%%%-----导入宏包-----%%%%
+\usepackage{style/shubeamer}   % SHU 主题（配色、帧标题、页脚、Python代码样式）
+\usepackage{amsmath,amsfonts,amssymb,bm}
+\usepackage{graphicx,hyperref,url}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage[super,square]{natbib}
+\usepackage{wrapfig}          % 文字绕排
+\usepackage{calligra}         % 结尾页花体字
+
+%%%%-----设置字体-----%%%%
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+
+%%%%-----常用自定义颜色（正文可直接使用）-----%%%%
+\definecolor{nvidia}{RGB}{102,156,28}
+\definecolor{red}{RGB}{184,13,73}
+\definecolor{orange}{RGB}{242,151,36}
+\definecolor{darkteal}{RGB}{43,106,108}
+\definecolor{darkblue}{RGB}{4,37,58}
+
+%%%%-----每节开始时自动显示当前节目录-----%%%%
+\AtBeginSection[]
+{
+	\begin{frame}<beamer>
+		\frametitle{\textbf{目录}}
+		\textbf{\tableofcontents[currentsection]}
+	\end{frame}
+}
+
+%%%%-----设定图片存放路径-----%%%%
+\graphicspath{{figures/}}
+
+%%%%-----首页信息设置-----%%%%
+\AtBeginDocument{%
+	%%%%----短标题[显示在页脚]{封面标题}
+	\title[Python金融数据分析 · 第2章]{\fontsize{16pt}{22pt}\selectfont {Python金融数据分析}}
+	%%%%----副标题（本章主题）
+	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第2章\quad Python基础语法}}
+	%%%%----个人信息
+	\author[王伟冠]{%
+		\begin{tabular}{ll}%
+			主讲人： & 王伟冠\tabularnewline%
+			院\quad 系： & 经济学院金融系\tabularnewline
+		\end{tabular}
+	}
+	%%%%----机构信息
+	\institute[SHU]{上海大学}
+	%%%%----日期信息
+	\date[\today]{\today}}
+
+%%%%-----数学宏（向量、矩阵、算子等，见 style/macros.tex）-----%%%%
+\input{style/macros.tex}
+
+
+\begin{document}
+
+%% 封面
+\begin{frame}
+	\titlepage
+\end{frame}
+
+%% 目录页
+\section*{目录}
+\begin{frame}
+	\frametitle{\textbf{目录}}
+	\textbf{\tableofcontents}
+\end{frame}
+
+
+%==============================================================
+\section{初识Python程序}
+%==============================================================
+
+\begin{frame}{本章学习目标}
+	\begin{itemize}
+		\item 理解什么是程序、变量与数据类型
+		\item 掌握Python的四种基本数据类型：整数、浮点数、布尔、字符串
+		\item 掌握常用运算符与表达式
+		\item 掌握列表、元组、字典、集合四种基本数据结构
+		\item 掌握 \texttt{if}、\texttt{for}、\texttt{while} 控制流与函数定义
+		\item 能够编写简单的金融计算脚本（收益率、复利等）
+	\end{itemize}
+	\vspace{0.3em}
+	\begin{alertblock}{对零基础同学的建议}
+		编程像学外语：\alert{多敲、多错、多改}。看懂不等于会写，请边听课边动手。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}{程序是什么？}
+	\begin{itemize}
+		\item \textbf{程序（Program）}：一系列告诉计算机"做什么"的指令，按顺序执行。
+		\item Python是\textbf{解释型语言}：代码由解释器逐行翻译、逐行执行，无需提前编译。
+		\item 两种常见运行方式：
+		\begin{itemize}
+			\item \textbf{交互模式}：输入一行，立即得到结果（像计算器）；
+			\item \textbf{脚本文件}：把代码保存为 \texttt{.py} 文件，一次执行多行。
+		\end{itemize}
+		\item 本课程主要使用 \textbf{Jupyter Notebook}（VS Code 中运行）：
+		\begin{itemize}
+			\item 代码按"单元格（cell）"组织，可逐块运行、即时查看结果；
+			\item 适合数据分析：代码、结果、文字说明交织在一起。
+		\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{第一个Python程序}
+	\begin{lstlisting}
+# 井号开头的是注释：写给人看的，计算机会跳过
+print("Hello, Finance!")   # print() 把结果显示出来
+
+# 也可以直接当计算器用
+1 + 1
+520 * 0.03
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{print()} 是一个\textbf{函数}：圆括号里放"输入"，函数完成某项工作。
+		\item 引号括起来的内容叫\textbf{字符串}（文本），不加引号的是\textbf{数字}。
+		\item 在 Notebook 中，单元格最后一行的结果会自动显示，无需 \texttt{print}。
+	\end{itemize}
+	\begin{alertblock}{易错点}
+		必须使用\textbf{英文标点}：引号 \texttt{""}、括号 \texttt{()}、逗号 \texttt{,}。中文标点会报错！
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{变量：给数据起名字}
+	\begin{itemize}
+		\item \textbf{变量}是贴了标签的盒子：用 \texttt{=} 把数据"装进"名字里。
+		\item 之后可以通过名字反复使用、修改这份数据。
+	\end{itemize}
+	\begin{lstlisting}
+price = 30.5        # 把 30.5 装进名为 price 的变量
+shares = 100
+value = price * shares   # 用变量做计算
+print(value)        # 输出 3050.0
+
+price = 31.2        # 变量的值可以随时更新
+\end{lstlisting}
+	\begin{alertblock}{注意}
+		\texttt{=} 是\textbf{赋值}（把右边的值放进左边），不是数学里的"相等"。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}{变量命名规则}
+	\begin{itemize}
+		\item 只能包含字母、数字和下划线 \texttt{\_}，且\textbf{不能以数字开头}。
+		\item 区分大小写：\texttt{Price} 与 \texttt{price} 是两个不同变量。
+		\item 不能使用Python保留字：\texttt{if}、\texttt{for}、\texttt{class}、\texttt{return} 等。
+	\end{itemize}
+	\begin{table}
+		\centering
+		\begin{tabular}{lll}
+			\toprule
+			合法 & 非法 & 原因 \\
+			\midrule
+			\texttt{stock\_price} & \texttt{2stock} & 不能以数字开头 \\
+			\texttt{rate2026} & \texttt{stock price} & 不能含空格 \\
+			\texttt{\_temp} & \texttt{stock-price} & 减号会被当作减法 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\begin{exampleblock}{好习惯}
+		变量名要"见名知意"：用 \texttt{annual\_rate} 而不是 \texttt{a}；多个单词用下划线连接。
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{基本数据类型}
+%==============================================================
+
+\begin{frame}{为什么要关心数据类型？}
+	\begin{itemize}
+		\item 不同类型的数据，能做的运算不同：数字可以相乘，文本不能。
+		\item 金融数据中常见的类型：
+		\begin{itemize}
+			\item 股价、利率 $\rightarrow$ 小数（\textbf{浮点数 float}）
+			\item 成交股数、年份 $\rightarrow$ \textbf{整数 int}
+			\item 股票代码、公司名 $\rightarrow$ \textbf{字符串 str}
+			\item 是否涨停、是否ST $\rightarrow$ \textbf{布尔 bool}（真/假）
+		\end{itemize}
+	\end{itemize}
+	\begin{block}{Python的四种基本数据类型}
+		\centering
+		\texttt{int}（整数）、\texttt{float}（浮点数）、\texttt{str}（字符串）、\texttt{bool}（布尔）
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{整数与浮点数}
+	\begin{lstlisting}
+a = 42          # int：整数
+b = 3.14        # float：浮点数（小数）
+c = 1e6         # 科学计数法，等于 1000000.0
+
+type(a)         # <class 'int'>   type() 查看类型
+type(b)         # <class 'float'>
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{type()} 是"验货工具"：随时查看某个数据的类型。
+		\item 整数与浮点数混合运算，结果自动变为浮点数：
+	\end{itemize}
+	\begin{lstlisting}
+1 + 2.0         # 3.0
+10 / 4          # 2.5   注意：/ 的结果永远是 float
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{浮点数的"小陷阱"}
+	\begin{lstlisting}
+0.1 + 0.2            # 0.30000000000000004
+123456789.12 * 0.01  # 可能尾数不完全精确
+\end{lstlisting}
+	\begin{itemize}
+		\item 计算机用二进制存储小数，某些十进制小数无法精确表示。
+		\item 这是\textbf{所有编程语言}的共同现象，不是Bug。
+		\item 金融计算中的应对方式：
+		\begin{itemize}
+			\item 比较时允许微小误差：\texttt{abs(a - b) < 1e-9}；
+			\item 需要精确金额时使用 \texttt{decimal} 模块（进阶内容）；
+			\item 显示时控制小数位数（后面学格式化输出）。
+		\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{布尔类型与字符串}
+	\begin{lstlisting}
+# bool：只有 True / False 两个值，表示"真/假"
+is_listed = True
+5 > 3       # True，比较的结果就是布尔值
+
+# str：用单引号或双引号括起来的文本
+code = "600519"
+name = '贵州茅台'
+greet = "It's fine"     # 内部有单引号时外层用双引号
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{True}、\texttt{False} 首字母大写，是关键字而非变量。
+		\item 股票代码、日期常以\textbf{字符串}存储（保留前导零，如 \texttt{"000001"}）。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{类型转换}
+	\begin{lstlisting}
+int("100")      # 100    字符串 -> 整数
+float("3.5")    # 3.5    字符串 -> 浮点数
+str(600519)     # '600519'  数字 -> 字符串
+int(3.99)       # 3      直接截断小数，不是四舍五入
+\end{lstlisting}
+	\begin{itemize}
+		\item 用类型名当函数即可完成转换：\texttt{int()}、\texttt{float()}、\texttt{str()}。
+		\item 无法转换时会报错：\texttt{int("abc")}。
+	\end{itemize}
+	\begin{alertblock}{典型易错}
+		\texttt{"1" + "2"} 结果是 \texttt{"12"}（字符串拼接），而 \texttt{1 + 2} 才是 \texttt{3}。\\
+		从文件读入的数字常常是字符串，先转换再计算！
+	\end{alertblock}
+\end{frame}
+
+
+%==============================================================
+\section{运算符与表达式}
+%==============================================================
+
+\begin{frame}{算术运算符}
+	\begin{table}
+		\centering
+		\begin{tabular}{clll}
+			\toprule
+			运算符 & 含义 & 示例 & 结果 \\
+			\midrule
+			\texttt{+ - * /} & 加减乘除 & \texttt{7 / 2} & \texttt{3.5} \\
+			\texttt{//} & 整除（取商的整数部分） & \texttt{7 // 2} & \texttt{3} \\
+			\texttt{\%} & 取余数 & \texttt{7 \% 2} & \texttt{1} \\
+			\texttt{**} & 幂运算 & \texttt{2 ** 10} & \texttt{1024} \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\begin{exampleblock}{金融味道：复利终值}
+		本金 $100$ 元、年利率 $5\%$、复利 $10$ 年：\\[2pt]
+		\centering
+		\texttt{100 * (1 + 0.05) ** 10} $\;\approx\; 162.89$ 元
+	\end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{比较与逻辑运算符}
+	\begin{columns}[T,totalwidth=\textwidth]
+		\begin{column}{0.48\textwidth}
+			\textbf{比较运算符}（结果为布尔值）
+			\begin{lstlisting}
+30.5 > 28        # True
+price == 30.5    # 是否相等：用两个等号
+price != 0       # 不等于
+\end{lstlisting}
+	\end{column}
+	\begin{column}{0.48\textwidth}
+			\textbf{逻辑运算符}（组合多个条件）
+			\begin{lstlisting}
+ret > 0 and ret < 0.1   # 且
+is_st or ret < -0.05    # 或
+not is_listed           # 非
+\end{lstlisting}
+	\end{column}
+	\end{columns}
+	\vspace{0.5em}
+	\begin{alertblock}{高频错误}
+		判断相等用 \texttt{==}；单个 \texttt{=} 是赋值。\\
+		"介于两者之间"要写完整：\texttt{0 < ret < 0.1}，不能写成 \texttt{0 < ret} 和 \texttt{< 0.1}。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{赋值运算符与练习}
+	\begin{lstlisting}
+x = 10
+x += 2      # 等价于 x = x + 2
+x -= 1      # 等价于 x = x - 1
+x *= 1.05   # 等价于 x = x * 1.05（像是"涨了5%"）
+\end{lstlisting}
+	\begin{exampleblock}{课堂练习（2分钟）}
+		某股票昨日收盘价 \texttt{close\_prev = 20.0}，今日收盘价 \texttt{close = 21.5}。\\
+		用一行代码计算日收益率 $r = (P_t - P_{t-1})/P_{t-1}$，并打印结果。
+	\end{exampleblock}
+	\begin{lstlisting}
+ret = (close - close_prev) / close_prev
+print(ret)      # 0.075，即上涨 7.5%
+\end{lstlisting}
+\end{frame}
+
+
+%==============================================================
+\section{字符串与格式化输出}
+%==============================================================
+
+\begin{frame}[fragile]{字符串的索引与切片}
+	\begin{itemize}
+		\item 字符串是一串字符的序列，每个字符有编号（\textbf{索引}），\alert{从0开始}。
+	\end{itemize}
+	\begin{lstlisting}
+code = "600519"
+code[0]       # '6'      第1个字符
+code[-1]      # '9'      倒数第1个字符
+code[0:3]     # '600'    切片：含头不含尾
+code[3:]      # '519'
+len(code)     # 6        长度
+\end{lstlisting}
+	\begin{alertblock}{为什么从0开始？}
+		这是大多数编程语言的约定：索引表示"距起点多远"，第1个字符距离为0。初学只需记住规则，多敲就习惯了。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{字符串拼接与常用方法}
+	\begin{lstlisting}
+exchange = "SH" + code      # 拼接：'SH600519'
+"ha" * 3                    # 重复：'hahaha'
+
+name = "Kweichow Moutai"
+name.lower()        # 转为小写
+name.upper()        # 转为大写
+"2026-08-04".split("-")     # 按分隔符切开 -> ['2026','08','04']
+", ".join(["600519", "000858"])  # '600519, 000858'
+\end{lstlisting}
+	\begin{itemize}
+		\item \textbf{方法}：写在对象后面、用点号调用的"功能"，如 \texttt{code.upper()}。
+		\item 字符串是\textbf{不可变}的：方法返回新字符串，原字符串不变。
+		\item 金融场景中常用 \texttt{split()} 拆解日期、代码、文件路径。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{f-string：最好用的格式化输出}
+	\begin{lstlisting}
+name = "贵州茅台"
+price = 1500.35
+ret = 0.0752
+
+print(f"{name} 当前价格 {price} 元")
+print(f"日涨幅为 {ret:.2%}")      # 百分比，保留2位小数
+print(f"价格保留两位小数：{price:.2f}")
+\end{lstlisting}
+	\begin{itemize}
+		\item f-string：字符串前加 \texttt{f}，\texttt{\{变量\}} 会被替换为变量的值。
+		\item 冒号后是格式说明：\texttt{.2f} 保留两位小数，\texttt{.2\%} 百分比。
+		\item 写分析报告、打印结果时非常常用，务必熟练。
+	\end{itemize}
+	\begin{exampleblock}{输出}
+		\texttt{贵州茅台 当前价格 1500.35 元}\\
+		\texttt{日涨幅为 7.52\%}
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{基本数据结构}
+%==============================================================
+
+\begin{frame}[fragile]{一个现实问题}
+	\begin{itemize}
+		\item 如果一只股票有 250 个交易日收盘价，难道要定义 250 个变量？
+		\begin{lstlisting}
+p1 = 30.1; p2 = 30.5; p3 = 29.8; ...   # 不可行！
+\end{lstlisting}
+		\item 我们需要能"一次装下一串数据"的容器——\textbf{数据结构}。
+	\end{itemize}
+	\begin{table}
+		\centering
+		\begin{tabular}{llll}
+			\toprule
+			结构 & 写法 & 可变？ & 典型用途 \\
+			\midrule
+			列表 list & \texttt{[1, 2, 3]} & 可变 & 一串股价、日期 \\
+			元组 tuple & \texttt{(1, 2, 3)} & 不可变 & 固定的一行记录 \\
+			字典 dict & \texttt{\{"a": 1\}} & 可变 & 代码$\to$价格 的映射 \\
+			集合 set & \texttt{\{1, 2, 3\}} & 可变 & 去重、成员判断 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+\end{frame}
+
+\begin{frame}[fragile]{列表（list）：最常用的容器}
+	\begin{lstlisting}
+prices = [30.1, 30.5, 29.8, 31.2, 30.9]
+codes  = ["600519", "000858", "601318"]
+mixed  = [1, "two", 3.0, True]    # 可混装不同类型
+
+prices[0]        # 30.1   索引从0开始
+prices[-1]       # 30.9   最后一个
+prices[1:3]      # [30.5, 29.8]  切片
+len(prices)      # 5
+\end{lstlisting}
+	\begin{itemize}
+		\item 列表用方括号 \texttt{[]} 定义，元素用逗号分隔。
+		\item 索引、切片规则与字符串完全一致（含头不含尾）。
+		\item 列表\textbf{可以修改}：\texttt{prices[0] = 30.0}。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{列表的增删与运算}
+	\begin{lstlisting}
+codes = ["600519", "000858"]
+codes.append("601318")      # 末尾追加
+codes.insert(0, "000001")   # 在指定位置插入
+codes.remove("000858")      # 按值删除
+popped = codes.pop()        # 弹出最后一个
+
+prices + [31.0]             # 拼接成新列表
+[0] * 5                     # [0, 0, 0, 0, 0]
+"600519" in codes           # True，成员判断
+prices.sort()               # 排序（升序）
+\end{lstlisting}
+	\begin{exampleblock}{提示}
+		\texttt{append} 是在原列表上修改；而 \texttt{prices + [31.0]} 生成\textbf{新}列表，原列表不变。
+	\end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{元组（tuple）：不可变的列表}
+	\begin{lstlisting}
+record = ("600519", "贵州茅台", 1500.35)
+record[0]          # '600519'
+record[1] = "茅台"  # 报错！元组元素不可修改
+\end{lstlisting}
+	\begin{itemize}
+		\item 元组用圆括号 \texttt{()} 定义；索引、切片与列表相同。
+		\item \textbf{不可变}：一旦创建不能增删改——适合存放"不应被改动"的记录。
+		\item 常见场景：函数返回多个值、一行数据记录。
+	\end{itemize}
+	\begin{lstlisting}
+# 元组解包：一次赋值给多个变量
+code, name, price = record
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{字典（dict）：按键取值}
+	\begin{itemize}
+		\item 字典存储 \textbf{键值对}（key--value），像一本"查得到"的字典。
+	\end{itemize}
+	\begin{lstlisting}
+prices = {"600519": 1500.35, "000858": 128.6, "601318": 55.2}
+prices["600519"]            # 1500.35，按"键"取值
+prices["000001"] = 12.5     # 新增或修改键值对
+"601318" in prices          # True
+
+prices.keys()    # 所有键
+prices.values()  # 所有值
+prices.items()   # 所有(键, 值)对
+\end{lstlisting}
+	\begin{exampleblock}{金融应用}
+		股票代码$\to$收盘价、行业$\to$市盈率、指标名$\to$计算结果……\\
+		凡是"名称$\to$数值"的对应关系，优先想到字典。
+	\end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{集合（set）：自动去重}
+	\begin{lstlisting}
+s = {"600519", "000858", "600519"}   # 自动去重
+len(s)            # 2
+
+s.add("601318")
+"600519" in s     # True，成员判断非常快
+
+a = {"600519", "000858"}
+b = {"000858", "601318"}
+a & b             # 交集 {'000858'}
+a | b             # 并集
+\end{lstlisting}
+	\begin{itemize}
+		\item 集合\textbf{无序、不重复}，用花括号 \texttt{\{\}} 定义。
+		\item 常用于：数据去重、快速判断某代码是否在某名单中。
+		\item 注意：\texttt{\{\}} 是空字典；空集合要用 \texttt{set()}。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\section{控制流：让程序会"判断"与"重复"}
+%==============================================================
+
+\begin{frame}[fragile]{if 条件判断}
+	\begin{lstlisting}
+ret = 0.075
+
+if ret > 0:
+    print("今日上涨")
+elif ret == 0:
+    print("今日平盘")
+else:
+    print("今日下跌")
+\end{lstlisting}
+	\begin{itemize}
+		\item \alert{缩进是Python的语法}：缩进（4个空格）内的行属于该分支。
+		\item 条件行末尾必须有\textbf{冒号} \texttt{:}。
+		\item \texttt{elif}、\texttt{else} 可省略；分支可嵌套。
+	\end{itemize}
+	\begin{alertblock}{零基础同学最大的坑}
+		缩进错误（漏缩进、空格与Tab混用）是最常见的报错来源，请使用编辑器自动缩进。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{for 循环：遍历序列}
+	\begin{lstlisting}
+codes = ["600519", "000858", "601318"]
+for code in codes:          # 依次取出每个元素
+    print(code)
+
+for i in range(5):          # range(5) 生成 0,1,2,3,4
+    print(i)
+
+for i in range(1, 11):      # 1 到 10（含头不含尾）
+    print(i)
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{for 变量 in 序列:} ——让循环变量依次等于序列中的每个元素。
+		\item \texttt{range(起止)} 常用来按次数循环；同样注意\textbf{含头不含尾}。
+		\item 列表、字符串、字典的键都可以被遍历。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{例：批量计算日收益率}
+	\begin{lstlisting}
+prices = [100.0, 102.0, 101.0, 105.0]
+returns = []                    # 空列表，用于存放结果
+
+for i in range(1, len(prices)):
+    r = (prices[i] - prices[i-1]) / prices[i-1]
+    returns.append(r)           # 把结果追加进列表
+
+print(returns)    # [0.02, -0.0098..., 0.0396...]
+\end{lstlisting}
+	\begin{itemize}
+		\item 模式：\textbf{准备空列表 $\to$ 循环计算 $\to$ append 收集结果}，非常常用。
+		\item \texttt{prices[i-1]} 是前一天价格，所以 \texttt{i} 从 1 开始。
+		\item （预告：学完 NumPy 后，这段代码可以一行搞定。）
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{while 循环与 break / continue}
+	\begin{lstlisting}
+# while：条件为 True 就一直执行
+value = 100
+years = 0
+while value < 200:        # 复利翻倍需要几年？
+    value = value * 1.05
+    years = years + 1
+print(years)              # 15
+\end{lstlisting}
+	\begin{lstlisting}
+for i in range(10):
+    if i == 3:
+        continue          # 跳过本次，进入下一次
+    if i == 6:
+        break             # 立即结束整个循环
+    print(i)
+\end{lstlisting}
+	\begin{alertblock}{注意}
+		\texttt{while} 循环必须保证条件终会变为 \texttt{False}，否则程序会"死循环"卡住。
+	\end{alertblock}
+\end{frame}
+
+
+%==============================================================
+\section{函数：把常用计算"打包"}
+%==============================================================
+
+\begin{frame}{为什么要用函数？}
+	\begin{itemize}
+		\item 已经用过的"内置函数"：\texttt{print()}、\texttt{len()}、\texttt{type()}、\texttt{int()}、\texttt{max()}、\texttt{min()}、\texttt{sum()}、\texttt{abs()}。
+		\item 函数的好处：
+		\begin{itemize}
+			\item \textbf{复用}：写一次，到处调用；
+			\item \textbf{清晰}：给一段逻辑起个名字，代码像文章一样易读；
+			\item \textbf{易测}：小段逻辑更容易检查对错。
+		\end{itemize}
+		\item 我们可以\textbf{自己定义函数}：把重复使用的计算（如收益率公式）打包。
+	\end{itemize}
+	\begin{block}{函数的三要素}
+		\centering
+		\textbf{名字}（做什么） + \textbf{参数}（输入） + \textbf{返回值}（输出）
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{def 定义函数}
+	\begin{lstlisting}
+def simple_return(p_prev, p_now):
+    """计算简单收益率"""
+    return (p_now - p_prev) / p_prev
+
+r = simple_return(100, 105)
+print(r)              # 0.05
+print(f"{r:.2%}")     # 5.00%
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{def 函数名(参数1, 参数2):}，函数体缩进，\texttt{return} 返回结果。
+		\item 三引号字符串 \texttt{"""..."""} 是\textbf{文档字符串}：说明函数用途。
+		\item 没有 \texttt{return} 的函数返回 \texttt{None}。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{默认参数与关键字参数}
+	\begin{lstlisting}
+def future_value(pv, rate, years=1):
+    """复利终值：years 默认为 1"""
+    return pv * (1 + rate) ** years
+
+future_value(100, 0.05)              # 105.0
+future_value(100, 0.05, 10)          # 162.89
+future_value(100, rate=0.05, years=3)  # 指明参数名
+\end{lstlisting}
+	\begin{itemize}
+		\item \textbf{默认参数}：\texttt{years=1}，调用时可省略。
+		\item \textbf{关键字参数}：写明参数名，顺序随意，可读性好。
+		\item 金融公式（现值、终值、年金）特别适合封装成函数。
+	\end{itemize}
+	\begin{exampleblock}{课堂练习}
+		编写函数 \texttt{pv(fv, rate, years)} 计算现值 $PV = FV/(1+r)^n$，\\
+		并计算：3年后收到的100元，折现率5\%，现值是多少？
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{综合案例与小结}
+%==============================================================
+
+\begin{frame}[fragile]{综合案例：迷你股票分析}
+	\begin{lstlisting}
+# 某股票近5日收盘价
+prices = [100.0, 102.0, 101.0, 105.0, 103.0]
+
+# 1. 区间收益率
+total_ret = (prices[-1] - prices[0]) / prices[0]
+
+# 2. 每日收益率，并统计上涨天数
+up_days = 0
+for i in range(1, len(prices)):
+    r = (prices[i] - prices[i-1]) / prices[i-1]
+    if r > 0:
+        up_days += 1
+
+print(f"区间收益率：{total_ret:.2%}")
+print(f"上涨天数：{up_days} / {len(prices)-1}")
+\end{lstlisting}
+	\begin{center}
+		本章学的\textbf{变量、列表、循环、判断、f-string}在这里全部用上了。
+	\end{center}
+\end{frame}
+
+\begin{frame}{本章小结}
+	\begin{itemize}
+		\item \textbf{变量与赋值}：\texttt{name = value}；\texttt{=} 是赋值不是相等。
+		\item \textbf{基本类型}：\texttt{int}、\texttt{float}、\texttt{str}、\texttt{bool}；用 \texttt{type()} 检查，用类型名转换。
+		\item \textbf{运算符}：\texttt{/ // \% **}；比较用 \texttt{==}；逻辑用 \texttt{and or not}。
+		\item \textbf{字符串}：索引从0开始、切片含头不含尾；\texttt{f"\{x:.2\%\}"} 格式化。
+		\item \textbf{数据结构}：列表（可变序列）、元组（不可变）、字典（键值对）、集合（去重）。
+		\item \textbf{控制流}：\texttt{if/elif/else}、\texttt{for}、\texttt{while}；\alert{缩进即语法}。
+		\item \textbf{函数}：\texttt{def} 定义，\texttt{return} 返回，复用与封装。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{课后任务与下章预告}
+	\begin{block}{课后任务}
+		\begin{enumerate}
+			\item 在 Notebook 中完成本章所有课堂练习并截图保存。
+			\item 编写脚本：输入本金、年利率、年限，打印复利终值。
+			\item 选做：用列表与循环计算一组价格的最大值与最小值（不许用 \texttt{max/min}）。
+		\end{enumerate}
+	\end{block}
+	\begin{exampleblock}{下章预告}
+		本章逐个元素地循环计算，处理上万行行情数据会很慢。\\
+		下一章学习 \textbf{NumPy 数组}：一行代码对整个数组做运算，速度提升百倍。
+	\end{exampleblock}
+	\begin{center}
+		\vspace{0.5em}
+		本章内容改编自教材第3章\citep{hilpisch2018python}。
+	\end{center}
+\end{frame}
+
+
+%==============================================================
+%  附录：参考文献 + 结尾页
+%==============================================================
+\appendix
+
+\begin{frame}[allowframebreaks]{参考文献}
+	\bibliographystyle{style/gbt7714-2005}
+	\bibliography{reference.bib}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		{\Huge\calligra Thanks for your attention!}
+		\vspace{1cm}
+
+		{\Huge Q \& A}
+	\end{center}
+\end{frame}
+
+\end{document}

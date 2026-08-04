@@ -1,0 +1,32 @@
+# ---- 虚拟环境与 IDE ----
+.venv/
+.vscode/
+.workbuddy/
+
+# ---- 手工备份 ----
+Backups/
+
+# ---- LaTeX 编译产物 ----
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+texput.log
+*.*.minted
+
+# ---- PDF（课件成品，编译即可再生成）----
+*.pdf
+# 但保留 Beamer 主题所需的 logo/背景图
+!**/logo/*.pdf
+
+# ---- Python 运行产物 ----
+__pycache__/
+.ipynb_checkpoints/

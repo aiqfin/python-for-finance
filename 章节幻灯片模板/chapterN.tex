@@ -1,0 +1,197 @@
+% !TeX program = xelatex
+%==============================================================
+%  Python金融数据分析 · 章节幻灯片模板
+%--------------------------------------------------------------
+%  使用方法：
+%    1. 将本文件夹整体复制一份，重命名为 "Chapter2 slides" 等；
+%    2. 把本文件重命名为 chapter2.tex（与章节对应）；
+%    3. 修改下方【首页信息设置】中的标题、副标题；
+%    4. 在正文区按 \section + frame 组织内容，示例见下文；
+%    5. 图片放入 figures/ 文件夹，直接 \includegraphics{文件名} 即可；
+%    6. 编译命令（需要 TeX Live，用 xelatex 编译两遍）：
+%         xelatex chapterN.tex
+%         xelatex chapterN.tex
+%    7. 参考文献写入 reference.bib，正文用 \citep{key} 引用。
+%==============================================================
+\documentclass[9pt]{ctexbeamer}
+
+%%%%-----导入宏包-----%%%%
+\usepackage{style/shubeamer}   % SHU 主题（配色、帧标题、页脚、Python代码样式）
+\usepackage{amsmath,amsfonts,amssymb,bm}
+\usepackage{graphicx,hyperref,url}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage[super,square]{natbib}
+\usepackage{wrapfig}          % 文字绕排
+\usepackage{calligra}         % 结尾页花体字
+
+%%%%-----设置字体-----%%%%
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+
+%%%%-----常用自定义颜色（正文可直接使用）-----%%%%
+\definecolor{nvidia}{RGB}{102,156,28}
+\definecolor{red}{RGB}{184,13,73}
+\definecolor{orange}{RGB}{242,151,36}
+\definecolor{darkteal}{RGB}{43,106,108}
+\definecolor{darkblue}{RGB}{4,37,58}
+
+%%%%-----每节开始时自动显示当前节目录-----%%%%
+\AtBeginSection[]
+{
+	\begin{frame}<beamer>
+		\frametitle{\textbf{目录}}
+		\textbf{\tableofcontents[currentsection]}
+	\end{frame}
+}
+
+%%%%-----设定图片存放路径-----%%%%
+\graphicspath{{figures/}}
+
+%%%%-----首页信息设置（★ 每章只需修改这里 ★）-----%%%%
+\AtBeginDocument{%
+	%%%%----短标题[显示在页脚]{封面标题}
+	\title[Python金融数据分析 · 第N章]{\fontsize{16pt}{22pt}\selectfont {Python金融数据分析}}
+	%%%%----副标题（本章主题）
+	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第N章\quad 在此填写本章标题}}
+	%%%%----个人信息
+	\author[王伟冠]{%
+		\begin{tabular}{ll}%
+			主讲人： & 王伟冠\tabularnewline%
+			院\quad 系： & 经济学院金融系\tabularnewline
+		\end{tabular}
+	}
+	%%%%----机构信息
+	\institute[SHU]{上海大学}
+	%%%%----日期信息
+	\date[\today]{\today}}
+
+%%%%-----数学宏（向量、矩阵、算子等，见 style/macros.tex）-----%%%%
+\input{style/macros.tex}
+
+
+\begin{document}
+
+%% 封面
+\begin{frame}
+	\titlepage
+\end{frame}
+
+%% 目录页
+\section*{目录}
+\begin{frame}
+	\frametitle{\textbf{目录}}
+	\textbf{\tableofcontents}
+\end{frame}
+
+
+%==============================================================
+%  正文开始：按 \section{节标题} 组织，每页一个 frame
+%==============================================================
+\section{第一节标题}
+
+\begin{frame}{要点列表页}
+	\begin{itemize}
+		\item 一级要点：使用 \texttt{itemize} 环境
+		\item 支持嵌套：
+		\begin{itemize}
+			\item 二级要点自动使用亮蓝色短横线
+		\end{itemize}
+		\item 重点内容可用 \alert{alert 高亮} 或 \textbf{加粗}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{双栏对比页}
+	\begin{columns}[T,totalwidth=\textwidth]
+		\begin{column}{0.48\textwidth}
+			\textbf{左栏标题}
+			\begin{itemize}
+				\item 要点一
+				\item 要点二
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.48\textwidth}
+			\textbf{右栏标题}
+			\begin{itemize}
+				\item 要点一
+				\item 要点二
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Block 盒子页}
+	\begin{block}{定义}
+		普通 block：适合定义、结论。\quad 例：$\mathbb{E}[X] = \int x f(x)\,\mathrm{d}x$
+	\end{block}
+	\begin{alertblock}{注意}
+		alertblock：适合强调易错点、注意事项。
+	\end{alertblock}
+	\begin{exampleblock}{示例}
+		exampleblock：适合举例说明。
+	\end{exampleblock}
+\end{frame}
+
+\section{代码与图表}
+
+\begin{frame}[fragile]{Python 代码页}
+	% 含代码的 frame 必须加 [fragile]
+	% 代码样式已在 style/shubeamer.sty 中统一定义（style=shupython）
+	\begin{lstlisting}
+import numpy as np
+import pandas as pd
+
+# 读取金融数据并计算收益率
+df = pd.read_csv("data.csv", index_col=0, parse_dates=True)
+rets = np.log(df / df.shift(1)).dropna()
+print(rets.describe())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{插图页}
+	\begin{figure}
+		\centering
+		% 图片放在 figures/ 文件夹中，无需写路径
+		% \includegraphics[width=0.6\textwidth]{example-image}
+		\caption{图标题示例}
+	\end{figure}
+	% 双图并排可使用 subcaption：
+	% \begin{subfigure}{0.45\textwidth} ... \end{subfigure}\hfill
+	% \begin{subfigure}{0.45\textwidth} ... \end{subfigure}
+\end{frame}
+
+\begin{frame}{表格页}
+	\begin{table}
+		\centering
+		\caption{表标题示例}
+		\begin{tabular}{lcc}
+			\toprule
+			项目 & 数值A & 数值B \\
+			\midrule
+			行一 & 1.23 & 4.56 \\
+			行二 & 7.89 & 0.12 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+\end{frame}
+
+%==============================================================
+%  附录：参考文献 + 结尾页
+%==============================================================
+\appendix
+
+\begin{frame}[allowframebreaks]{参考文献}
+	\bibliographystyle{style/gbt7714-2005}
+	\bibliography{reference.bib}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		{\Huge\calligra Thanks for your attention!}
+		\vspace{1cm}
+
+		{\Huge Q \& A}
+	\end{center}
+\end{frame}
+
+\end{document}

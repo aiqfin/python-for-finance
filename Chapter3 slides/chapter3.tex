@@ -1,0 +1,568 @@
+% !TeX program = xelatex
+%==============================================================
+%  Python金融数据分析 · 第3章 NumPy数组计算
+%  基于《Python金融大数据分析（第2版）》第4章内容改编
+%  授课对象：本科金融系学生（已学完第2章Python基础语法）
+%  编译：xelatex chapter3.tex（编译两遍）
+%==============================================================
+\documentclass[9pt]{ctexbeamer}
+
+%%%%-----导入宏包-----%%%%
+\usepackage{style/shubeamer}   % SHU 主题（配色、帧标题、页脚、Python代码样式）
+\usepackage{amsmath,amsfonts,amssymb,bm}
+\usepackage{graphicx,hyperref,url}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage[super,square]{natbib}
+\usepackage{wrapfig}          % 文字绕排
+\usepackage{calligra}         % 结尾页花体字
+
+%%%%-----设置字体-----%%%%
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+
+%%%%-----常用自定义颜色（正文可直接使用）-----%%%%
+\definecolor{nvidia}{RGB}{102,156,28}
+\definecolor{red}{RGB}{184,13,73}
+\definecolor{orange}{RGB}{242,151,36}
+\definecolor{darkteal}{RGB}{43,106,108}
+\definecolor{darkblue}{RGB}{4,37,58}
+
+%%%%-----每节开始时自动显示当前节目录-----%%%%
+\AtBeginSection[]
+{
+	\begin{frame}<beamer>
+		\frametitle{\textbf{目录}}
+		\textbf{\tableofcontents[currentsection]}
+	\end{frame}
+}
+
+%%%%-----设定图片存放路径-----%%%%
+\graphicspath{{figures/}}
+
+%%%%-----首页信息设置-----%%%%
+\AtBeginDocument{%
+	%%%%----短标题[显示在页脚]{封面标题}
+	\title[Python金融数据分析 · 第3章]{\fontsize{16pt}{22pt}\selectfont {Python金融数据分析}}
+	%%%%----副标题（本章主题）
+	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第3章\quad NumPy数组计算}}
+	%%%%----个人信息
+	\author[王伟冠]{%
+		\begin{tabular}{ll}%
+			主讲人： & 王伟冠\tabularnewline%
+			院\quad 系： & 经济学院金融系\tabularnewline
+		\end{tabular}
+	}
+	%%%%----机构信息
+	\institute[SHU]{上海大学}
+	%%%%----日期信息
+	\date[\today]{\today}}
+
+%%%%-----数学宏（向量、矩阵、算子等，见 style/macros.tex）-----%%%%
+\input{style/macros.tex}
+
+
+\begin{document}
+
+%% 封面
+\begin{frame}
+	\titlepage
+\end{frame}
+
+%% 目录页
+\section*{目录}
+\begin{frame}
+	\frametitle{\textbf{目录}}
+	\textbf{\tableofcontents}
+\end{frame}
+
+
+%==============================================================
+\section{为什么需要NumPy？}
+%==============================================================
+
+\begin{frame}{本章学习目标}
+	\begin{itemize}
+		\item 理解为什么金融数据分析离不开 NumPy
+		\item 掌握 \texttt{ndarray} 的创建、属性与索引切片
+		\item 掌握\textbf{向量化运算}：一行代码对整个数组做计算
+		\item 掌握\textbf{布尔索引}：按条件筛选数据
+		\item 掌握常用统计函数（均值、标准差、累计等）
+		\item 能够用 NumPy 计算收益率序列与波动率等风险指标
+	\end{itemize}
+	\vspace{0.3em}
+	\begin{block}{前置知识}
+		第2章的列表、循环、函数——本章会把它们"升级"为数组写法。
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{回顾：上一章的做法}
+	\begin{lstlisting}
+prices = [100.0, 102.0, 101.0, 105.0]
+returns = []
+for i in range(1, len(prices)):
+    r = (prices[i] - prices[i-1]) / prices[i-1]
+    returns.append(r)
+\end{lstlisting}
+	\begin{itemize}
+		\item 只有 4 个价格没问题；但真实数据动辄\alert{数千个交易日、成百上千只股票}。
+		\item Python 的 \texttt{for} 循环每一步都要检查类型、逐个搬运，\textbf{速度慢}；
+		\item 代码冗长，意图（"算收益率"）被循环细节淹没。
+	\end{itemize}
+	\begin{alertblock}{本章的目标}
+		用 NumPy 把 4 行循环压缩成 1 行，并且快上百倍。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{NumPy是什么？}
+	\begin{itemize}
+		\item \textbf{NumPy}（Numerical Python）是Python科学计算的基石。
+		\item 核心对象：\texttt{ndarray}——存储\textbf{同一类型}数据的多维数组。
+		\item 底层用 C 实现，运算直接作用于整块内存，速度远超Python循环。
+		\item pandas、scikit-learn 等后续工具都构建在 NumPy 之上。
+	\end{itemize}
+	\begin{lstlisting}
+import numpy as np     # 约定俗成的导入方式
+
+prices = np.array([100.0, 102.0, 101.0, 105.0])
+returns = prices[1:] / prices[:-1] - 1    # 一行搞定！
+\end{lstlisting}
+	\begin{exampleblock}{约定}
+		\texttt{import numpy as np} 是全世界通用的写法，请照抄。
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{创建数组}
+%==============================================================
+
+\begin{frame}[fragile]{从列表创建与基本属性}
+	\begin{lstlisting}
+a = np.array([100.0, 102.0, 101.0, 105.0])
+a            # array([100., 102., 101., 105.])
+
+type(a)      # numpy.ndarray
+a.shape      # (4,)      形状：长度为4的一维数组
+a.dtype      # float64   元素类型：全数组统一
+len(a)       # 4
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{np.array(列表)}：把Python列表转换为数组。
+		\item \textbf{类型统一}：数组中所有元素同一类型（如全是 \texttt{float64}），这正是快的原因。
+		\item \texttt{shape} 描述"形状"，是后面理解二维数据的关键。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{快速生成常用数组}
+	\begin{lstlisting}
+np.zeros(5)           # array([0., 0., 0., 0., 0.])
+np.ones(3)            # array([1., 1., 1.])
+
+np.arange(0, 10, 2)   # array([0, 2, 4, 6, 8])  类似range
+np.linspace(0, 1, 5)  # array([0., 0.25, 0.5, 0.75, 1.])
+                      # 0到1之间均匀取5个点（含端点）
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{zeros/ones}：初始化占位数组（如预存结果）。
+		\item \texttt{arange(起, 止, 步长)}：整数序列，与 \texttt{range} 类似但返回数组。
+		\item \texttt{linspace(起, 止, 个数)}：画利率区间、画函数图像时常用。
+	\end{itemize}
+	\begin{exampleblock}{金融场景}
+		给一组折现率 \texttt{np.linspace(0.01, 0.10, 10)}，批量观察债券价格变化。
+	\end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{二维数组：数据的"表格"形态}
+	\begin{lstlisting}
+# 3天 x 2只股票 的收盘价：每行一天，每列一只股票
+p = np.array([[25.0, 100.0],
+              [25.5,  99.0],
+              [26.0, 102.0]])
+
+p.shape      # (3, 2)   3行2列
+p.ndim       # 2        维度数
+p.size       # 6        元素总数
+\end{lstlisting}
+	\begin{itemize}
+		\item 列表中套列表 $\rightarrow$ 二维数组，可以看作\textbf{表格/矩阵}。
+		\item \texttt{shape} 变为 \texttt{(行数, 列数)}。
+		\item 金融数据的典型形态：\alert{行=日期，列=资产}。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{形状变换与拼接}
+	\begin{lstlisting}
+a = np.arange(6)             # [0 1 2 3 4 5]
+a.reshape(2, 3)              # 变成2行3列
+a.reshape(-1, 2)             # -1 表示"自动算"：3行2列
+
+np.array([1, 2]) + 0         # 数组拼接用专门函数：
+np.concatenate([np.array([1, 2]), np.array([3, 4])])
+                             # array([1, 2, 3, 4])
+\end{lstlisting}
+	\begin{alertblock}{易错点}
+		数组的 \texttt{+} 是\textbf{逐元素相加}，不是拼接！拼接请用 \texttt{np.concatenate}。\\
+		\texttt{np.array([1,2]) + np.array([3,4])} 得到 \texttt{[4, 6]}。
+	\end{alertblock}
+\end{frame}
+
+
+%==============================================================
+\section{索引与切片}
+%==============================================================
+
+\begin{frame}[fragile]{一维数组：与列表几乎相同}
+	\begin{lstlisting}
+prices = np.array([30.1, 30.5, 29.8, 31.2, 30.9])
+
+prices[0]        # 30.1    索引从0开始
+prices[-1]       # 30.9    倒数第一个
+prices[1:3]      # array([30.5, 29.8])   含头不含尾
+prices[1:]       # 除第一个外的所有元素
+prices[:-1]      # 除最后一个外的所有元素
+\end{lstlisting}
+	\begin{itemize}
+		\item 索引、切片规则与列表完全一致——旧知识直接复用。
+		\item \texttt{prices[1:]} 与 \texttt{prices[:-1]} 这对组合后面算收益率要用，务必熟练。
+	\end{itemize}
+	\begin{alertblock}{注意}
+		数组切片返回的是\textbf{视图}（与原数组共享内存）：修改切片会影响原数组，与列表不同。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{二维数组：先行后列}
+	\begin{lstlisting}
+p = np.array([[25.0, 100.0],
+              [25.5,  99.0],
+              [26.0, 102.0]])
+
+p[0, 0]      # 25.0   第0行第0列
+p[1, 1]      # 99.0   第1行第1列
+p[0]         # 第0行 -> array([25., 100.])
+p[:, 1]      # 所有行、第1列 -> 股票2的价格序列
+p[1:, :]     # 第1行到末尾的所有行
+\end{lstlisting}
+	\begin{itemize}
+		\item 写法：\texttt{数组[行, 列]}；冒号 \texttt{:} 表示"全部"。
+		\item \texttt{p[:, 1]} 即"取出某只股票的整个价格序列"，金融分析中的高频操作。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\section{向量化运算}
+%==============================================================
+
+\begin{frame}[fragile]{数组与标量：整体运算}
+	\begin{lstlisting}
+prices = np.array([100.0, 102.0, 101.0, 105.0])
+
+prices + 1       # 每个元素加1
+prices * 1.05    # 每个元素涨5%
+prices ** 2      # 每个元素平方
+1 / prices       # 每个元素取倒数
+\end{lstlisting}
+	\begin{itemize}
+		\item \textbf{向量化}：运算自动作用于数组中的\alert{每一个}元素，无需循环。
+		\item 运算不改变原数组，而是返回\textbf{新数组}。
+		\item 读代码时把数组想象成"一整列Excel数据同时参与计算"。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{数组与数组：逐元素配对}
+	\begin{lstlisting}
+a = np.array([1.0, 2.0, 3.0])
+b = np.array([10., 20., 30.])
+
+a + b        # array([11., 22., 33.])
+a * b        # array([10., 40., 90.])
+b / a        # array([10., 10., 10.])
+\end{lstlisting}
+	\begin{itemize}
+		\item 两个数组运算：\textbf{位置一一对应}（第0个对第0个、第1个对第1个……）。
+		\item 这正对应金融场景：
+		\begin{itemize}
+			\item "今日价 / 昨日价"：两个错开一位的价格序列相除；
+			\item "组合收益"：持仓权重数组 $\times$ 个股收益数组。
+		\end{itemize}
+	\end{itemize}
+	\begin{alertblock}{形状要匹配}
+		参与运算的两个数组形状必须一致（或满足广播规则），否则报错。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{例：一行代码计算收益率}
+	\begin{lstlisting}
+prices = np.array([100.0, 102.0, 101.0, 105.0])
+
+# 简单收益率：(今日-昨日)/昨日
+ret = prices[1:] / prices[:-1] - 1
+ret        # array([0.02, -0.0098, 0.0396])
+
+# 对数收益率（后文常用）
+logret = np.log(prices[1:] / prices[:-1])
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{prices[1:]}：今日价序列；\texttt{prices[:-1]}：昨日价序列；相除即逐日配对。
+		\item 上一章的4行循环，现在\alert{1行}；数据越大，优势越明显。
+		\item \texttt{np.log()} 是向量化函数，对整个数组取自然对数。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{快多少？速度对比}
+	\begin{lstlisting}
+big = np.arange(1_000_000)          # 0到999999
+
+%timeit [x ** 2 for x in big]       # Python循环：约200毫秒
+%timeit big ** 2                    # NumPy向量化：约1毫秒
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{\%timeit} 是 Notebook 计时魔法命令（下节 notebook 中可亲自体验）。
+		\item 同样的一百万元素平方运算，NumPy 快约 \alert{100倍以上}。
+		\item 原因：类型统一 + 底层C实现 + 无需逐步类型检查。
+	\end{itemize}
+	\begin{block}{经验法则}
+		看到"对每个元素做同样的事"，先想向量化，再考虑循环。
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{常用向量化数学函数}
+	\begin{table}
+		\centering
+		\begin{tabular}{lll}
+			\toprule
+			函数 & 作用 & 金融用途举例 \\
+			\midrule
+			\texttt{np.log(x)} / \texttt{np.exp(x)} & 对数 / 指数 & 对数收益率、连续复利 \\
+			\texttt{np.sqrt(x)} & 平方根 & 波动率换算 \\
+			\texttt{np.abs(x)} & 绝对值 & 偏差幅度 \\
+			\texttt{np.maximum(a,b)} & 逐元素取大 & 期权收益 $\max(S-K,0)$ \\
+			\texttt{np.round(x, n)} & 四舍五入 & 报表展示 \\
+			\texttt{np.cumsum(x)} & 累计和 & 累计收益、净值曲线 \\
+			\texttt{np.diff(x)} & 相邻差分 & 价格变动额 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\begin{exampleblock}{期权到期收益}
+		\texttt{np.maximum(S - K, 0)}：行权价 $K$，到期价序列 $S$，一行算出所有情形的收益。
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{布尔索引：按条件筛选}
+%==============================================================
+
+\begin{frame}[fragile]{比较运算返回布尔数组}
+	\begin{lstlisting}
+ret = np.array([0.02, -0.01, 0.04, -0.03, 0.01])
+
+ret > 0      # array([True, False, True, False, True])
+\end{lstlisting}
+	\begin{itemize}
+		\item 数组的比较运算也是\textbf{向量化}的：逐元素判断，返回等长的布尔数组。
+		\item 布尔数组可以当"筛选器"使用（下一页）。
+		\item 组合条件要用 \texttt{\&}（且）、\texttt{|}（或），且每个条件加括号：
+	\end{itemize}
+	\begin{lstlisting}
+(ret > -0.01) & (ret < 0.01)     # 小幅波动日
+\end{lstlisting}
+	\begin{alertblock}{易错点}
+		数组条件中 \texttt{and}、\texttt{or} 会报错，必须用 \texttt{\&}、\texttt{|}。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{用布尔数组筛选与统计}
+	\begin{lstlisting}
+ret = np.array([0.02, -0.01, 0.04, -0.03, 0.01])
+
+ret[ret > 0]          # array([0.02, 0.04, 0.01]) 只留上涨日
+ret[ret < -0.02]      # array([-0.03])            大跌日
+
+np.sum(ret > 0)       # 3     True按1计数：上涨天数
+(ret > 0).mean()      # 0.6   上涨日占比
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{数组[布尔数组]}：只保留对应位置为 \texttt{True} 的元素。
+		\item \texttt{np.sum(布尔数组)}：统计满足条件的个数——非常实用的技巧。
+		\item 金融应用：统计涨停天数、回撤超过阈值的次数、极端波动日。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{np.where：条件赋值}
+	\begin{lstlisting}
+ret = np.array([0.02, -0.01, 0.04])
+
+np.where(ret > 0, 1, 0)
+# array([1, 0, 1])   条件为真取1，否则取0
+
+np.where(ret > 0, "涨", "跌")
+# array(['涨', '跌', '涨'])
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{np.where(条件, 真时的值, 假时的值)}：向量化的 \texttt{if/else}。
+		\item 应用：构造交易信号——收益为正记1（持有多头），为负记0。
+		\item 这比写 \texttt{for} 循环套 \texttt{if} 简洁且快得多。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\section{统计函数}
+%==============================================================
+
+\begin{frame}[fragile]{常用聚合函数}
+	\begin{lstlisting}
+ret = np.array([0.02, -0.01, 0.04, -0.03, 0.01])
+
+ret.sum()        # 0.03     求和
+ret.mean()       # 0.006    均值（日均收益率）
+ret.std()        # 0.026... 标准差（波动性）
+ret.max()        # 0.04     最大值
+ret.min()        # -0.03    最小值
+ret.argmax()     # 2        最大值的"位置"
+\end{lstlisting}
+	\begin{itemize}
+		\item "把一串数压缩成一个数"的函数叫\textbf{聚合函数}。
+		\item 写法两种等价：\texttt{ret.mean()} 或 \texttt{np.mean(ret)}。
+		\item \textbf{标准差}是金融中风险（波动率）的度量，务必熟悉。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{二维数组与 axis 参数}
+	\begin{lstlisting}
+# 3天 x 2只股票的日收益率
+r = np.array([[ 0.02, -0.01],
+              [-0.01,  0.03],
+              [ 0.04,  0.01]])
+
+r.mean()          # 0.0133...  全部元素的均值
+r.mean(axis=0)    # 按"列"求均值 -> 每只股票的日均收益
+r.mean(axis=1)    # 按"行"求均值 -> 每天的组合平均收益
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{axis=0}：沿行的方向压缩 $\rightarrow$ 结果对应每一\textbf{列}；
+		\item \texttt{axis=1}：沿列的方向压缩 $\rightarrow$ 结果对应每一\textbf{行}。
+		\item 记忆口诀：\alert{axis 是被"压掉"的那一维}。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{累计与差分}
+	\begin{lstlisting}
+prices = np.array([100., 102., 101., 105.])
+
+np.diff(prices)     # array([2., -1., 4.]) 每日涨跌"额"
+np.cumsum([1, 1, 1, 1])   # array([1, 2, 3, 4]) 累计和
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{np.diff}：相邻元素相减，长度少1——快速得到每日变动。
+		\item \texttt{np.cumsum}：逐步累加——从"每日现金流"得到"累计现金流"，\\
+			从"对数收益率"恢复"累计对数收益"。
+	\end{itemize}
+	\begin{exampleblock}{小例子}
+		对数收益率序列取 \texttt{np.cumsum}，再取 \texttt{np.exp}，即得净值曲线（相对期初价格）。
+	\end{exampleblock}
+\end{frame}
+
+
+%==============================================================
+\section{综合案例与小结}
+%==============================================================
+
+\begin{frame}[fragile]{综合案例：模拟股价并测风险}
+	\begin{lstlisting}
+rng = np.random.default_rng(8)          # 随机数生成器(固定种子)
+n = 250                                  # 250个交易日
+
+# 模拟日收益率：均值0.04%，日波动1.5%
+rets = 0.0004 + 0.015 * rng.standard_normal(n)
+
+# 由收益率还原价格曲线（期初100元）
+prices = 100 * np.exp(np.cumsum(rets))
+
+print(f"日均收益率：{rets.mean():.4%}")
+print(f"日波动率：  {rets.std():.4%}")
+print(f"年化波动率：{rets.std()*np.sqrt(252):.2%}")
+print(f"最高价/最低价：{prices.max():.2f} / {prices.min():.2f}")
+\end{lstlisting}
+	\begin{itemize}
+		\item \textbf{年化波动率 = 日标准差 $\times\sqrt{252}$}，业界标准做法。
+		\item 用到的全部是本章工具：向量化、\texttt{cumsum}、\texttt{exp}、聚合函数。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{续：进一步分析}
+	\begin{lstlisting}
+# 上涨日占比
+print(f"上涨日占比：{(rets > 0).mean():.2%}")
+
+# 单日跌幅超过3%的"极端日"
+extreme = rets[rets < -0.03]
+print(f"极端下跌天数：{len(extreme)}")
+
+# 最大回撤的粗略观察：历史最高价 vs 当前价
+peak = np.maximum.accumulate(prices)
+drawdown = prices / peak - 1
+print(f"最大回撤：{drawdown.min():.2%}")
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{np.maximum.accumulate}：到每个时点为止的历史最高价。
+		\item \textbf{最大回撤}是基金与策略最常用的风险指标之一。
+		\item 整段分析没有写一个 \texttt{for} 循环。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{本章小结}
+	\begin{itemize}
+		\item \textbf{创建}：\texttt{np.array}、\texttt{zeros/ones}、\texttt{arange/linspace}；属性 \texttt{shape/dtype}。
+		\item \textbf{索引切片}：与列表同规则；二维写 \texttt{[行, 列]}，\texttt{:} 表示全部。
+		\item \textbf{向量化}：数组运算逐元素进行，一行顶循环，速度快百倍；\\
+		\alert{数组的 \texttt{+} 是相加不是拼接}。
+		\item \textbf{布尔索引}：\texttt{a[a>0]} 筛选；\texttt{np.sum(条件)} 计数；条件组合用 \texttt{\&}、\texttt{|}。
+		\item \textbf{统计}：\texttt{mean/std/max/min}；\texttt{axis} 是被压掉的维度。
+		\item \textbf{金融工具箱}：收益率 \texttt{p[1:]/p[:-1]-1}、年化波动率 $\sigma\times\sqrt{252}$、\texttt{cumsum/diff}、\texttt{np.where} 信号。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{课后任务与下章预告}
+	\begin{block}{课后任务}
+		\begin{enumerate}
+			\item 运行课堂 notebook，修改参数观察输出变化。
+			\item 给定价格数组 \texttt{np.array([50, 52, 51, 55, 53, 56])}：\\
+			计算日收益率、找出最大单日涨幅、统计上涨天数。
+			\item 选做：用 \texttt{np.where} 构造信号"收益为正买1手、为负卖1手"，\\
+			并计算该策略的每日收益（信号$\times$次日收益，注意错位）。
+		\end{enumerate}
+	\end{block}
+	\begin{exampleblock}{下章预告}
+		数组只装数字，真实行情还有日期、股票代码、公司名。\\
+		下一章学习 \textbf{pandas}：带标签的表格数据，金融数据分析的主力工具。
+	\end{exampleblock}
+	\begin{center}
+		\vspace{0.5em}
+		本章内容改编自教材第4章\citep{hilpisch2018python}。
+	\end{center}
+\end{frame}
+
+
+%==============================================================
+%  附录：参考文献 + 结尾页
+%==============================================================
+\appendix
+
+\begin{frame}[allowframebreaks]{参考文献}
+	\bibliographystyle{style/gbt7714-2005}
+	\bibliography{reference.bib}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		{\Huge\calligra Thanks for your attention!}
+		\vspace{1cm}
+
+		{\Huge Q \& A}
+	\end{center}
+\end{frame}
+
+\end{document}

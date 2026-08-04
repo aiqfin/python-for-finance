@@ -1,0 +1,393 @@
+% !TeX program = xelatex
+%==============================================================
+%  Python金融数据分析 · 第5章 Matplotlib可视化
+%  基于《Python金融大数据分析（第2版）》第7章内容改编
+%  授课对象：本科金融系学生（已学完第2-4章）
+%  编译：xelatex chapter5.tex（编译两遍）
+%==============================================================
+\documentclass[9pt]{ctexbeamer}
+
+%%%%-----导入宏包-----%%%%
+\usepackage{style/shubeamer}   % SHU 主题（配色、帧标题、页脚、Python代码样式）
+\usepackage{amsmath,amsfonts,amssymb,bm}
+\usepackage{graphicx,hyperref,url}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage[super,square]{natbib}
+\usepackage{wrapfig}          % 文字绕排
+\usepackage{calligra}         % 结尾页花体字
+
+%%%%-----设置字体-----%%%%
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+
+%%%%-----常用自定义颜色（正文可直接使用）-----%%%%
+\definecolor{nvidia}{RGB}{102,156,28}
+\definecolor{red}{RGB}{184,13,73}
+\definecolor{orange}{RGB}{242,151,36}
+\definecolor{darkteal}{RGB}{43,106,108}
+\definecolor{darkblue}{RGB}{4,37,58}
+
+%%%%-----每节开始时自动显示当前节目录-----%%%%
+\AtBeginSection[]
+{
+	\begin{frame}<beamer>
+		\frametitle{\textbf{目录}}
+		\textbf{\tableofcontents[currentsection]}
+	\end{frame}
+}
+
+%%%%-----设定图片存放路径-----%%%%
+\graphicspath{{figures/}}
+
+%%%%-----首页信息设置-----%%%%
+\AtBeginDocument{%
+	%%%%----短标题[显示在页脚]{封面标题}
+	\title[Python金融数据分析 · 第5章]{\fontsize{16pt}{22pt}\selectfont {Python金融数据分析}}
+	%%%%----副标题（本章主题）
+	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第5章\quad Matplotlib可视化}}
+	%%%%----个人信息
+	\author[王伟冠]{%
+		\begin{tabular}{ll}%
+			主讲人： & 王伟冠\tabularnewline%
+			院\quad 系： & 经济学院金融系\tabularnewline
+		\end{tabular}
+	}
+	%%%%----机构信息
+	\institute[SHU]{上海大学}
+	%%%%----日期信息
+	\date[\today]{\today}}
+
+%%%%-----数学宏（向量、矩阵、算子等，见 style/macros.tex）-----%%%%
+\input{style/macros.tex}
+
+
+\begin{document}
+
+%% 封面
+\begin{frame}
+	\titlepage
+\end{frame}
+
+%% 目录页
+\section*{目录}
+\begin{frame}
+	\frametitle{\textbf{目录}}
+	\textbf{\tableofcontents}
+\end{frame}
+
+
+%==============================================================
+\section{为什么需要可视化？}
+%==============================================================
+
+\begin{frame}{本章学习目标}
+	\begin{itemize}
+		\item 理解"先看图再分析"的工作习惯为何重要
+		\item 掌握 Matplotlib 画图的基本流程：figure $\to$ 画图 $\to$ 装饰 $\to$ 保存
+		\item 会画金融常用图：价格曲线、回撤图、收益分布、柱状图、散点图
+		\item 掌握中文显示设置与子图（subplot）布局
+		\item 会用 pandas 的快捷绘图 \texttt{df.plot()} 快速探索数据
+	\end{itemize}
+	\begin{block}{本章数据}
+		沿用第4章综合案例的三只模拟股票（茅台、平安、招行，250个交易日），前后连贯。
+	\end{block}
+\end{frame}
+
+\begin{frame}{一张图胜过一千个数字}
+	\begin{itemize}
+		\item \texttt{describe()} 给出均值与标准差，但看不出：
+		\begin{itemize}
+			\item 价格趋势是涨是跌、何时转折；
+			\item 回撤发生在哪一段、持续多久；
+			\item 收益率分布是否有"厚尾"（极端行情）。
+		\end{itemize}
+		\item 金融报告、路演、论文都依赖图表传达结论。
+		\item \textbf{Matplotlib} 是 Python 可视化的基石：
+		\begin{itemize}
+			\item pandas、seaborn 等工具的绘图底层都是它；
+			\item 学会它，其他绘图库触类旁通。
+		\end{itemize}
+	\end{itemize}
+	\begin{alertblock}{好习惯}
+		拿到数据：先 \texttt{head()}，再 \texttt{describe()}，然后\alert{立刻画图}。
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}{本章将画出的图}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.85\textwidth]{example_line}
+		\caption{三只模拟股票的价格走势——本章代码的成品之一}
+	\end{figure}
+\end{frame}
+
+
+%==============================================================
+\section{Matplotlib基本流程}
+%==============================================================
+
+\begin{frame}[fragile]{导入与中文设置}
+	\begin{lstlisting}
+import matplotlib.pyplot as plt   # 约定俗成，照抄
+
+# 让图里能显示中文（Windows 用微软雅黑）
+plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
+plt.rcParams["axes.unicode_minus"] = False   # 负号正常显示
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{pyplot} 是 Matplotlib 的绘图接口，缩写 \texttt{plt}。
+		\item 不设置中文字体，图里的汉字会变成方块（"豆腐"）。
+		\item 这两行建议放在每个 notebook 的开头。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{画图四步曲}
+	\begin{lstlisting}
+fig, ax = plt.subplots(figsize=(8, 4))  # 1. 建画布和坐标系
+ax.plot(prices.index, prices["茅台"])    # 2. 画数据
+ax.set_title("茅台价格走势")              # 3. 装饰：标题
+ax.set_xlabel("日期")                   #         坐标轴标签
+ax.set_ylabel("价格")
+ax.grid(alpha=0.3)                      #         网格
+plt.show()                              # 4. 显示
+\end{lstlisting}
+	\begin{itemize}
+		\item \textbf{figure（画布）}上放着 \textbf{axes（坐标系）}，画图都在 axes 上进行。
+		\item \texttt{figsize=(宽, 高)} 单位是英寸，按需要调整。
+		\item 在 Notebook 中，单元格末尾直接写 \texttt{fig} 也能显示。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{多条曲线与图例}
+	\begin{lstlisting}
+fig, ax = plt.subplots(figsize=(8, 4))
+for name in prices.columns:                 # 遍历三只股票
+    ax.plot(prices.index, prices[name],
+            label=name, linewidth=1.3)      # label 供图例使用
+ax.set_title("三只模拟股票的价格走势")
+ax.legend()          # 显示图例
+ax.grid(alpha=0.3)   # 淡网格，alpha 控制透明度
+\end{lstlisting}
+	\begin{itemize}
+		\item 多次调用 \texttt{ax.plot} 即叠加多条曲线。
+		\item 每条线给 \texttt{label}，最后 \texttt{ax.legend()} 自动生成图例。
+		\item 成品即本章开头的插图。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{线条样式与保存图片}
+	\begin{lstlisting}
+ax.plot(x, y,
+        color="red",          # 颜色：英文名或 "#B40D49"
+        linestyle="--",       # 线型：实线- 虚线-- 点线:
+        marker="o",           # 数据点标记：o . s ^
+        linewidth=2, alpha=0.8)
+\end{lstlisting}
+	\begin{lstlisting}
+fig.savefig("prices.png",        # 保存为图片文件
+            dpi=300,             # 分辨率（投稿常用300）
+            bbox_inches="tight") # 自动裁掉空白边
+\end{lstlisting}
+	\begin{itemize}
+		\item 写报告时\alert{永远用 \texttt{savefig} 导出高清图}，不要截图。
+		\item 支持 \texttt{png/pdf/svg} 等格式，文件名后缀决定格式。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\section{金融常用图表}
+%==============================================================
+
+\begin{frame}[fragile]{回撤图：风险"看得见"}
+	\begin{lstlisting}
+peak = prices.cummax()              # 到每天为止的历史最高价
+drawdown = prices / peak - 1        # 回撤（<=0）
+
+fig, ax = plt.subplots(figsize=(8, 3))
+for name in drawdown.columns:
+    ax.fill_between(drawdown.index, drawdown[name], 0,
+                    alpha=0.35, label=name)
+ax.set_title("三只股票的回撤")
+ax.legend(ncol=3)
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{fill\_between} 画填充区域——回撤图的经典画法。
+		\item 曲线越"深"，说明从高点跌得越多；第4章的最大回撤在这里一目了然。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{子图：把多张图排在一起}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.8\textwidth]{example_subplots}
+		\caption{上：价格走势；下：回撤。共用横轴（\texttt{sharex=True}）}
+	\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{subplots 布局语法}
+	\begin{lstlisting}
+fig, axes = plt.subplots(2, 1, figsize=(8, 5),
+                         sharex=True)   # 2行1列，共享x轴
+# axes[0] 画第一张图，axes[1] 画第二张图
+axes[0].plot(...)
+axes[1].fill_between(...)
+fig.tight_layout()      # 自动调整间距，防止标题重叠
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{plt.subplots(行数, 列数)} 返回画布和 axes 数组。
+		\item \texttt{tight\_layout()} 解决"文字挤在一起"的常见问题。
+		\item 金融报告常见布局：上价格、下成交量/回撤/波动率。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{直方图：收益率长什么样？}
+	\begin{lstlisting}
+r = rets["茅台"].dropna()
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.hist(r, bins=30, density=True,
+        alpha=0.75, label="茅台日收益率")
+ax.set_title("茅台日收益率分布")
+ax.legend()
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{bins}：分组个数；\texttt{density=True}：纵轴变密度，便于与理论分布比较。
+		\item 金融观察：真实收益率往往比正态分布更"厚尾"——极端行情比模型预想的多。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{分布图的成品}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.8\textwidth]{example_hist}
+		\caption{红色曲线是正态分布参考线：两端的柱子若高于红线，即为"厚尾"迹象}
+	\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{柱状图与散点图}
+	\begin{lstlisting}
+# 柱状图：三只股票的年化平均收益对比
+(rets.mean() * 252).plot(kind="bar")
+
+# 散点图：两只股票日收益的联动关系
+fig, ax = plt.subplots(figsize=(5, 4))
+ax.scatter(rets["茅台"], rets["招行"], alpha=0.5)
+ax.set_xlabel("茅台日收益率")
+ax.set_ylabel("招行日收益率")
+\end{lstlisting}
+	\begin{itemize}
+		\item 柱状图适合\textbf{少量类别的对比}（各股收益、各行业PE）。
+		\item 散点图越"聚成一条线"，相关性越强——第4章 \texttt{corr()} 的图形版。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\section{pandas快捷绘图}
+%==============================================================
+
+\begin{frame}[fragile]{df.plot()：探索数据的快车道}
+	\begin{lstlisting}
+prices.plot(figsize=(8, 4), grid=True)       # 所有列一次画完
+rets.plot(kind="kde")                        # 核密度估计曲线
+rets["茅台"].hist(bins=30)                   # 单列直方图
+\end{lstlisting}
+	\begin{itemize}
+		\item pandas 对 DataFrame/Series 提供 \texttt{.plot()}，底层就是 Matplotlib。
+		\item 自动用列名当图例、日期索引当横轴——探索阶段省时利器。
+		\item 需要精细控制时，再回到 \texttt{plt.subplots} 手写。
+	\end{itemize}
+	\begin{block}{分工建议}
+		\textbf{探索}用 \texttt{df.plot()} 快速试；\textbf{报告}用 \texttt{plt} 精雕细琢。
+	\end{block}
+\end{frame}
+
+
+%==============================================================
+\section{综合案例与小结}
+%==============================================================
+
+\begin{frame}[fragile]{综合案例：一页式分析报告图}
+	\begin{lstlisting}
+fig, axes = plt.subplots(2, 2, figsize=(10, 6))
+
+# (0,0) 价格曲线
+for name in prices.columns:
+    axes[0, 0].plot(prices.index, prices[name], label=name)
+axes[0, 0].legend(ncol=3); axes[0, 0].set_title("价格")
+
+# (0,1) 回撤
+for name in drawdown.columns:
+    axes[0, 1].fill_between(drawdown.index, drawdown[name], 0,
+                            alpha=0.35)
+axes[0, 1].set_title("回撤")
+
+# (1,0) 收益率直方图
+rets.plot(kind="hist", bins=30, alpha=0.6, ax=axes[1, 0])
+axes[1, 0].set_title("日收益率分布")
+
+# (1,1) 散点图
+axes[1, 1].scatter(rets["茅台"], rets["招行"], alpha=0.5)
+axes[1, 1].set_title("茅台 vs 招行")
+
+fig.tight_layout()
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{本章小结}
+	\begin{itemize}
+		\item \textbf{流程}：\texttt{plt.subplots} 建画布 $\to$ \texttt{ax.plot/\ldots} 画 $\to$ 标题图例 $\to$ \texttt{savefig}。
+		\item \textbf{中文}：\texttt{rcParams["font.sans-serif"]} + \texttt{axes.unicode\_minus}，两行放文件开头。
+		\item \textbf{金融图表}：
+		\begin{itemize}
+			\item 价格曲线：\texttt{plot} + 图例；
+			\item 回撤：\texttt{cummax} + \texttt{fill\_between}；
+			\item 分布：\texttt{hist(density=True)}，观察厚尾；
+			\item 对比：\texttt{bar}；联动：\texttt{scatter}。
+		\end{itemize}
+		\item \textbf{布局}：\texttt{subplots(行, 列)} + \texttt{tight\_layout()}。
+		\item \textbf{捷径}：\texttt{df.plot()} 用于快速探索。
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{课后任务与下章预告}
+	\begin{block}{课后任务}
+		\begin{enumerate}
+			\item 复现本章四张图，并用 \texttt{savefig} 导出 300 dpi 的 png。
+			\item 给价格图添加一条水平虚线，标出茅台的期末价格\\
+			（提示：\texttt{ax.axhline(y, linestyle="--")}）。
+			\item 选做：把直方图的 \texttt{bins} 从 10 改到 60，观察图形变化并思考：bins 太少或太多各有什么问题？
+		\end{enumerate}
+	\end{block}
+	\begin{exampleblock}{下章预告}
+		到目前为止我们用的是模拟数据。下一章进入 \textbf{金融时间序列}：\\
+		收益率的统计特性、波动率聚集，真实数据怎么读进来。
+	\end{exampleblock}
+	\begin{center}
+		\vspace{0.5em}
+		本章内容改编自教材第7章\citep{hilpisch2018python}。
+	\end{center}
+\end{frame}
+
+
+%==============================================================
+%  附录：参考文献 + 结尾页
+%==============================================================
+\appendix
+
+\begin{frame}[allowframebreaks]{参考文献}
+	\bibliographystyle{style/gbt7714-2005}
+	\bibliography{reference.bib}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		{\Huge\calligra Thanks for your attention!}
+		\vspace{1cm}
+
+		{\Huge Q \& A}
+	\end{center}
+\end{frame}
+
+\end{document}
