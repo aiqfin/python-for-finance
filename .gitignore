@@ -28,6 +28,16 @@ texput.log
 # 但保留 Beamer 主题所需的 logo/背景图
 !**/logo/*.pdf
 
+# ---- 超大样本数据文件（>5MB，仅保留在本地）----
+US_Baby_Names_right.csv
+Online_Retail.csv
+fxcm_eur_usd_tick_data.csv
+
+# ---- 系统临时文件 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
 # ---- Python 运行产物 ----
 __pycache__/
 .ipynb_checkpoints/
