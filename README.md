@@ -15,12 +15,13 @@
 | 第7章 | 数据输入输出 | `Chapter7 slides - 数据输入输出/chapter7.pdf` | `07_Input_Output.ipynb` |
 | 第8章 | 数学工具 | `Chapter8 slides - 数学工具/chapter8.pdf` | `08_Math_Tools.ipynb` |
 | 第9章 | 模拟与期权定价 | `Chapter9 slides - 模拟与期权定价/chapter9.pdf` | `09_Monte_Carlo.ipynb` |
+| 第10章 | 统计学与投资组合优化 | `Chapter10 slides - 统计学与投资组合优化/chapter10.pdf` | `10_Statistics_Portfolio_Optimization.ipynb` |
 
 ## 项目结构
 
 ```
 .
-├── Chapter1~9 slides */     # 各章节 LaTeX 幻灯片（含 PDF）
+├── Chapter1~10 slides */    # 各章节 LaTeX 幻灯片（含 PDF）
 │   ├── chapterN.tex         #   主 TeX 源文件（xelatex + ctexbeamer 编译）
 │   ├── chapterN.pdf         #   编译生成的课件 PDF
 │   ├── figures/             #   插图资源
