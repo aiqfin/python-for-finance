@@ -1,0 +1,28 @@
+[project]
+name = "py4fi-course"
+version = "0.1.0"
+description = "Python 金融大数据分析课程环境（第2版）"
+requires-python = ">=3.11"
+dependencies = [
+    # 核心科学计算与数据分析
+    "numpy>=2.0",
+    "pandas>=2.2,<3.0",
+    "scipy>=1.14",
+    # 可视化
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    # 机器学习与符号计算
+    "scikit-learn>=1.5",
+    "sympy>=1.13",
+    # 金融数据获取
+    "pandas-datareader>=0.10",
+    # pandas I/O 后端：HDF5（data.h5）与 Excel
+    "tables>=3.9",
+    "openpyxl>=3.1",
+    # Jupyter 运行环境
+    "jupyterlab>=4.2",
+    "ipykernel>=6.29",
+]
+
+[tool.uv]
+package = false

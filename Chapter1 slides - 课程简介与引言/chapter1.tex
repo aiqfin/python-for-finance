@@ -273,44 +273,69 @@
 		\item venv：Python 自带的虚拟环境工具，适合简单项目。
 		\item virtualenv：功能更强大，支持更多 Python 版本。
 		\item conda：不仅是虚拟环境管理器，还能管理包和依赖，适合数据科学项目。
-		\item uv: 轻量级虚拟环境工具，适合快速创建和切换环境。
+		\item uv: Rust 编写的新一代 Python 包与环境管理器，速度极快，可自动下载管理 Python 版本，\textbf{本课程采用}。
 	\end{itemize}
 \end{frame}
 
 
 
 \begin{frame}[fragile]
-\frametitle{使用 conda 构造虚拟环境}
+\frametitle{课程环境搭建（uv，第一步：安装 uv）}
 
 \begin{itemize}
-	\item 打开anaconda power shell
-	\item 进入项目文件夹: 
-	\begin{verbatim}
+	\item 打开 PowerShell，执行官方安装脚本：
+	\begin{lstlisting}[language=bash]
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+	\end{lstlisting}
+	\item 安装完成后\textbf{重启终端}，验证安装：
+	\begin{lstlisting}[language=bash]
+uv --version
+	\end{lstlisting}
+	\item uv 会自动安装到 \texttt{\textasciitilde/.local/bin} 并加入 PATH；无需预先安装 Python，uv 可以自行下载管理 Python。
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{课程环境搭建（uv，第二步：创建环境并装包）}
+
+\begin{itemize}
+	\item 进入课程文件夹（课件中已附带 \texttt{pyproject.toml} 与 \texttt{uv.lock} 环境文件）:
+	\begin{lstlisting}[language=bash]
 cd D:\<your_path>   # 注意路径上不要出现中文，容易出错
-\end{verbatim}
-  \item 创建环境：
-  
-  \begin{lstlisting}[language=python]
-# 创建虚拟环境，Python 版本可根据需要调整
-conda create -p ./.venv python=3.13  
-#第一次运行需要接受条款，按a  
-  \end{lstlisting}
+	\end{lstlisting}
+	\item 一键创建虚拟环境并安装全部课程所需包：
+	\begin{lstlisting}[language=bash]
+# 自动下载 Python、创建 .venv、按锁定版本安装所有依赖
+uv sync --python 3.11
+	\end{lstlisting}
+	\item 查看已安装包：
+	\begin{lstlisting}[language=bash]
+uv pip list
+	\end{lstlisting}
+\end{itemize}
 
-  \item 激活环境：
-  
-  \begin{lstlisting}[language=python]
-conda activate ./.venv
-  \end{lstlisting}
+\end{frame}
 
-  \item 展示已安装包：
-  \begin{lstlisting}[language=python]
-conda list
-  \end{lstlisting}
 
-  \item 安装所需包：
-  \begin{lstlisting}[language=python]
-conda install numpy pandas matplotlib scikit-learn -y
-  \end{lstlisting}
+\begin{frame}[fragile]
+\frametitle{课程环境搭建（uv，第三步：日常使用与维护）}
+
+\begin{itemize}
+	\item 推荐方式：无需激活，直接用 \texttt{uv run} 在环境中执行命令：
+	\begin{lstlisting}[language=bash]
+uv run jupyter lab    # 启动 JupyterLab
+uv run python xx.py   # 运行脚本
+	\end{lstlisting}
+	\item 也可以先激活再使用（传统方式）：
+	\begin{lstlisting}[language=bash]
+.venv\Scripts\activate
+	\end{lstlisting}
+	\item 后续新增课程需要的包（会同步更新环境文件）：
+	\begin{lstlisting}[language=bash]
+uv add <package_name>
+	\end{lstlisting}
 \end{itemize}
 
 \end{frame}
@@ -319,7 +344,7 @@ conda install numpy pandas matplotlib scikit-learn -y
 \begin{frame}
 	\begin{itemize}
 		\item 在VSCode中运行jupyter notebook格式的python代码，第一次需要安装python插件以及ipykernel
-		\item 如果不能自动安装的话，在anaconda powershell中激活相应的虚拟环境以后安装。
+		\item 内核解释器选择课程目录下的 \texttt{.venv\textbackslash Scripts\textbackslash python.exe}；ipykernel 已包含在课程环境文件中。
 		\item  报错显示某些包不存在
 		\begin{figure}
 		\includegraphics[width=0.6\textwidth]{missing-package.png}
