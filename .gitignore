@@ -47,3 +47,12 @@ __pycache__/
 **/课堂代码/stats*.csv
 **/课堂代码/spy_vol21.*
 **/课堂代码/prices.png
+**/课堂代码/demo_prices.csv
+
+# ---- 本地临时文件 ----
+/tmp77l66d3y/
+/tmp_ch13_dump.txt
+/tmp_dump_nb.py
+
+# ---- 第11章本地授权数据 ----
+/Chapter11 - 个股日内收益率实验/data/*.zip
