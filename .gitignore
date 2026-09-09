@@ -42,8 +42,8 @@ desktop.ini
 __pycache__/
 .ipynb_checkpoints/
 # notebook 运行时生成的中间文件
-章节课堂代码/*.h5
-章节课堂代码/notes.txt
-章节课堂代码/stats*.csv
-章节课堂代码/spy_vol21.*
-章节课堂代码/prices.png
+**/课堂代码/*.h5
+**/课堂代码/notes.txt
+**/课堂代码/stats*.csv
+**/课堂代码/spy_vol21.*
+**/课堂代码/prices.png

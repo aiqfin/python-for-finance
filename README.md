@@ -6,29 +6,31 @@
 
 | 章节 | 主题 | 课件 | 课堂代码 |
 |------|------|------|----------|
-| 第1章 | 课程简介与引言 | `Chapter1 slides - 课程简介与引言/chapter1.pdf` | — |
-| 第2章 | Python 基础语法 | `Chapter2 slides - Python基础语法/chapter2.pdf` | `02_Python_Basics.ipynb` |
-| 第3章 | NumPy 数组计算 | `Chapter3 slides - NumPy数组计算/chapter3.pdf` | `03_NumPy.ipynb` |
-| 第4章 | pandas 数据分析 | `Chapter4 slides - pandas数据分析/chapter4.pdf` | `04_pandas.ipynb` |
-| 第5章 | Matplotlib 可视化 | `Chapter5 slides - Matplotlib可视化/chapter5.pdf` | `05_Visualization.ipynb` |
-| 第6章 | 金融时间序列 | `Chapter6 slides - 金融时间序列/chapter6.pdf` | `06_Financial_Time_Series.ipynb` |
-| 第7章 | 数据输入输出 | `Chapter7 slides - 数据输入输出/chapter7.pdf` | `07_Input_Output.ipynb` |
-| 第8章 | 数学工具 | `Chapter8 slides - 数学工具/chapter8.pdf` | `08_Math_Tools.ipynb` |
-| 第9章 | 模拟与期权定价 | `Chapter9 slides - 模拟与期权定价/chapter9.pdf` | `09_Monte_Carlo.ipynb` |
-| 第10章 | 统计学与投资组合优化 | `Chapter10 slides - 统计学与投资组合优化/chapter10.pdf` | `10_Statistics_Portfolio_Optimization.ipynb` |
+| 第1章 | 课程简介与引言 | `Chapter1 slides - 课程简介与引言/latex/chapter1.pdf` | — |
+| 第2章 | Python 基础语法 | `Chapter2 slides - Python基础语法/latex/chapter2.pdf` | `Chapter2 slides - Python基础语法/课堂代码/02_Python_Basics.ipynb` |
+| 第3章 | NumPy 数组计算 | `Chapter3 slides - NumPy数组计算/latex/chapter3.pdf` | `Chapter3 slides - NumPy数组计算/课堂代码/03_NumPy.ipynb` |
+| 第4章 | pandas 数据分析 | `Chapter4 slides - pandas数据分析/latex/chapter4.pdf` | `Chapter4 slides - pandas数据分析/课堂代码/04_pandas.ipynb` |
+| 第5章 | Matplotlib 可视化 | `Chapter5 slides - Matplotlib可视化/latex/chapter5.pdf` | `Chapter5 slides - Matplotlib可视化/课堂代码/05_Visualization.ipynb` |
+| 第6章 | 金融时间序列 | `Chapter6 slides - 金融时间序列/latex/chapter6.pdf` | `Chapter6 slides - 金融时间序列/课堂代码/06_Financial_Time_Series.ipynb` |
+| 第7章 | 数据输入输出 | `Chapter7 slides - 数据输入输出/latex/chapter7.pdf` | `Chapter7 slides - 数据输入输出/课堂代码/07_Input_Output.ipynb` |
+| 第8章 | 数学工具 | `Chapter8 slides - 数学工具/latex/chapter8.pdf` | `Chapter8 slides - 数学工具/课堂代码/08_Math_Tools.ipynb` |
+| 第9章 | 模拟与期权定价 | `Chapter9 slides - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 slides - 模拟与期权定价/课堂代码/09_Monte_Carlo.ipynb` |
+| 第10章 | 统计学与投资组合优化 | `Chapter10 slides - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 slides - 统计学与投资组合优化/课堂代码/10_Statistics_Portfolio_Optimization.ipynb` |
 
 ## 项目结构
 
 ```
 .
-├── Chapter1~10 slides */    # 各章节 LaTeX 幻灯片（含 PDF）
-│   ├── chapterN.tex         #   主 TeX 源文件（xelatex + ctexbeamer 编译）
-│   ├── chapterN.pdf         #   编译生成的课件 PDF
-│   ├── figures/             #   插图资源
-│   ├── logo/                #   校徽 / 主题 logo
-│   ├── style/               #   Beamer 主题（shubeamer.sty）、宏包、参考文献样式
-│   └── reference.bib        #   参考文献数据库
-├── 章节课堂代码/             # 各章节 Jupyter Notebook 及示例数据
+├── Chapter1~10 slides */    # 各章节课件与课堂代码
+│   ├── 课堂代码/             #   本章 Jupyter Notebook 与示例数据（第 2–10 章）
+│   │   └── *.ipynb
+│   └── latex/               #   LaTeX 源码与构建资源
+│       ├── chapterN.tex     #   主 TeX 源文件（xelatex + ctexbeamer 编译）
+│       ├── chapterN.pdf     #   编译生成的课件 PDF
+│       ├── figures/         #   插图资源
+│       ├── logo/            #   校徽 / 主题 logo
+│       ├── style/           #   Beamer 主题、宏包、参考文献样式
+│       └── reference.bib    #   参考文献数据库
 ├── 章节幻灯片模板/            # 新建章节时使用的 LaTeX 模板
 ├── 练习题/                   # 课后练习（含解答）
 │   ├── Excercise/           #   精选练习题（Chipotle、US Crime、Auto MPG 等）
@@ -78,14 +80,19 @@ uv sync
 jupyter lab
 ```
 
-然后打开 `章节课堂代码/` 目录下的对应 `.ipynb` 文件即可开始学习。
+然后进入对应章节的 `课堂代码/` 目录并打开 `.ipynb` 文件即可开始学习。为保证相对路径读取示例数据正确，建议从该目录启动 Jupyter Lab，例如：
+
+```bash
+cd "Chapter4 slides - pandas数据分析/课堂代码"
+jupyter lab
+```
 
 ## 课件编译
 
 各章节幻灯片使用 XeLaTeX 编译，依赖 TeX Live 完整发行版。以第1章为例：
 
 ```bash
-cd "Chapter1 slides - 课程简介与引言"
+cd "Chapter1 slides - 课程简介与引言/latex"
 xelatex chapter1.tex
 xelatex chapter1.tex   # 两次编译以生成目录
 ```
