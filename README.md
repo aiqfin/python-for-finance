@@ -6,25 +6,28 @@
 
 | 章节 | 主题 | 课件 | 课堂代码 |
 |------|------|------|----------|
-| 第1章 | 课程简介与引言 | `Chapter1 slides - 课程简介与引言/latex/chapter1.pdf` | — |
-| 第2章 | Python 基础语法 | `Chapter2 slides - Python基础语法/latex/chapter2.pdf` | `Chapter2 slides - Python基础语法/课堂代码/02_Python_Basics.ipynb` |
-| 第3章 | NumPy 数组计算 | `Chapter3 slides - NumPy数组计算/latex/chapter3.pdf` | `Chapter3 slides - NumPy数组计算/课堂代码/03_NumPy.ipynb` |
-| 第4章 | pandas 数据分析 | `Chapter4 slides - pandas数据分析/latex/chapter4.pdf` | `Chapter4 slides - pandas数据分析/课堂代码/04_pandas.ipynb` |
-| 第5章 | Matplotlib 可视化 | `Chapter5 slides - Matplotlib可视化/latex/chapter5.pdf` | `Chapter5 slides - Matplotlib可视化/课堂代码/05_Visualization.ipynb` |
-| 第6章 | 金融时间序列 | `Chapter6 slides - 金融时间序列/latex/chapter6.pdf` | `Chapter6 slides - 金融时间序列/课堂代码/06_Financial_Time_Series.ipynb` |
-| 第7章 | 数据输入输出 | `Chapter7 slides - 数据输入输出/latex/chapter7.pdf` | `Chapter7 slides - 数据输入输出/课堂代码/07_Input_Output.ipynb` |
-| 第8章 | 数学工具 | `Chapter8 slides - 数学工具/latex/chapter8.pdf` | `Chapter8 slides - 数学工具/课堂代码/08_Math_Tools.ipynb` |
-| 第9章 | 模拟与期权定价 | `Chapter9 slides - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 slides - 模拟与期权定价/课堂代码/09_Monte_Carlo.ipynb` |
-| 第10章 | 统计学与投资组合优化 | `Chapter10 slides - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 slides - 统计学与投资组合优化/课堂代码/10_Statistics_Portfolio_Optimization.ipynb` |
+| 第1章 | 课程简介与引言 | `Chapter1 - 课程简介与引言/latex/chapter1.pdf` | — |
+| 第2章 | Python 基础语法 | `Chapter2 - Python基础语法/latex/chapter2.pdf` | `Chapter2 - Python基础语法/notebooks/02_Python_Basics.ipynb` |
+| 第3章 | NumPy 数组计算 | `Chapter3 - NumPy数组计算/latex/chapter3.pdf` | `Chapter3 - NumPy数组计算/notebooks/03_NumPy.ipynb` |
+| 第4章 | pandas 数据分析 | `Chapter4 - pandas数据分析/latex/chapter4.pdf` | `Chapter4 - pandas数据分析/notebooks/04_pandas.ipynb` |
+| 第5章 | Matplotlib 可视化 | `Chapter5 - Matplotlib可视化/latex/chapter5.pdf` | `Chapter5 - Matplotlib可视化/notebooks/05_Visualization.ipynb` |
+| 第6章 | 金融时间序列 | `Chapter6 - 金融时间序列/latex/chapter6.pdf` | `Chapter6 - 金融时间序列/notebooks/06_Financial_Time_Series.ipynb` |
+| 第7章 | 数据输入输出 | `Chapter7 - 数据输入输出/latex/chapter7.pdf` | `Chapter7 - 数据输入输出/notebooks/07_Input_Output.ipynb` |
+| 第8章 | 数学工具 | `Chapter8 - 数学工具/latex/chapter8.pdf` | `Chapter8 - 数学工具/notebooks/08_Math_Tools.ipynb` |
+| 第9章 | 模拟与期权定价 | `Chapter9 - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 - 模拟与期权定价/notebooks/09_Monte_Carlo.ipynb` |
+| 第10章 | 统计学与投资组合优化 | `Chapter10 - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 - 统计学与投资组合优化/notebooks/10_Statistics_Portfolio_Optimization.ipynb` |
 | 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
 
 ## 项目结构
 
 ```
 .
-├── Chapter1~10 slides */    # 各章节课件与课堂代码
-│   ├── 课堂代码/             #   本章 Jupyter Notebook 与示例数据（第 2–10 章）
+├── ChapterN - 主题/         # 第1–11章统一命名
+│   ├── README.md            #   本章入口与运行说明
+│   ├── notebooks/           #   教学Notebook（有代码的章节）
 │   │   └── *.ipynb
+│   ├── data/                #   输入数据（按需）
+│   ├── outputs/             #   运行生成的表格、文件（按需）
 │   └── latex/               #   LaTeX 源码与构建资源
 │       ├── chapterN.tex     #   主 TeX 源文件（xelatex + ctexbeamer 编译）
 │       ├── chapterN.pdf     #   编译生成的课件 PDF
@@ -81,10 +84,10 @@ uv sync
 jupyter lab
 ```
 
-然后进入对应章节的 `课堂代码/` 目录并打开 `.ipynb` 文件即可开始学习。为保证相对路径读取示例数据正确，建议从该目录启动 Jupyter Lab，例如：
+然后进入对应章节的 `notebooks/` 目录并打开 `.ipynb` 文件即可开始学习。涉及文件读写的Notebook已统一设置 `DATA` 和 `OUTPUTS` 路径，支持从Notebook目录、本章目录或课程根目录运行。例如：
 
 ```bash
-cd "Chapter4 slides - pandas数据分析/课堂代码"
+cd "Chapter4 - pandas数据分析/notebooks"
 jupyter lab
 ```
 
@@ -93,12 +96,12 @@ jupyter lab
 各章节幻灯片使用 XeLaTeX 编译，依赖 TeX Live 完整发行版。以第1章为例：
 
 ```bash
-cd "Chapter1 slides - 课程简介与引言/latex"
+cd "Chapter1 - 课程简介与引言/latex"
 xelatex chapter1.tex
 xelatex chapter1.tex   # 两次编译以生成目录
 ```
 
-新建章节时，复制 `章节幻灯片模板/` 文件夹并修改 `chapterN.tex` 中的标题信息即可。详细说明见模板文件头部注释。
+新建章节时，建立 `ChapterN - 主题/latex/`，把 `章节幻灯片模板/` 的内容复制到其中，并修改 `chapterN.tex` 中的标题信息即可。详细说明见模板文件头部注释。
 
 ## 参考教材
 
