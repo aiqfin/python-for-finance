@@ -383,16 +383,16 @@ uv --version
       \textbf{Windows / PowerShell}
 \begin{lstlisting}[language={},numbers=none]
 cd $HOME
-mkdir finance-demo
-cd finance-demo
+mkdir py4fi-course
+cd py4fi-course
 \end{lstlisting}
     \end{column}
     \begin{column}{0.48\textwidth}
       \textbf{macOS / 终端}
 \begin{lstlisting}[language={},numbers=none]
 cd ~
-mkdir finance-demo
-cd finance-demo
+mkdir py4fi-course
+cd py4fi-course
 \end{lstlisting}
     \end{column}
   \end{columns}
@@ -410,13 +410,13 @@ uv python pin 3.11
 \end{frame}
 
 \begin{frame}[fragile]{第三步：创建虚拟环境，检查 Python 的位置}
-  \textbf{Windows / macOS 相同：在 finance-demo 文件夹中运行}
+  \textbf{Windows / macOS 相同：在 py4fi-course 文件夹中运行}
 \begin{lstlisting}[language={},numbers=none]
-uv venv --python 3.11
+uv venv --python 3.11 --prompt py4fi-course
 \end{lstlisting}
   \begin{itemize}
     \item uv 找到或下载 Python 3.11，再创建当前项目的 \texttt{.venv} 文件夹。
-    \item 此时已有运行 Python 的环境，但还没有安装 pandas 等分析包。
+    \item \texttt{--prompt py4fi-course} 设置激活后的显示名称；环境目录仍是 \texttt{.venv}，分析包稍后安装。
   \end{itemize}
   \textbf{直接调用环境中的 Python，无需先激活：}
   \begin{columns}[T,totalwidth=\textwidth]
@@ -434,7 +434,7 @@ uv venv --python 3.11
     \end{column}
   \end{columns}
   \begin{block}{观察结果}
-    输出路径应位于 \texttt{finance-demo} 的 \texttt{.venv} 中。\par
+    输出路径应位于 \texttt{py4fi-course} 的 \texttt{.venv} 中。\par
     Windows 的命令目录叫 \texttt{Scripts}，macOS 的叫 \texttt{bin}。
   \end{block}
 \end{frame}
@@ -462,7 +462,7 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
   \textbf{示意片段：描述项目需要什么，具体下限可能因安装时间不同而变化。}
 \begin{lstlisting}[language={},numbers=none]
 [project]
-name = "finance-demo"
+name = "py4fi-course"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
@@ -537,12 +537,12 @@ deactivate
 
 \begin{frame}[fragile]{第六步：在 VS Code 中选对 Notebook 内核}
   \begin{enumerate}
-    \item 用 VS Code 打开 \texttt{finance-demo} 文件夹，安装 Microsoft 的 \textbf{Python} 和 \textbf{Jupyter} 扩展。
+    \item 用 VS Code 打开 \texttt{py4fi-course} 文件夹，安装 Microsoft 的 \textbf{Python} 和 \textbf{Jupyter} 扩展。
     \item 新建或打开 \texttt{.ipynb} 文件，点击右上角 \textbf{Select Kernel}，从 Python 环境中选择本项目的 \texttt{.venv}。
   \end{enumerate}
   \begin{block}{对应的解释器路径}
-    Windows：\texttt{finance-demo\textbackslash .venv\textbackslash Scripts\textbackslash python.exe}\par
-    macOS：\texttt{finance-demo/.venv/bin/python}
+    Windows：\texttt{py4fi-course\textbackslash .venv\textbackslash Scripts\textbackslash python.exe}\par
+    macOS：\texttt{py4fi-course/.venv/bin/python}
   \end{block}
   \textbf{在 Notebook 单元格运行，两系统相同：}
 \begin{lstlisting}[language=Python,numbers=none]
@@ -690,7 +690,7 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
 \end{frame}
 
 \begin{frame}{向 AI 描述任务：目标、输入、约束、验收}
-  \begin{block}{课堂提示词示例：在桌面端关联 finance-demo 后输入}
+  \begin{block}{课堂提示词示例：在桌面端关联 py4fi-course 后输入}
     请新建 \texttt{returns\_demo.py}，计算价格序列
     \texttt{[100, 110, 99]} 的两期简单收益率和累计收益率。\par\medskip
     仅使用 Python 标准库；用本项目的 \texttt{.venv} 运行；
@@ -726,6 +726,200 @@ print(f"Total: {total:.2%}")
     \item 两期简单收益率直接相加得到 $0\%$，不代表持有期累计收益率。
     \item 将末期价格改成 100，先预测再运行：累计收益率应为 $0\%$。
   \end{itemize}
+\end{frame}
+
+\section{Git 版本管理与 Agent 协作}
+
+\begin{frame}{Git 是什么，可以做什么？}
+  \begin{block}{为项目记录可以追溯的版本}
+    Git 是分布式版本控制工具。每次提交（commit）记录一个项目快照，
+    并保存作者、时间、说明和版本之间的关系。
+  \end{block}
+  \begin{itemize}
+    \item \textbf{比较修改}：Agent 改了哪些文件、哪些行，计算逻辑是否改变？
+    \item \textbf{查阅历史}：哪个版本能运行？某个公式为什么被修改？
+    \item \textbf{尝试新方案}：在分支上实验，验证后再合并到主线。
+    \item \textbf{恢复与协作}：找回已记录的内容，与他人交换已提交的版本。
+  \end{itemize}
+  \begin{block}{本课程中的例子}
+    为 \texttt{returns\_demo.py} 记录“完成两期收益率计算”，
+    再记录“支持任意长度价格序列”，无需保存多个“最终版”文件。
+  \end{block}
+  {\tiny\href{https://git-scm.com/docs/gittutorial}{参考：Git 官方入门教程}}
+\end{frame}
+
+\begin{frame}{Git 如何工作：工作区、暂存区、仓库}
+  \centering
+  \begin{tikzpicture}[
+    box/.style={draw=shublue,fill=shulight,rounded corners=3pt,
+      text width=2.6cm,minimum height=1.7cm,align=center,font=\small},
+    arr/.style={->,>=stealth,thick,draw=shublue}]
+    \node[box] (work) at (0,0) {\textbf{工作区}\\[6pt]磁盘上的项目文件\\你与 Agent 在这里编辑};
+    \node[box] (stage) at (3.65,0) {\textbf{暂存区}\\[6pt]选入下一次提交的内容\\可以只选部分文件};
+    \node[box] (repo) at (7.3,0) {\textbf{本地仓库}\\[6pt]已经提交的版本历史\\通常存放在 \texttt{.git}};
+    \draw[arr] (work) -- node[above,font=\scriptsize]{\texttt{git add}} (stage);
+    \draw[arr] (stage) -- node[above,font=\scriptsize]{\texttt{git commit}} (repo);
+  \end{tikzpicture}
+  \vspace{0.4cm}
+  \begin{itemize}
+    \item \textbf{保存文件}更新工作区；\textbf{add}选取内容；\textbf{commit}记录版本。
+    \item 暂存的是执行 add 时的内容；随后又改了文件，需要再次 add。
+    \item 提交在本地完成，无需联网；\textbf{push}才把提交发送到远程仓库。
+    \item Git 不会自动记录每次编辑；没有提交的内容不属于已保存的版本历史。
+  \end{itemize}
+  {\tiny\href{https://git-scm.com/docs/git-add}{参考：git add}\quad
+  \href{https://git-scm.com/docs/git-push}{git push}}
+\end{frame}
+
+\begin{frame}[fragile]{第一步：准备 Git 并创建仓库}
+  \begin{enumerate}
+    \item 从 \href{https://git-scm.com/install/}{\textbf{git-scm.com/install}} 按系统说明安装 Git，重新打开终端。
+    \item 进入前面创建的 \texttt{py4fi-course} 文件夹，执行下列命令。
+  \end{enumerate}
+\begin{lstlisting}[language={},numbers=none]
+git --version
+git init -b main
+git config user.name "Your Name"
+git config user.email "you@example.com"
+git status
+\end{lstlisting}
+  \begin{itemize}
+    \item \texttt{init} 创建本地仓库，\texttt{main} 是本练习的主分支名称。
+    \item 把示例姓名和邮箱换成自己的；此处配置只作用于当前仓库。
+    \item 姓名与邮箱用于标注提交作者，不是 GitHub 的登录信息。
+    \item 若 uv 已创建 Git 仓库，跳过 init；用 \texttt{git branch --show-current} 查看当前分支名，后续按实际名称操作。
+  \end{itemize}
+  {\tiny\href{https://git-scm.com/docs/gittutorial}{参考：Git 初始化与作者配置}}
+\end{frame}
+
+\begin{frame}[fragile]{第二步：选择要记录的文件}
+  \textbf{在项目根目录创建或补充 .gitignore，每行一个忽略规则：}
+\begin{lstlisting}[language={},numbers=none]
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.env
+data/raw/
+\end{lstlisting}
+  \begin{itemize}
+    \item \textbf{提交}：代码、说明、\texttt{.gitignore}，以及前面生成的
+      \texttt{pyproject.toml}、\texttt{uv.lock}、\texttt{.python-version}。
+    \item \textbf{忽略}：本机环境、缓存、存放密钥的 \texttt{.env} 和本例的原始数据目录。
+    \item 数据另行保存来源与获取说明；Notebook 提交前检查输出中的数据内容。
+    \item \texttt{.gitignore} 只影响未跟踪文件，不会自动移除已经提交的文件或历史。
+  \end{itemize}
+  \begin{block}{添加前先看一眼}
+    使用 \texttt{git status} 查看文件清单，再按文件名添加；
+    忽略文件仍保留在电脑上。
+  \end{block}
+  {\tiny\href{https://git-scm.com/docs/gitignore}{参考：Git 忽略规则}}
+\end{frame}
+
+\begin{frame}[fragile]{第三步：记录第一个可运行版本}
+  \textbf{承接收益率示例：先保存文件，再在项目目录执行。}
+\begin{lstlisting}[language={},numbers=none]
+uv run python returns_demo.py
+git status
+git add returns_demo.py .gitignore
+git add pyproject.toml uv.lock .python-version
+git diff --cached
+git commit -m "Add two-period returns example"
+git log -5 --format="%s"
+\end{lstlisting}
+  \begin{itemize}
+    \item 核对收益率输出为 $10\%$、$-10\%$ 和 $-1\%$，再记录这一版本。
+    \item \texttt{diff --cached} 展示即将提交的内容；有遗漏时补充 add。
+    \item \texttt{commit -m} 写明这次做了什么；最后一行查看最近 5 次提交的标题。
+    \item 如果提示 \texttt{nothing to commit}，说明当前没有可提交的新内容。
+  \end{itemize}
+  {\tiny\href{https://git-scm.com/docs/gittutorial}{参考：提交与查看历史}}
+\end{frame}
+
+\begin{frame}[fragile]{日常检查：改了什么，哪些会被提交？}
+\begin{lstlisting}[language={},numbers=none]
+git status
+git diff -- returns_demo.py
+git diff --cached -- returns_demo.py
+git log -5 --format="%s"
+\end{lstlisting}
+  \begin{itemize}
+    \item \texttt{status}：区分未跟踪、未暂存、已暂存的文件。
+    \item \texttt{diff}：比较工作区与暂存区；\texttt{diff --cached}：比较暂存区与上次提交。
+    \item 新建且未跟踪的文件不会出现在普通 diff 中，应直接打开检查。
+    \item VS Code 的\textbf{源代码管理}面板也可查看文件差异、暂存和提交。
+  \end{itemize}
+  \begin{block}{只想撤销暂存，保留代码修改}
+    已有首次提交后，执行
+    \texttt{git restore --staged returns\_demo.py}。\par
+    不带 \texttt{--staged} 的 restore 会改写工作区文件，含义不同。
+  \end{block}
+  {\tiny\href{https://git-scm.com/docs/git-diff}{参考：git diff}\quad
+  \href{https://git-scm.com/docs/git-restore}{git restore}}
+\end{frame}
+
+\begin{frame}[fragile]{用分支尝试 Agent 的新方案}
+  \textbf{先提交当前可运行版本，确认 git status 显示工作区干净。}
+\begin{lstlisting}[language={},numbers=none]
+git switch -c agent-returns
+\end{lstlisting}
+  \begin{itemize}
+    \item 分支是一条开发路线；新提交先记录在 \texttt{agent-returns} 上。
+    \item 让 Agent 在该分支修改，审查、运行并提交后，再回到主线合并。
+  \end{itemize}
+\begin{lstlisting}[language={},numbers=none]
+git switch main
+git merge agent-returns
+\end{lstlisting}
+  \begin{block}{分支与文件夹的区别}
+    普通分支共用当前工作目录；切换分支会更新其中的文件。\par
+    分支不会自动隔离未提交的编辑。多人或多个 Agent 同时工作时，
+    可进一步学习 worktree，在不同目录中工作。
+  \end{block}
+  {\small 若合并出现冲突，需要理解两边意图，编辑为正确结果，再运行、暂存并提交。}
+  \par{\tiny\href{https://git-scm.com/docs/git-switch}{参考：git switch}\quad
+  \href{https://git-scm.com/docs/gittutorial}{分支与合并}}
+\end{frame}
+
+\begin{frame}[fragile]{Git 与 Agent：先明确范围，再审查和提交}
+  \begin{block}{在 agent-returns 分支中给 Qoder Desktop 的任务}
+    先查看 Git 状态，保留已有修改。仅修改 \texttt{returns\_demo.py}，
+    使它支持任意长度的正价格序列（至少两个价格）。\par\medskip
+    用本项目的 \texttt{.venv} 运行，验证 \texttt{[100,110,99]} 的累计收益率为
+    $-1\%$，\texttt{[100,110,100]} 为 $0\%$。
+    完成后解释 diff 和运行结果，暂不提交或推送。
+  \end{block}
+  \textbf{学生审查并运行验证后，保存这次任务的版本：}
+\begin{lstlisting}[language={},numbers=none]
+git diff -- returns_demo.py
+uv run python returns_demo.py
+git add returns_demo.py
+git diff --cached
+git commit -m "Support multiple return periods"
+\end{lstlisting}
+  {\small 也可以在审查后明确让 Agent 提交指定文件；一次提交对应一个清楚的任务。
+  Git 记录修改，人仍需判断计算结果是否正确。}
+\end{frame}
+
+\begin{frame}[fragile]{远程协作：Git 与 GitHub 的区别}
+  \begin{itemize}
+    \item \textbf{Git} 是版本管理工具；\textbf{GitHub / Gitee} 是托管远程仓库的平台。
+    \item \textbf{commit} 保存到本地；\textbf{push} 上传提交；\textbf{pull} 获取并整合远程更新。
+    \item 从他人已有仓库开始，用 \texttt{git clone 仓库地址}，无需再执行 init。
+  \end{itemize}
+  \textbf{可选练习：在平台创建空仓库并完成认证后，回到本地主分支执行。}
+\begin{lstlisting}[language={},numbers=none]
+git remote add origin https://github.com/USER/REPO.git
+git push -u origin main
+\end{lstlisting}
+  \relax
+  {\small 将 \texttt{USER/REPO} 替换为实际地址；\texttt{origin} 是远程仓库的简称。
+  上面假设此前未配置 origin；后续可用 \texttt{git push} 同步新提交。}
+  \begin{block}{本节最低目标}
+    完成一次“修改 $\rightarrow$ 查看差异 $\rightarrow$ 运行验证 $\rightarrow$ 提交”。\par
+    本地练习不需要远程账号；发布前确认仓库可见性及上传文件范围。
+  \end{block}
+  {\tiny\href{https://git-scm.com/docs/git-push}{参考：git push}\quad
+  \href{https://git-scm.com/docs/gittutorial}{远程协作}}
 \end{frame}
 
 %-----------------------------------------------------
