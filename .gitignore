@@ -43,10 +43,6 @@ __pycache__/
 .ipynb_checkpoints/
 # notebook 运行时生成的中间文件
 **/outputs/
-**/outputs/
-**/outputs/
-**/outputs/
-**/outputs/
 
 # ---- 本地临时文件 ----
 /tmp*/

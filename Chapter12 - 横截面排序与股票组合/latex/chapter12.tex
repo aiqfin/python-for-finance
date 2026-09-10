@@ -1,0 +1,378 @@
+% !TeX program = xelatex
+\documentclass[9pt]{ctexbeamer}
+\usepackage{style/shubeamer}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,tikz}
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\graphicspath{{figures/}}
+\input{analysis_numbers.tex}
+\title[横截面排序与股票组合]{Python金融数据分析}
+\subtitle{第12章\quad 横截面排序与股票组合}
+\author[王伟冠]{王伟冠\quad 经济学院金融系}
+\institute[SHU]{上海大学}
+\date{\today}
+\newcommand{\nbref}[1]{\par\vspace{0.15cm}{\scriptsize\color{shugray}对应 Notebook：#1}}
+\newcommand{\chartpage}[3]{\begin{frame}{#1}\centering\includegraphics[width=0.97\textwidth,height=0.69\textheight,keepaspectratio]{#2}\par\small #3\end{frame}}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+
+\begin{frame}{从股票收益分析走向组合研究}
+\begin{block}{本章问题}
+同一个调仓日，小市值股票与大市值股票的后续表现有什么不同？
+\end{block}
+\begin{enumerate}
+\item 提出假设：为什么规模可能与未来收益有关？
+\item 规定时间：什么时候看数据，什么时候形成持仓？
+\item 构建组合：五组排序、等权和市值加权。
+\item 检查证据：收益、回撤、换手、微盘敏感性和成交局限。
+\end{enumerate}
+\nbref{第1节；先提出问题，再用数据检验}
+\end{frame}
+
+\begin{frame}{本章路线}\tableofcontents\end{frame}
+\section{问题与共享数据}
+\begin{frame}{横截面：在同一天比较不同股票}
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{block}{上一章：日频收益分析}
+同一只股票随时间变化。\par
+计算日收益、累计收益、波动率和回撤。
+\end{block}
+\end{column}
+\begin{column}{0.47\textwidth}
+\begin{block}{本章节}
+同一天比较几千只股票。\par
+按市值排序，观察各组后续持有收益。
+\end{block}
+\end{column}
+\end{columns}
+\vspace{0.4cm}
+\textbf{关键区别：}分组使用当时市值，结果使用之后收益。\par
+不能按全样本收益选出赢家，再回头绘制它们的历史净值。
+\nbref{第3节}
+\end{frame}
+
+\begin{frame}{先提出规模假设}
+\begin{itemize}
+\item 小企业与大企业的经营风险、融资条件、流动性可能不同。
+\item 投资者关注度、交易行为和样本构成也可能影响组间表现。
+\item 即使小市值组收益更高，也不能仅靠排序区分这些解释。
+\end{itemize}
+\begin{block}{把问题写成可以检查的比较}
+G1至G5收益是否有顺序？不同年份是否一致？\par
+换一种权重、排除微盘、考虑成本，结论是否变化？
+\end{block}
+\nbref{第6--8节；统计关系不等于因果解释}
+\end{frame}
+
+\begin{frame}{使用第11章维护的同一份行情}
+\textbf{共享文件：}\par
+{\small\texttt{股票日频收益率分析/data/stock\_daily.parquet}}
+\vspace{0.3cm}
+\begin{itemize}
+\item 全包6,888,585行，27列；本章按列读取，不按年份截断。
+\item 日期：\DataStart{}至\DataEnd{}；2021年和2026年均不完整。
+\item A股记录6,778,694行，含填充；不能将原始日期数当作交易日数。
+\item 第12章只读引用，无需复制行情或再维护一份合并文件。
+\end{itemize}
+\nbref{第1--2节；本地CSMAR授权数据，来源路径保留在结果记录中}
+\end{frame}
+
+\begin{frame}[fragile]{跨目录读取：路径和分析参数分开}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+ROOT = next(p for p in [Path.cwd(), *Path.cwd().parents]
+    if (p / "Chapter11 - 股票日频收益率分析/data/stock_daily.parquet").is_file())
+SOURCE = ROOT / "Chapter11 - 股票日频收益率分析/data/stock_daily.parquet"
+raw = pd.read_parquet(SOURCE, columns=columns)
+\end{lstlisting}
+\begin{itemize}
+\item 支持从课程根目录、本章目录或Notebook目录启动。
+\item 用课程\texttt{.venv}解释器；Windows与macOS共享读取代码。
+\item 图表和汇总表写到本章目录，原始行情仍由第11章维护。
+\end{itemize}
+\nbref{第1--2节；完整列名见Notebook}
+\end{frame}
+
+\begin{frame}{先读字段口径，再定义规模}
+\centering\small
+\begin{tabular}{lp{6.6cm}}
+\toprule
+字段 & 含义与本章用途\\\midrule
+\texttt{Dsmvtl2} & 总市值2，单位千元；总股数乘A股价格，主排序指标。\\[5pt]
+\texttt{Dsmvosd} & 流通市值，单位千元；扩展练习可替换的规模指标。\\[5pt]
+\texttt{Adjprcwd} & 含现金红利再投资的可比价格，用比值计算持有收益。\\[5pt]
+\texttt{Trdsta / Filling} & 信号日状态与填充标识，用于候选样本筛选。\\[5pt]
+\texttt{Dnshrtrd / LimitStatus} & 成交股数与涨跌停状态，用于成交局限检查。\\
+\bottomrule
+\end{tabular}
+\vspace{0.3cm}\par
+\raggedright 市值从千元换成亿元：除以100,000。\par
+\texttt{Dsmvtl2}并非A/B/H分别按各自价格加总的市值。
+\nbref{第1节；口径来自第11章原始包字段说明}
+\end{frame}
+
+\section{信号、排序与持有时间}
+\begin{frame}{把信号日、建仓日和收益日分开}
+\centering
+\begin{tikzpicture}[every node/.style={font=\small}]
+\draw[->,thick,shublue] (0,0)--(10.4,0);
+\foreach \x in {1,4.7,9.1}{\draw[shublue,thick] (\x,-.12)--(\x,.12);}
+\node[above,align=center] at (1,.2) {月末倒数第二日\\收盘后排序};
+\node[above,align=center] at (4.7,.2) {月末最后交易日\\收盘建仓};
+\node[above,align=center] at (9.1,.2) {下个月末\\旧组合持有结束};
+\node[below,align=center] at (1,-.2) {$s$：可见市值};
+\node[below,align=center] at (4.7,-.2) {$e$：基准估值};
+\node[below,align=center] at (8,-1.05) {$e$之后的交易日才计入新组合收益};
+\end{tikzpicture}
+\vspace{0.7cm}\par\raggedright
+首次：2021-08-30形成信号，2021-08-31建仓，2021-09-01开始计算收益。\par
+共\Rebalances{}次建仓，收益区间\ReturnStart{}至\ReturnEnd{}。
+\nbref{第3节；提前一天形成信号，避免用收盘结果同时决定当日收盘交易}
+\end{frame}
+
+\begin{frame}{处理样本首尾，不制造完整月份}
+\begin{itemize}
+\item 市值排序不需要过去一年收益，2021年8月底即可形成首期组合。
+\item 2026年8月13日是数据末日，不能当成8月完整月末。
+\item 最后一期沿用7月底建立的组合，估值至8月13日。
+\item 59个完整持有月份，另有2026年8月这一不完整月份。
+\item 末期收益可以报告，但不能与完整月收益混在一起算月度胜率。
+\end{itemize}
+\nbref{第3、6节；交易日历取自非填充且有成交的A股日期}
+\end{frame}
+
+\begin{frame}{选股条件只使用信号日信息}
+\begin{enumerate}
+\item 市场类型属于沪深京A股。
+\item 非填充、正常交易状态（\texttt{Trdsta == 1}）、有成交。
+\item 收盘价、含红利可比价格和市值有效且为正。
+\end{enumerate}
+\begin{alertblock}{持仓形成后，不能因为结果不好而删除股票}
+不要求股票在样本末日仍存在，也不按未来收益是否缺失筛选。\par
+持有后变成ST或停牌，仍应保留持仓并处理估值。
+\end{alertblock}
+\nbref{第3.1节；本包缺少独立上市退市及代码变更映射，范围偏差仍需关注}
+\end{frame}
+
+\begin{frame}[fragile]{用pandas得到等数量五组}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+cross = cross.sort_values([SIZE, "Stkcd"])
+cross = cross.reset_index(drop=True)
+position = np.arange(len(cross))
+cross["group"] = "G" + (
+    position * 5 // len(cross) + 1
+).astype(str)
+\end{lstlisting}
+\begin{itemize}
+\item G1最小，G5最大；各组数量最多相差1只。
+\item 代码只用于处理并列市值，保证每次运行分组一致。
+\item 检查组内最小、中位、最大市值，确认排序方向。
+\end{itemize}
+\nbref{第3.1节；每个调仓日重新形成截面}
+\end{frame}
+
+\section{组合权重与收益计算}
+\begin{frame}{相同股票分组，两种初始权重}
+\begin{columns}[T]
+\begin{column}{0.46\textwidth}
+\begin{block}{等权}
+\[w_i=\frac{1}{N}\]
+每只股票投入同样金额。\par
+小股票在组合中也获得相同份额。
+\end{block}
+\end{column}
+\begin{column}{0.46\textwidth}
+\begin{block}{市值加权}
+\[w_i=\frac{ME_{i,s}}{\sum_j ME_{j,s}}\]
+按信号日市值分配金额。\par
+组内较大股票获得更高权重。
+\end{block}
+\end{column}
+\end{columns}
+\vspace{0.4cm}
+全体候选股票按相同方式构建\texttt{ALL}基准。\par
+这是同池自建组合，不是官方市场指数。
+\nbref{第4.1节}
+\end{frame}
+
+\begin{frame}{买入持有：权重会自然变化}
+\centering
+\begin{tabular}{lrrr}
+\toprule & 建仓日 & 第1天 & 第2天\\\midrule
+股票A价格 & 100 & 110 & 121\\
+股票B价格 & 100 & 100 & 100\\
+买入持有净值 & 1.0000 & 1.0500 & 1.1050\\
+每日恢复等权净值 & 1.0000 & 1.0500 & 1.1025\\\bottomrule
+\end{tabular}
+\vspace{0.45cm}\par\raggedright
+初始各投0.5。第1天后A的权重变为$0.55/1.05$，已经高于50\%。\par
+每天对个股收益取简单平均，相当于每天恢复等权，改变了调仓规则。
+\nbref{第4节；Notebook含可运行例子与预期终值核对}
+\end{frame}
+
+\begin{frame}{用可比价格计算整段持有价值}
+\[V_{g,t}=c_g+\sum_i w_{i,g}\frac{P^*_{i,t}}{P^*_{i,e}}\]
+\[r_{g,t}=\frac{V_{g,t}}{V_{g,t-1}}-1\]
+\begin{itemize}
+\item $P^*$：含红利可比价格；$e$：建仓日。
+\item $w_{i,g}$：本期初始权重；$c_g$：零利息现金权重。
+\item 建仓日价值为1；之后的变化归新组合。
+\item 月末更新持仓，下一期重复计算并串联日收益。
+\end{itemize}
+\nbref{第4.2节；无论等权还是市值加权，使用同一估值公式}
+\end{frame}
+
+\begin{frame}[fragile]{矩阵计算：日期乘股票，股票乘组合}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+relative = prices.loc[dates, selected].div(
+    prices.loc[execution, selected])
+values = relative @ weights.loc[selected] + cash
+returns = values.pct_change(fill_method=None).iloc[1:]
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lll}
+\toprule 对象 & 行 & 列\\\midrule
+\texttt{relative} & 日期 & 股票\\
+\texttt{weights} & 股票 & 组合\\
+\texttt{values} & 日期 & 组合\\\bottomrule
+\end{tabular}
+\end{center}
+\nbref{第4.2节；按股票标签对齐，先理解维度再使用矩阵乘法}
+\end{frame}
+
+\begin{frame}{缺失估值：保留持仓并记录影响}
+\begin{itemize}
+\item 建仓日无有效成交或价格：预定金额留作现金，不重新分配。
+\item 持有期无有效观测：沿用过去最后有效估值，恢复后确认价格变化。
+\item 使用\texttt{ffill()}，不用未来价格向前填充。
+\item 记录终止后沿用旧估值，不代表已经处理退市回收。
+\end{itemize}
+\begin{alertblock}{这是估值假设}
+旧估值可能暂时掩盖风险。不能把“今日没有价格变化”解释为“这项资产没有经济损失”。
+\end{alertblock}
+\nbref{第2.1、8节；缺失持仓股票日数和权重另行导出}
+\end{frame}
+
+\section{结果与敏感性}
+\begin{frame}{从组合收益到风险收益指标}
+\begin{align*}
+\text{累计收益}&=\prod_{t=1}^{T}(1+r_t)-1,\\
+\text{几何年化收益}&=\left[\prod_{t=1}^{T}(1+r_t)\right]^{252/T}-1,\\
+\text{年化波动率}&=s(r_t)\sqrt{252},\\
+\text{回撤}_t&=\frac{NAV_t}{\max_{0\leq u\leq t}NAV_u}-1.
+\end{align*}
+\begin{itemize}
+\item 252用于近似年化，回撤的历史峰值包含初始净值1。
+\item 没有无风险利率，本章不报告Sharpe比率或alpha。
+\end{itemize}
+\nbref{第6节；\ReturnDays{}个收益交易日}
+\end{frame}
+
+\chartpage{五组组合：先观察整段净值}{group_nav}{图中为月度建仓、月内持有的毛收益；G1最小，G5最大。}
+\chartpage{加权方式是否改变比较结果？}{weighting_comparison}{比较同一组内的两种初始权重，再观察G1至G5的顺序。}
+\chartpage{更高收益伴随怎样的回撤？}{drawdown}{小市值组最大回撤为\SmallDD\%；持有体验不能只用终值描述。}
+
+\begin{frame}{逐年比较：部分年份单独标注}
+\centering
+\input{annual_table.tex}
+\par\small 单位：\%；等权组合；G1最小、G5最大、ALL同池基准。
+\vspace{0.3cm}\par\raggedright
+2021年仅9--12月；2026年仅年初至8月13日。\par
+2026年截至数据末日，大市值组优于小市值组；不能把全期排序外推到每一年。
+\nbref{第6节；表格随Notebook执行自动生成}
+\end{frame}
+
+\chartpage{规模收益差：每月G1收益减G5收益}{monthly_spread}{差值用百分点表示；末月不完整，不连乘为可投资多空净值。}
+
+\begin{frame}{简单规模收益差，不是标准FF SMB}
+\[\text{本章月度规模收益差}=R_{G1,m}-R_{G5,m}\]
+\begin{itemize}
+\item 回答本月小市值与大市值的相对表现。
+\item 尚未定义多空资金、融券、保证金及多空再平衡机制。
+\item 标准FF SMB还涉及规模与账面市值比交叉排序。
+\item 后续可用A股因子回归解释组合收益，本章不提前将收益称为alpha。
+\end{itemize}
+{\scriptsize\href{https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors.html}{方法参考：Kenneth French，Fama/French Factors构造说明}}
+\nbref{第6.2节；未使用美国因子数据}
+\end{frame}
+
+\begin{frame}{成本先作为透明的参数情景}
+\[\mathrm{Turnover}=\tfrac12\left(\sum_i|w_i^{new}-w_i^{old}|+|c^{new}-c^{old}|\right)\]
+\[\mathrm{Cost}=0.001\sum_i|w_i^{new}-w_i^{old}|\]
+\begin{itemize}
+\item 旧权重使用持有收益变化后的权重，首次从现金建仓也计成本。
+\item 每买入或卖出1元，假设10bp成本；不是统一收取组合净值的10bp。
+\item 在新一期首个收益日统一比例扣费；不模拟逐笔成交和费用反馈。
+\item 未完整覆盖冲击、税费差异及实际成交限制。
+\end{itemize}
+\nbref{第5、7节；成本参数可修改，但不依据最佳结果挑选}
+\end{frame}
+
+\chartpage{每期组内数量与月度换手}{composition_turnover}{股票池随时间变化；首次从现金建仓，换手接近100\%。}
+\chartpage{微盘股票与成本的敏感性}{sensitivity}{每期剔除最小10\%后重新分五组，因此新的G1已是不同成员集合。}
+
+\begin{frame}{把观察结果和解释边界放在一起}
+\centering
+\begin{tabular}{lr}
+\toprule 情景 & 几何年化收益\\\midrule
+基础G1，等权毛收益 & \SmallAnn\%\\
+基础G5，等权毛收益 & \BigAnn\%\\
+剔除最小10\%后G1 & \TrimAnn\%\\
+基础G1，买卖每边10bp成本后 & \SmallNetAnn\%\\\bottomrule
+\end{tabular}
+\vspace{0.35cm}\par\raggedright
+\textbf{观察：}小市值组全期较强，剔除微盘后收益下降。\par
+\textbf{边界：}这是全历史探索、理想化估值与成交下的结果；没有独立样本外检验，也没有完整成交模拟。
+\nbref{第6--8节；数据区间\ReturnStart{}至\ReturnEnd{}}
+\end{frame}
+
+\section{核验与课堂练习}
+\begin{frame}{验证代码执行的规则，而不只验证能否运行}
+\begin{enumerate}
+\item 数据：行数、主键、交易日与含红利回报口径。
+\item 时间：信号先于建仓，建仓先于新组合收益。
+\item 权重：股票加现金为1，持有期间权重自然漂移。
+\item 收益：首期逐股持有收益加权，与逐日组合收益连乘一致。
+\item 输出：净值初值为1，年度首尾标注，图表与汇总表同源。
+\end{enumerate}
+\nbref{第2--8节；两只股票的确定性例子也用于检验计算方法}
+\end{frame}
+
+\begin{frame}{从理想化组合到可交易策略，还缺什么？}
+\begin{itemize}
+\item 部分月末旧持仓缺少当日有效成交，本章仍按估值退出。
+\item 部分目标股票在建仓日涨跌停，不能确认能以收盘价成交。
+\item 缺失观测、终止记录和退市回收可能改变收益与回撤。
+\item 缺少历史证券范围及代码变更核对，不能宣称无幸存者偏差。
+\end{itemize}
+\begin{block}{阅读诊断表}
+检查最大不可成交退出权重、涨跌停目标权重、缺失估值股票日数。\par
+下一步应补充成交和证券生命周期信息，而不是只调参数优化净值。
+\end{block}
+\nbref{第8节；\texttt{outputs/tables/diagnostic\_summary.csv}}
+\end{frame}
+
+\begin{frame}{课堂练习：先预测，再运行，再解释}
+\begin{enumerate}
+\item 用流通市值替换总市值2，预测哪些股票的排名可能变化。
+\item 比较等权和市值加权，解释组内大股票的影响。
+\item 找出G1回撤最深的区间，说明终值图遗漏了什么体验。
+\item 将成本参数提高，检查换手如何影响结果。
+\item 找出不可成交退出权重最大的月份，提出需要补充的数据。
+\end{enumerate}
+\nbref{第10节；参数变更后从头运行Notebook并重新编译课件}
+\end{frame}
+
+\begin{frame}{后续：复用组合框架，更换研究问题}
+\begin{block}{第13章：量价信号}
+将市值排序替换为动量、反转、波动率或换手率排名。\par
+复用时间对齐、权重、估值、基准与诊断流程。
+\end{block}
+\begin{block}{第14章：收益解释}
+引入适用于A股的市场、规模、价值因子及无风险利率。\par
+区分策略原始收益、风格暴露和风险调整后的收益。
+\end{block}
+提出假设和验证证据仍由人负责，Python与AI协助实现和检查。
+\nbref{课程根目录《后续章节教学方案.md》}
+\end{frame}
+\end{document}
