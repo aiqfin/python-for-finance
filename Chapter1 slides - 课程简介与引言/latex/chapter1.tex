@@ -579,9 +579,11 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
   \end{block}
 \end{frame}
 
-\section{Qoder CN 桌面端与 VS Code 协作}
+\section{AI 编程与 Qoder CN Desktop}
 
-\begin{frame}{认识 Qoder CN 桌面端}
+\begin{frame}{认识 Qoder CN Desktop（桌面端）}
+  \relax
+  {\small \href{https://qoder.com.cn/}{Qoder CN} 是独立安装的 AI 智能体工作台，由阿里巴巴通义团队开发。本课程使用桌面端，可在其中调用Qwen, GLM, Deepseek和其他第三方模型进行工作。}\par\vspace{0.2cm}
   \begin{columns}[T,totalwidth=\textwidth]
     \begin{column}{0.62\textwidth}
       \includegraphics[width=\linewidth]{qoder-cn-desktop-official.png}
@@ -591,13 +593,13 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
     \end{column}
     \begin{column}{0.35\textwidth}
       \textbf{用自然语言协作}\par
-      描述目标，让 AI 理解项目、编写代码、解释报错并辅助修改。
+      描述目标，让 AI 编写代码、解释报错并辅助修改。
       \vspace{0.3cm}\par
       \textbf{围绕本地文件工作}\par
-      关联项目文件夹，AI 的修改保存为电脑上的实际文件。
+      关联项目目录，将修改保存到本地文件。
       \vspace{0.3cm}\par
       \textbf{配合 VS Code}\par
-      学生打开这些文件，阅读代码、运行程序并检查结果。
+      阅读生成的代码，运行程序并检查结果。
     \end{column}
   \end{columns}
   \vspace{0.25cm}
@@ -606,9 +608,32 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
   \end{block}
 \end{frame}
 
+\begin{frame}{AI 编程：模型、上下文与工具}
+  \begin{block}{AI 编程是什么？}
+    用自然语言描述需求，让 AI 辅助编写、解释和修改代码，\par
+    再通过实际运行与结果检查，逐步完成任务。
+  \end{block}
+  \begin{tabular}{p{0.18\textwidth}p{0.71\textwidth}}
+    \toprule
+    组成 & 在课程项目中的作用 \\
+    \midrule
+    大语言模型 & 根据需求与已有信息，生成代码和解释。\\[7pt]
+    项目上下文 & 提供当前代码、数据字段、报错和环境信息。\\[7pt]
+    工具 & 在授权范围内读取文件、保存修改、执行命令。\\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item 编程智能体（Agent）把模型与工具结合，按任务需要反复执行和调整。
+    \item 回复中的代码要经过运行；程序能运行，还要检查公式和数据口径。
+    \item 学习时请 AI 解释关键步骤，并尝试自己修改输入、预测输出。
+  \end{itemize}
+  {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{软件操作参考：Qoder CN 快速入门}}
+\end{frame}
+
 \begin{frame}{下载桌面端，并关联课程项目}
   \begin{enumerate}
-    \item 打开 \href{https://qoder.cn/download}{\textbf{qoder.cn/download}}，选择 \textbf{Qoder CN 桌面端}对应的产品卡片。官网同时列出 IDE 等产品，请核对名称。
+    \item 打开 \href{https://qoder.com.cn/}{\textbf{qoder.com.cn}}，从\textbf{桌面端}入口下载 Qoder CN Desktop。官网也提供 IDE、插件等其他形态，注意选择桌面端。
   \end{enumerate}
   \begin{columns}[T,totalwidth=\textwidth]
     \begin{column}{0.48\textwidth}
@@ -661,6 +686,45 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
     \item 交给 AI 修改前，先保存 VS Code 中的编辑；同一文件避免同时修改。
     \item AI 完成后查看磁盘上的最新内容；不要用未保存的旧内容覆盖新修改。
     \item 人负责核对数据、公式与经济解释，AI 的完成提示是验证的起点。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{向 AI 描述任务：目标、输入、约束、验收}
+  \begin{block}{课堂提示词示例：在桌面端关联 finance-demo 后输入}
+    请新建 \texttt{returns\_demo.py}，计算价格序列
+    \texttt{[100, 110, 99]} 的两期简单收益率和累计收益率。\par\medskip
+    仅使用 Python 标准库；用本项目的 \texttt{.venv} 运行；
+    不修改其他文件。先解释公式，再编写和运行代码。\par\medskip
+    输出两期收益率和累计收益率，保留两位小数并显示百分号；
+    列出运行命令，解释累计收益率为什么不等于两期收益率之和。
+  \end{block}
+  \begin{itemize}
+    \item \textbf{目标与输入}：指定计算任务与完整的示例数据。
+    \item \textbf{约束}：说明文件范围、Python 环境和可用依赖。
+    \item \textbf{验收}：明确输出格式、运行证据和需要解释的问题。
+    \item 若结果有误，反馈实际输出与预期差异；若报错，附完整报错。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{课堂验证：两期收益率如何累计？}
+  \textbf{在 VS Code 阅读 AI 生成的文件，并与下面的计算核对：}
+\begin{lstlisting}[language=Python,numbers=none]
+prices = [100, 110, 99]
+r1 = prices[1] / prices[0] - 1
+r2 = prices[2] / prices[1] - 1
+total = (1 + r1) * (1 + r2) - 1
+print(f"Period 1: {r1:.2%}")
+print(f"Period 2: {r2:.2%}")
+print(f"Total: {total:.2%}")
+\end{lstlisting}
+  \begin{block}{手算验收}
+    两期收益率为 $+10\%$ 和 $-10\%$；累计收益率为\par
+    $(1+10\%)(1-10\%)-1=-1\%$，也等于 $99/100-1$。
+  \end{block}
+  \begin{itemize}
+    \item 在项目目录运行 \texttt{uv run python returns\_demo.py}，核对三个输出。
+    \item 两期简单收益率直接相加得到 $0\%$，不代表持有期累计收益率。
+    \item 将末期价格改成 100，先预测再运行：累计收益率应为 $0\%$。
   \end{itemize}
 \end{frame}
 
