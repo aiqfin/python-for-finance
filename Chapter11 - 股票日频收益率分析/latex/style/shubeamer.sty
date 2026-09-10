@@ -1,0 +1,162 @@
+%%%
+%%% shubeamer.sty — 上海大学课程 Beamer 主题（美化版 v2.0）
+%%% 用法：\usepackage{style/shubeamer}
+%%% 依赖：logo/background.pdf（水印）、logo/SHDX-tight-white.pdf（帧标题栏校名）
+%%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{style/shubeamer}[2026/08/04 SHU Beamer Theme v2.0]
+
+%%%% ---------- 配色方案 ----------
+\definecolor{shublue}{RGB}{0,61,115}       % 主色：上大蓝
+\definecolor{shusky}{RGB}{0,122,194}       % 辅助：亮蓝
+\definecolor{shugold}{RGB}{205,155,55}     % 点缀：金色
+\definecolor{shugray}{RGB}{105,105,105}    % 辅助灰
+\definecolor{shulight}{RGB}{242,245,248}   % 浅蓝灰底
+\definecolor{codebg}{RGB}{246,247,245}     % 代码底色
+
+\usecolortheme[named=shublue]{structure}
+
+%%%% ---------- 背景（校徽水印）----------
+\pgfdeclareimage[width=\paperwidth,height=\paperheight]{bg}{logo/background.pdf}
+\setbeamertemplate{background}{\pgfuseimage{bg}}
+
+%%%% ---------- 字体 ----------
+\setbeamerfont{title}{size=\LARGE,series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamerfont{footline}{size=\scriptsize}
+\setbeamerfont{block title}{series=\bfseries,size=\small}
+\usefonttheme{professionalfonts}
+
+%%%% ---------- 元素颜色 ----------
+\setbeamercolor{normal text}{fg=black!88,bg=white}
+\setbeamercolor{frametitle}{fg=white,bg=shublue}
+\setbeamercolor{framesubtitle}{fg=white!85!shublue,bg=shublue}
+\setbeamercolor{goldrule}{fg=shugold,bg=shugold}
+\setbeamercolor{footline}{fg=shugray,bg=white}
+\setbeamercolor{title}{fg=shublue}
+\setbeamercolor{subtitle}{fg=shugray}
+\setbeamercolor{author}{fg=black!80}
+\setbeamercolor{institute}{fg=shugray}
+\setbeamercolor{date}{fg=shugray}
+\setbeamercolor{alerted text}{fg=shugold!55!black}
+\setbeamercolor{example text}{fg=shusky!75!black}
+\setbeamercolor{itemize item}{fg=shublue}
+\setbeamercolor{itemize subitem}{fg=shusky}
+\setbeamercolor{itemize subsubitem}{fg=shugold}
+\setbeamercolor{enumerate item}{fg=shublue}
+\setbeamercolor{enumerate subitem}{fg=shusky}
+\setbeamercolor{section in toc}{fg=shublue}
+\setbeamercolor{subsection in toc}{fg=shugray}
+\setbeamercolor{block title}{fg=white,bg=shublue}
+\setbeamercolor{block body}{fg=black!88,bg=shulight}
+\setbeamercolor{block title alerted}{fg=white,bg=shugold!65!black}
+\setbeamercolor{block body alerted}{fg=black!88,bg=shugold!14}
+\setbeamercolor{block title example}{fg=white,bg=shusky!85!black}
+\setbeamercolor{block body example}{fg=black!88,bg=shusky!12}
+\setbeamercolor{caption name}{fg=shublue}
+
+%%%% ---------- 列表样式 ----------
+\setbeamertemplate{itemize item}{{\color{shublue}\rule[0.15ex]{0.85ex}{0.85ex}}}
+\setbeamertemplate{itemize subitem}{\raisebox{0.35ex}{\color{shusky}\rule{0.9ex}{0.28ex}}}
+\setbeamertemplate{itemize subsubitem}{{\color{shugold}\footnotesize$\bullet$}}
+\setbeamertemplate{enumerate items}[circle]
+\setbeamertemplate{itemize/enumerate body begin}{\setlength{\itemsep}{4pt}}
+\setbeamertemplate{itemize/enumerate subbody begin}{\setlength{\itemsep}{2.5pt}}
+
+%%%% ---------- 目录 ----------
+\setbeamertemplate{section in toc}[sections numbered]
+\setbeamertemplate{subsection in toc}{\leavevmode\leftskip=2.2em\scriptsize\inserttocsubsection\par}
+
+%%%% ---------- Block ----------
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setlength{\abovecaptionskip}{2pt}
+\renewcommand\figurename{图}
+\renewcommand\tablename{表}
+
+%%%% ---------- 关闭导航符号 ----------
+\setbeamertemplate{navigation symbols}{}
+
+%%%% ---------- 页眉（内容页不设页眉，扩大正文空间）----------
+\setbeamertemplate{headline}{}
+
+%%%% ---------- 帧标题：蓝色横条 + 金色细线 + 右侧校名 ----------
+\pgfdeclareimage[height=2.4ex]{titlelogo}{logo/SHDX-tight-white.pdf}
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,leftskip=.45cm,rightskip=.45cm,ht=3ex,dp=1.2ex]{frametitle}%
+    \usebeamerfont{frametitle}\insertframetitle%
+    \ifx\insertframesubtitle\@empty\else%
+      \quad{\usebeamerfont{framesubtitle}\color{white!75!shublue}\insertframesubtitle}%
+    \fi%
+    \hfill\pgfuseimage{titlelogo}%
+  \end{beamercolorbox}%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=1.4pt,dp=0pt]{goldrule}%
+  \end{beamercolorbox}%
+}
+
+%%%% ---------- 页脚：单行极简 ----------
+\setbeamertemplate{footline}{%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.2ex,dp=1.1ex,leftskip=.45cm,rightskip=.45cm]{footline}%
+    \usebeamerfont{footline}%
+    \insertshortauthor\enspace\(\cdot\)\enspace\insertshortinstitute%
+    \hfill%
+    \insertshorttitle%
+    \hfill%
+    \insertframenumber\,/\,\inserttotalframenumber%
+  \end{beamercolorbox}%
+}
+
+%%%% ---------- 封面 ----------
+\setbeamertemplate{title page}{%
+  \vbox{}%
+  \vfill%
+  {\color{shugold}\rule{0.32\textwidth}{2.2pt}}\par%
+  \vspace{0.5em}%
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+  \vspace{0.45em}%
+  {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+  \vspace{0.6em}%
+  {\color{shublue}\rule{\textwidth}{1.6pt}}\par%
+  \vfill%
+  {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}%
+  \vspace{0.6em}%
+  {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
+  \vspace{0.4em}%
+  {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}%
+  \vfill%
+  \vbox{}%
+}
+
+%%%% ---------- 代码样式（Python）----------
+\RequirePackage{listings}
+\lstdefinestyle{shupython}{%
+  language=Python,%
+  basicstyle=\ttfamily\footnotesize,%
+  keywordstyle=\color{shublue}\bfseries,%
+  stringstyle=\color{shugold!70!black},%
+  commentstyle=\color{shugray}\itshape,%
+  numberstyle=\tiny\color{shugray},%
+  numbers=left,%
+  numbersep=6pt,%
+  backgroundcolor=\color{codebg},%
+  frame=single,%
+  framerule=0.4pt,%
+  rulecolor=\color{shulight!70!shugray},%
+  framesep=4pt,%
+  xleftmargin=1.6em,%
+  breaklines=true,%
+  showstringspaces=false,%
+  keepspaces=true,%
+  columns=flexible,%
+  morekeywords={as,with,yield,async,await,fstring},%
+  emph={self,True,False,None},%
+  emphstyle=\color{shusky!75!black}\bfseries,%
+}
+\lstset{style=shupython}
+
+%%%% ---------- 其它微调 ----------
+\setbeamertemplate{caption}[numbered]
+\setlength{\parskip}{2pt}

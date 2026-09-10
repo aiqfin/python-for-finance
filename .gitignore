@@ -53,4 +53,6 @@ __pycache__/
 /tmp*/
 
 # ---- 第11章本地授权数据 ----
-/Chapter11 - 个股日内收益率实验/data/*.zip
+/Chapter11 - 股票日频收益率分析/data/*.zip
+/Chapter11 - 股票日频收益率分析/data/processed/
+/Chapter11 - 股票日频收益率分析/data/raw/

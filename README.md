@@ -16,6 +16,7 @@
 | 第8章 | 数学工具 | `Chapter8 slides - 数学工具/latex/chapter8.pdf` | `Chapter8 slides - 数学工具/课堂代码/08_Math_Tools.ipynb` |
 | 第9章 | 模拟与期权定价 | `Chapter9 slides - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 slides - 模拟与期权定价/课堂代码/09_Monte_Carlo.ipynb` |
 | 第10章 | 统计学与投资组合优化 | `Chapter10 slides - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 slides - 统计学与投资组合优化/课堂代码/10_Statistics_Portfolio_Optimization.ipynb` |
+| 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
 
 ## 项目结构
 
