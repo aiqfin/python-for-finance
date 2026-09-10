@@ -42,11 +42,11 @@ desktop.ini
 __pycache__/
 .ipynb_checkpoints/
 # notebook 运行时生成的中间文件
-**/outputs/notes.txt
-**/outputs/stats*.csv
-**/outputs/spy_vol21.*
-**/outputs/prices.png
-**/outputs/demo_prices.csv
+**/outputs/
+**/outputs/
+**/outputs/
+**/outputs/
+**/outputs/
 
 # ---- 本地临时文件 ----
 /tmp*/
@@ -61,6 +61,7 @@ __pycache__/
 *.h5
 *.hdf5
 *.parquet
+*.parquet.part
 # 原始数据及处理缓存；CSV示例、outputs中的汇总表仍可提交
 **/data/raw/
 **/data/processed/

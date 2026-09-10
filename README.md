@@ -71,7 +71,7 @@ uv sync
 | 可视化 | matplotlib, seaborn |
 | 机器学习 / 符号计算 | scikit-learn, sympy |
 | 金融数据 | pandas-datareader |
-| 文件 I/O | tables (HDF5), openpyxl (Excel) |
+| 文件 I/O | tables (HDF5), openpyxl (Excel), pyarrow (Parquet) |
 | 交互环境 | jupyterlab, ipykernel |
 
 ### 启动 Jupyter Lab

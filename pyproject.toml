@@ -16,9 +16,10 @@ dependencies = [
     "sympy>=1.13",
     # 金融数据获取
     "pandas-datareader>=0.10",
-    # pandas I/O 后端：HDF5（data.h5）与 Excel
+    # pandas I/O 后端：HDF5、Excel 与 Parquet
     "tables>=3.9",
     "openpyxl>=3.1",
+    "pyarrow>=25.0.1",
     # Jupyter 运行环境
     "jupyterlab>=4.2",
     "ipykernel>=6.29",
