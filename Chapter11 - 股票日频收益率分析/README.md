@@ -3,7 +3,7 @@
 本章是股票收益率数据分析的入门教学材料，包含 A 股市场构成、字段与样本口径、基础指标、描述性统计和图表解释。
 
 - [课件 PDF](latex/chapter11.pdf)：35页，沿用课程上海大学 Beamer 主题。
-- [教学 Notebook](notebooks/11_股票日频收益率分析.ipynb)：46个单元格，其中22个代码单元格，已使用课程 `.venv` 从头执行并保存输出。
+- [教学 Notebook](notebooks/11_股票日频收益率分析.ipynb)：50个单元格，其中24个代码单元格，已使用课程 `.venv` 从头执行并保存输出。
 - [课件源码](latex/chapter11.tex)：可继续修改；图表和统计宏由 Notebook 生成。
 - [数据及分析核验](outputs/validation.md)：记录本次范围、检查与解释边界。
 
@@ -15,6 +15,7 @@
 data/
   原始授权数据.zip                 # 原始文件保持不变，实际名称见目录
   raw/                            # Notebook从ZIP解压的7个CSV、字段说明和版权说明
+  stock_daily.parquet              # 同一全量数据的压缩版本，供快速读取
 notebooks/11_股票日频收益率分析.ipynb
 outputs/
   analysis_summary.json           # 本次实际统计结果
@@ -27,7 +28,7 @@ latex/
   style/ / logo/                  # 本课程主题资源
 ```
 
-原始 ZIP、`data/raw/` 和旧版 `data/processed/` 均已配置 Git 忽略。课堂流程不依赖 HDF5、`tables` 或 `source_profile.json`。分块读取时只保留教学年份，避免同时载入全包；解压后的文件另需本地磁盘空间，具体大小由 Notebook 开头显示。
+原始 ZIP、`data/raw/` 和Parquet文件已配置 Git 忽略。课堂流程不依赖 HDF5、`tables` 或 `source_profile.json`。分块读取时只保留教学年份，避免同时载入全包；解压后的文件另需本地磁盘空间，具体大小由 Notebook 开头显示。
 
 ## 打开与运行
 
@@ -39,7 +40,9 @@ Notebook 第2节完整展示：
 2. `extract` 解压到 `data/raw/`；已有文件保留，不覆盖手工编辑。
 3. `read_csv(nrows=5)` 试读，查看字段说明和类型。
 4. `read_csv(chunksize=150_000)` 扫描每个CSV，统计全包覆盖并选取 `YEAR`。
-5. `pd.concat` 合并年度记录，检查行数、重复键与价格关系，再接第3节分析。
+5. 第2.4.1节直接将7个原始CSV分块合并为 `data/stock_daily.parquet`，不生成合并CSV；使用已纳入课程依赖的 `pyarrow`，已有Parquet保留并核对行数。
+6. 第2.4.2节展示Parquet按年、按列快速读取。
+7. `pd.concat` 合并年度记录，检查行数、重复键与价格关系，再接第3节分析。
 
 每次从头运行都会重新读取CSV；无需事先在终端运行脚本。旧版HDF5转换脚本已移除，Notebook是本章唯一的教学运行入口。Python解压与读取代码在Windows和macOS上相同。
 
@@ -57,6 +60,10 @@ macOS将上述 Python 路径换为 `./.venv/bin/python`。本次执行验证在 
 xelatex -interaction=nonstopmode -halt-on-error chapter11.tex
 xelatex -interaction=nonstopmode -halt-on-error chapter11.tex
 ```
+
+## 读取速度实测
+
+[测试报告](outputs/read_performance.md)记录每轮耗时与复现代码。CSV完整读取中位数7.53秒，Parquet为0.53秒；2025年8列为5.32秒和0.13秒。Parquet首次完整读取曾耗时37.8秒，重复读取更快；测试未清空系统缓存。文件由1.65 GiB缩小到539 MiB。测速用的合并CSV已清理；原始ZIP和7个CSV保留用于原始数据核对。
 
 ## 教学口径与对应关系
 
