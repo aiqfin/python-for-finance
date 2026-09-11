@@ -24,7 +24,7 @@
 \item 提出假设：为什么规模可能与未来收益有关？
 \item 规定时间：什么时候看数据，什么时候形成持仓？
 \item 构建组合：五组排序、等权和市值加权。
-\item 检查证据：收益、回撤、换手、微盘敏感性和成交局限。
+\item 检查证据：收益、回撤和微盘敏感性。
 \end{enumerate}
 \nbref{第1节；先提出问题，再用数据检验}
 \end{frame}
@@ -60,7 +60,7 @@
 \end{itemize}
 \begin{block}{把问题写成可以检查的比较}
 G1至G5收益是否有顺序？不同年份是否一致？\par
-换一种权重、排除微盘、考虑成本，结论是否变化？
+换一种权重、排除微盘，结论是否变化？
 \end{block}
 \nbref{第6--8节；统计关系不等于因果解释}
 \end{frame}
@@ -102,7 +102,7 @@ raw = pd.read_parquet(SOURCE, columns=columns)
 \texttt{Dsmvosd} & 流通市值，单位千元；扩展练习可替换的规模指标。\\[5pt]
 \texttt{Adjprcwd} & 含现金红利再投资的可比价格，用比值计算持有收益。\\[5pt]
 \texttt{Trdsta / Filling} & 信号日状态与填充标识，用于候选样本筛选。\\[5pt]
-\texttt{Dnshrtrd / LimitStatus} & 成交股数与涨跌停状态，用于成交局限检查。\\
+\texttt{Dnshrtrd} & 成交股数，仅用于识别市场交易日历。\\
 \bottomrule
 \end{tabular}
 \vspace{0.3cm}\par
@@ -144,12 +144,12 @@ raw = pd.read_parquet(SOURCE, columns=columns)
 \begin{frame}{选股条件只使用信号日信息}
 \begin{enumerate}
 \item 市场类型属于沪深京A股。
-\item 非填充、正常交易状态（\texttt{Trdsta == 1}）、有成交。
-\item 收盘价、含红利可比价格和市值有效且为正。
+\item 信号日正常交易状态（\texttt{Trdsta == 1}）。
+\item 市值及填充后的历史估值有效且为正。
 \end{enumerate}
 \begin{alertblock}{持仓形成后，不能因为结果不好而删除股票}
 不要求股票在样本末日仍存在，也不按未来收益是否缺失筛选。\par
-持有后变成ST或停牌，仍应保留持仓并处理估值。
+持有期间直接使用统一价格表，不按未来结果重新筛选股票。
 \end{alertblock}
 \nbref{第3.1节；本包缺少独立上市退市及代码变更映射，范围偏差仍需关注}
 \end{frame}
@@ -211,11 +211,11 @@ cross["group"] = "G" + (
 \end{frame}
 
 \begin{frame}{用可比价格计算整段持有价值}
-\[V_{g,t}=c_g+\sum_i w_{i,g}\frac{P^*_{i,t}}{P^*_{i,e}}\]
+\[V_{g,t}=\sum_i w_{i,g}\frac{P^*_{i,t}}{P^*_{i,e}}\]
 \[r_{g,t}=\frac{V_{g,t}}{V_{g,t-1}}-1\]
 \begin{itemize}
 \item $P^*$：含红利可比价格；$e$：建仓日。
-\item $w_{i,g}$：本期初始权重；$c_g$：零利息现金权重。
+\item $w_{i,g}$：本期初始股票权重，各组权重合计为1。
 \item 建仓日价值为1；之后的变化归新组合。
 \item 月末更新持仓，下一期重复计算并串联日收益。
 \end{itemize}
@@ -226,7 +226,7 @@ cross["group"] = "G" + (
 \begin{lstlisting}[basicstyle=\ttfamily\small]
 relative = prices.loc[dates, selected].div(
     prices.loc[execution, selected])
-values = relative @ weights.loc[selected] + cash
+values = relative @ weights.loc[selected]
 returns = values.pct_change(fill_method=None).iloc[1:]
 \end{lstlisting}
 \begin{center}
@@ -240,17 +240,17 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \nbref{第4.2节；按股票标签对齐，先理解维度再使用矩阵乘法}
 \end{frame}
 
-\begin{frame}{缺失估值：保留持仓并记录影响}
+\begin{frame}{统一价格表，集中学习组合计算}
 \begin{itemize}
-\item 建仓日无有效成交或价格：预定金额留作现金，不重新分配。
-\item 持有期无有效观测：沿用过去最后有效估值，恢复后确认价格变化。
-\item 使用\texttt{ffill()}，不用未来价格向前填充。
-\item 记录终止后沿用旧估值，不代表已经处理退市回收。
+\item 将含红利可比价格转成日期乘股票的矩阵，按市场交易日对齐。
+\item 使用\texttt{ffill()}沿用历史最后有效价格，之后直接用于计算。
+\item 信号日已有正的有效估值，保证建仓价格比值可以计算。
+\item 各组全部资金投入股票，月内买入持有、月末重新分组。
 \end{itemize}
-\begin{alertblock}{这是估值假设}
-旧估值可能暂时掩盖风险。不能把“今日没有价格变化”解释为“这项资产没有经济损失”。
-\end{alertblock}
-\nbref{第2.1、8节；缺失持仓股票日数和权重另行导出}
+\begin{block}{教学假设}
+调仓日按当日估值完成全部买卖，不考虑停牌、涨跌停和成交限制。
+\end{block}
+\nbref{第2.1、4节；只用过去价格填充，不向前引用未来价格}
 \end{frame}
 
 \section{结果与敏感性}
@@ -278,7 +278,7 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \par\small 单位：\%；等权组合；G1最小、G5最大、ALL同池基准。
 \vspace{0.3cm}\par\raggedright
 2021年仅9--12月；2026年仅年初至8月13日。\par
-2026年截至数据末日，大市值组优于小市值组；不能把全期排序外推到每一年。
+逐年观察大小市值组的相对表现；不能把全期排序外推到每一年。
 \nbref{第6节；表格随Notebook执行自动生成}
 \end{frame}
 
@@ -296,20 +296,9 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \nbref{第6.2节；未使用美国因子数据}
 \end{frame}
 
-\begin{frame}{成本先作为透明的参数情景}
-\[\mathrm{Turnover}=\tfrac12\left(\sum_i|w_i^{new}-w_i^{old}|+|c^{new}-c^{old}|\right)\]
-\[\mathrm{Cost}=0.001\sum_i|w_i^{new}-w_i^{old}|\]
-\begin{itemize}
-\item 旧权重使用持有收益变化后的权重，首次从现金建仓也计成本。
-\item 每买入或卖出1元，假设10bp成本；不是统一收取组合净值的10bp。
-\item 在新一期首个收益日统一比例扣费；不模拟逐笔成交和费用反馈。
-\item 未完整覆盖冲击、税费差异及实际成交限制。
-\end{itemize}
-\nbref{第5、7节；成本参数可修改，但不依据最佳结果挑选}
-\end{frame}
 
-\chartpage{每期组内数量与月度换手}{composition_turnover}{股票池随时间变化；首次从现金建仓，换手接近100\%。}
-\chartpage{微盘股票与成本的敏感性}{sensitivity}{每期剔除最小10\%后重新分五组，因此新的G1已是不同成员集合。}
+
+\chartpage{微盘股票的敏感性}{sensitivity}{每期剔除最小10\%后重新分五组，因此新的G1已是不同成员集合。}
 
 \begin{frame}{把观察结果和解释边界放在一起}
 \centering
@@ -317,39 +306,38 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \toprule 情景 & 几何年化收益\\\midrule
 基础G1，等权毛收益 & \SmallAnn\%\\
 基础G5，等权毛收益 & \BigAnn\%\\
-剔除最小10\%后G1 & \TrimAnn\%\\
-基础G1，买卖每边10bp成本后 & \SmallNetAnn\%\\\bottomrule
+剔除最小10\%后G1 & \TrimAnn\%\\\bottomrule
 \end{tabular}
 \vspace{0.35cm}\par\raggedright
-\textbf{观察：}小市值组全期较强，剔除微盘后收益下降。\par
-\textbf{边界：}这是全历史探索、理想化估值与成交下的结果；没有独立样本外检验，也没有完整成交模拟。
+\textbf{观察：}比较各组年化收益，并检查剔除微盘后结果如何变化。\par
+\textbf{边界：}这是全历史探索、统一价格估值和全额股票组合假设下的结果；没有独立样本外检验。
 \nbref{第6--8节；数据区间\ReturnStart{}至\ReturnEnd{}}
 \end{frame}
 
 \section{核验与课堂练习}
 \begin{frame}{验证代码执行的规则，而不只验证能否运行}
 \begin{enumerate}
-\item 数据：行数、主键、交易日与含红利回报口径。
+\item 数据：行数、主键、交易日与正的建仓估值。
 \item 时间：信号先于建仓，建仓先于新组合收益。
-\item 权重：股票加现金为1，持有期间权重自然漂移。
+\item 权重：各组股票权重之和为1，持有期间权重自然漂移。
 \item 收益：首期逐股持有收益加权，与逐日组合收益连乘一致。
 \item 输出：净值初值为1，年度首尾标注，图表与汇总表同源。
 \end{enumerate}
 \nbref{第2--8节；两只股票的确定性例子也用于检验计算方法}
 \end{frame}
 
-\begin{frame}{从理想化组合到可交易策略，还缺什么？}
+\begin{frame}{用结果回答问题，也说明假设}
 \begin{itemize}
-\item 部分月末旧持仓缺少当日有效成交，本章仍按估值退出。
-\item 部分目标股票在建仓日涨跌停，不能确认能以收盘价成交。
-\item 缺失观测、终止记录和退市回收可能改变收益与回撤。
-\item 缺少历史证券范围及代码变更核对，不能宣称无幸存者偏差。
+\item 比较G1至G5的收益顺序，并观察不同年份是否一致。
+\item 结合回撤，解释持有过程中承受的风险。
+\item 比较等权、市值加权及剔除微盘后的结果。
+\item 结论适用于本章样本及统一估值假设，不直接等于可实现交易收益。
 \end{itemize}
-\begin{block}{阅读诊断表}
-检查最大不可成交退出权重、涨跌停目标权重、缺失估值股票日数。\par
-下一步应补充成交和证券生命周期信息，而不是只调参数优化净值。
+\begin{block}{主流程}
+市值排序 $\longrightarrow$ 分组 $\longrightarrow$ 权重\par
+持有收益 $\longrightarrow$ 净值比较
 \end{block}
-\nbref{第8节；\texttt{outputs/tables/diagnostic\_summary.csv}}
+\nbref{第8节；全历史教学探索，不将组间差异直接称为alpha}
 \end{frame}
 
 \begin{frame}{课堂练习：先预测，再运行，再解释}
@@ -357,8 +345,8 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \item 用流通市值替换总市值2，预测哪些股票的排名可能变化。
 \item 比较等权和市值加权，解释组内大股票的影响。
 \item 找出G1回撤最深的区间，说明终值图遗漏了什么体验。
-\item 将成本参数提高，检查换手如何影响结果。
-\item 找出不可成交退出权重最大的月份，提出需要补充的数据。
+\item 改变分组数量，说明需要同步调整哪些图表和标签。
+\item 用两只股票解释买入持有与每日恢复等权的区别。
 \end{enumerate}
 \nbref{第10节；参数变更后从头运行Notebook并重新编译课件}
 \end{frame}
@@ -366,7 +354,7 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 \begin{frame}{后续：复用组合框架，更换研究问题}
 \begin{block}{第13章：量价信号}
 将市值排序替换为动量、反转、波动率或换手率排名。\par
-复用时间对齐、权重、估值、基准与诊断流程。
+复用时间对齐、分组、权重、估值和基准比较。
 \end{block}
 \begin{block}{第14章：收益解释}
 引入适用于A股的市场、规模、价值因子及无风险利率。\par
@@ -375,4 +363,18 @@ returns = values.pct_change(fill_method=None).iloc[1:]
 提出假设和验证证据仍由人负责，Python与AI协助实现和检查。
 \nbref{课程根目录《后续章节教学方案.md》}
 \end{frame}
+
+\section{选学：换手与成本}
+\begin{frame}{选学：在组合结果之后计算成本}
+\[\mathrm{Turnover}=\tfrac12\sum_i|w_i^{new}-w_i^{old}|\]
+\[\mathrm{Cost}=0.001\sum_i|w_i^{new}-w_i^{old}|\]
+\begin{itemize}
+\item 上式用于已有持仓的月度调仓；旧权重取自然漂移后的期末权重。
+\item 首次全额建仓的买入金额为1，换手单独记为1。
+\item 每买入或卖出1元，假设支付10bp成本。
+\item 在新一期首个收益日比例扣费，作为独立选学情景。
+\end{itemize}
+\nbref{第11节；主分析无需运行本节，扣费使用毛组合权重估算交易金额}
+\end{frame}
+\chartpage{选学：换手与成本情景}{optional_turnover_cost}{首次建仓换手为100\%；其后按新目标与期末漂移权重之差计算。}
 \end{document}
