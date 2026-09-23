@@ -1,0 +1,45 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{6.2A enumerate：编号和内容一起取}
+\small 给签到名单编号时，不需要自己维护计数器。enumerate 的 start=1 只改变显示的编号，不改变列表索引。
+\medskip
+\begin{lstlisting}
+attendees = ["小林", "小周", "小陈"]
+for number, person in enumerate(attendees, start=1):
+    print(number, person)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6.2B zip：把姓名与成绩配对}
+\small zip 按位置配对；默认到最短序列就停止。配对前检查长度，避免悄悄漏掉学生。这与 pandas 按标签对齐不同。
+\medskip
+\begin{lstlisting}
+students = ["小林", "小周", "小陈"]
+scores = [82, 95, 68]
+print(len(students), len(scores))
+for student, score in zip(students, scores):
+    print(f"{student}: {score}分")
+score_map = dict(zip(students, scores))
+print(score_map)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：6.2B zip：把姓名与成绩配对}
+输出分数至少为 80 的学生姓名。删去 scores 的最后一个元素，观察配对数量。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{6.2C 列表推导式：从已有循环缩写}
+\small 先理解循环，再使用推导式。读法是“对每个 score，若达到 80，就保留 score”。复杂流程仍分步写。
+\medskip
+\begin{lstlisting}
+scores = [82, 95, 68]
+passed = []
+for score in scores:
+    if score >= 80:
+        passed.append(score)
+short_form = [score for score in scores if score >= 80]
+print(passed, short_form)
+\end{lstlisting}
+\end{frame}

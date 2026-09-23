@@ -1,0 +1,29 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{3A 从计算结果到可读的图}
+\small 绘图前核对统计口径，绘图后核对标题、单位、样本范围与坐标。柱状图通常从零开始；缺失观测不要随意画成零。
+\medskip
+\begin{lstlisting}
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.5))
+axes[0].bar(drink_names, drink_counts, color="#2B6A6C")
+axes[0].set(title="饮品类别比较", ylabel="销量（杯）")
+axes[1].scatter(study_hours, exam_scores, color="#B40D49")
+axes[1].set(title="两变量关系", xlabel="学习时间（小时）", ylabel="成绩（分）")
+fig.suptitle("课堂合成数据：按问题选择图形")
+fig.tight_layout()
+fig.savefig(OUTPUTS / "nonfinancial_examples.png", dpi=160)
+plt.show()
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3A 从计算结果到可读的图}
+用自己的合成小数据各画一张柱状图和散点图，写一句图能支持的观察，再写一句图不能支持的结论。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}{非金融例子的绘图结果}
+\centering
+\includegraphics[width=.96\textwidth]{nonfinancial_examples.png}\par\medskip
+\small 同样的绘图接口可以迁移到行业比较与收益率关系；先明确每个柱子或点代表什么。
+\end{frame}

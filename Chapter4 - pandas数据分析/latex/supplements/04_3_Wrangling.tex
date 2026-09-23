@@ -1,0 +1,156 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 两张表的粒度与键}
+\small 合成订单表每行一笔订单，商品表每行一种商品。同一商品可以出现在多笔订单中，因此合并关系是多对一。
+\medskip
+\begin{lstlisting}
+import pandas as pd
+orders = pd.DataFrame({
+    "订单": [1, 2, 3, 4], "商品": ["T", "C", "T", "X"],
+    "数量": [2, 1, 3, 1]})
+products = pd.DataFrame({
+    "商品": ["T", "C", "J"],
+    "名称": ["茶", "咖啡", "果汁"], "单价": [10, 20, 15]})
+print(orders)
+print(products)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2. 左连接：保留每笔订单}
+\small on 明确匹配键；left 保留左表订单。indicator 标记未匹配行，validate 检查商品表的键唯一，避免合并后订单被复制。
+\medskip
+\begin{lstlisting}
+joined = orders.merge(products, on="商品", how="left",
+    validate="many_to_one", indicator=True)
+print(joined)
+print(joined["_merge"].value_counts())
+assert len(joined) == len(orders)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3. 内连接与外连接：观察谁消失、谁新增}
+\small inner 只保留双方存在的商品匹配；outer 还会显示没有订单的商品。未匹配不代表金额为零，应单独列出。
+\medskip
+\begin{lstlisting}
+inner = orders.merge(products, on="商品", how="inner")
+outer = orders.merge(products, on="商品", how="outer",
+                     indicator=True)
+print(len(inner), len(outer))  # 3, 5
+print(outer[["订单", "商品", "_merge"]])
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3. 内连接与外连接：观察谁消失、谁新增}
+哪笔订单在 inner 中消失？哪个商品只在右表中？如果要核对全部订单，该选哪种连接？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{4. 重复键：合并可能让行数变多}
+\small 在商品表中故意重复 T，观察两笔 T 订单各匹配两次。解决方法是核实键与版本，而不是合并后随意去重。
+\medskip
+\begin{lstlisting}
+bad_products = pd.concat([products, products.iloc[[0]]],
+                          ignore_index=True)
+expanded = orders.merge(bad_products, on="商品", how="left")
+print(len(orders), len(expanded))  # 4, 6
+print(bad_products.duplicated("商品").sum())
+# 加 validate="many_to_one" 将直接报错，课堂可自行尝试。
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{5. concat：把同结构记录上下接起来}
+\small concat 不按商品键寻找匹配。ignore\_index 重建行号，不检查业务编号是否重复；拼接后仍要检查订单号。
+\medskip
+\begin{lstlisting}
+next_orders = pd.DataFrame({
+    "订单": [5, 6], "商品": ["C", "T"], "数量": [2, 1]})
+all_orders = pd.concat([orders, next_orders], ignore_index=True)
+print(all_orders)
+print(all_orders["订单"].is_unique)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6. concat 的另一方向：横向按索引对齐}
+\small axis=1 横向拼接时按索引标签对齐，不会因为行数相同就按位置贴在一起。先检查索引含义。
+\medskip
+\begin{lstlisting}
+left = pd.Series([80, 90], index=["001", "002"], name="数学")
+right = pd.Series([70, 85], index=["002", "001"], name="英语")
+print(pd.concat([left, right], axis=1))
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{7. 长表转宽表：pivot 不做统计}
+\small 长表每行是一名学生的一门课成绩；宽表每行一名学生、每列一门课。pivot 要求“学号—课程”组合唯一。
+\medskip
+\begin{lstlisting}
+long_scores = pd.DataFrame({
+    "学号": ["001", "001", "002", "002"],
+    "课程": ["数学", "英语", "数学", "英语"],
+    "成绩": [80, 90, 70, 85]})
+wide = long_scores.pivot(index="学号", columns="课程", values="成绩")
+print(wide)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 宽表转长表：melt 保留身份列}
+\small id\_vars 指定不被展开的标识列。melt 将列名变成课程字段，将原来的单元格变成成绩字段。
+\medskip
+\begin{lstlisting}
+back = wide.reset_index().melt(id_vars="学号",
+    var_name="课程", value_name="成绩")
+print(back.sort_values(["学号", "课程"]))
+assert len(back) == len(long_scores)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{9. 重复组合：先决定是否需要聚合}
+\small 加入一次补考后，同一学生同一课程出现两次。pivot\_table 可以聚合；取最大值代表“保留最高成绩”，这是业务规则。
+\medskip
+\begin{lstlisting}
+retake = pd.DataFrame({"学号": ["002"],
+                       "课程": ["数学"], "成绩": [88]})
+attempts = pd.concat([long_scores, retake], ignore_index=True)
+best = attempts.pivot_table(index="学号", columns="课程",
+    values="成绩", aggfunc="max")
+print(best)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：9. 重复组合：先决定是否需要聚合}
+将 max 改为 mean，002 的数学成绩变成多少？两种答案分别回答什么问题？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{10. 多层索引：把组合键显式写出来}
+\small MultiIndex 可以表示“学号—课程”这类组合标签。先学 set\_index 和 reset\_index，再选学 stack、unstack。
+\medskip
+\begin{lstlisting}
+indexed = long_scores.set_index(["学号", "课程"]).sort_index()
+print(indexed.loc[("001", "数学"), "成绩"])
+print(indexed.unstack("课程"))
+print(indexed.reset_index())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{11. 综合检查：只汇总匹配成功的金额}
+\small 价格未知的 X 订单不能当作零金额。先列出未匹配订单，再汇总可计算的部分，并说明覆盖范围。
+\medskip
+\begin{lstlisting}
+matched = joined.loc[joined["_merge"] == "both"].copy()
+matched["金额"] = matched["数量"] * matched["单价"]
+print(matched[["订单", "名称", "金额"]])
+print("已知金额合计：", matched["金额"].sum())  # 70
+print("未匹配订单数：", (joined["_merge"] == "left_only").sum())
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：11. 综合检查：只汇总匹配成功的金额}
+将商品 X 补录为“水”、单价 5，重新合并全部原订单。总金额应是多少？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}

@@ -159,6 +159,8 @@ plt.show()                              # 4. 显示
 	\end{itemize}
 \end{frame}
 
+\input{supplements/everyday}
+
 \begin{frame}[fragile]{多条曲线与图例}
 	\begin{lstlisting}
 fig, ax = plt.subplots(figsize=(8, 4))
@@ -265,6 +267,8 @@ ax.legend()
 	\end{figure}
 \end{frame}
 
+\input{supplements/distributions}
+
 \begin{frame}[fragile]{柱状图与散点图}
 	\begin{lstlisting}
 # 柱状图：三只股票的年化平均收益对比
@@ -305,6 +309,8 @@ rets["茅台"].hist(bins=30)                   # 单列直方图
 
 
 %==============================================================
+\input{supplements/reading}
+
 \section{综合案例与小结}
 %==============================================================
 
@@ -374,6 +380,15 @@ fig.tight_layout()
 %==============================================================
 %  附录：参考文献 + 结尾页
 %==============================================================
+\begin{frame}{扩展阅读与练习来源}
+\begin{itemize}
+\item Wes McKinney, \textit{Python for Data Analysis}, 3rd ed.
+\item \href{https://wesmckinney.com/book/plotting-and-visualization}{在线阅读：第9章 Plotting and Visualization}
+\item 新增中文说明、合成数据与练习为本课程自行编写。
+\item 阅读正文理解概念；在配套 Notebook 中运行、修改、核对。
+\end{itemize}
+\end{frame}
+
 \appendix
 
 \begin{frame}[allowframebreaks]{参考文献}

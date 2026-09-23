@@ -1,0 +1,140 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 原始登记表：保留文本才能看见问题}
+\small 教学合成数据，每行一次成绩登记。故意保留首尾空格、重复记录、缺考和不合理成绩；学号按字符串读入以保留前导零。
+\medskip
+\begin{lstlisting}
+from io import StringIO
+import pandas as pd
+raw_csv = """学号,姓名,班级,成绩,日期
+001, 小林 ,A,82,2026-09-01
+002,小周,a,95,2026-09-01
+003,小陈,B,缺考,2026-09-02
+004,小许,B,108,2026-09-02
+001, 小林 ,A,82,2026-09-01
+005,小吴, B ,76,日期待核"""
+raw = pd.read_csv(StringIO(raw_csv), dtype="string")
+raw
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2. 先检查，再清洗}
+\small info 看类型和非缺失数，duplicated 找整行重复。这里“缺考”是普通文本，尚不会被 isna 自动识别。
+\medskip
+\begin{lstlisting}
+raw.info()
+print(raw.isna().sum())
+print("整行重复数：", raw.duplicated().sum())
+raw.loc[raw.duplicated(keep=False)]
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3. str 方法：把单个字符串操作扩展到整列}
+\small copy 保留原始登记。统一班级格式后再分组，否则 A 和 a 会被算成两个班。
+\medskip
+\begin{lstlisting}
+clean = raw.copy()
+clean["姓名"] = clean["姓名"].str.strip()
+clean["班级"] = clean["班级"].str.strip().str.upper()
+print(clean["班级"].value_counts())
+print(clean["姓名"].str.contains("小", na=False))
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{4. 类型转换：转换失败的行必须可追踪}
+\small 先把明确的缺考编码改成缺失，再转数值。coerce 将无法解析的值变成缺失；保留原列才能区分缺考与格式错误。
+\medskip
+\begin{lstlisting}
+score_text = clean["成绩"].replace("缺考", pd.NA)
+clean["分数"] = pd.to_numeric(score_text, errors="coerce")
+clean["登记日"] = pd.to_datetime(clean["日期"], errors="coerce")
+parse_failed = score_text.notna() & clean["分数"].isna()
+print(clean.loc[parse_failed | clean["登记日"].isna()])
+print(clean.dtypes)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{5. 重复键不等于重复行}
+\small 本例每名学生只有一次考试，学号应唯一。已确认整行相同的重复登记可以删除；若同一学号分数不同，应先核实，不能任意保留。
+\medskip
+\begin{lstlisting}
+print(clean.loc[clean.duplicated("学号", keep=False)])
+clean = clean.drop_duplicates().reset_index(drop=True)
+print("清理后记录数：", len(clean))
+print("学号唯一：", clean["学号"].is_unique)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6. 异常值与缺失值分开记录}
+\small 考试满分 100，因此 108 是待核异常，不能直接截成 100。缺考也不等于 0 分。设置标记后，在统计列中排除异常。
+\medskip
+\begin{lstlisting}
+clean["成绩异常"] = (clean["分数"].notna() &
+                       ~clean["分数"].between(0, 100))
+clean["有效成绩"] = clean["分数"].mask(clean["成绩异常"])
+print(clean[["学号", "成绩", "成绩异常", "有效成绩"]])
+print("有效成绩均值：", clean["有效成绩"].mean())
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：6. 异常值与缺失值分开记录}
+计算有效成绩数量、缺考数量、异常成绩数量。为什么不能把三者混成一类？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{7. 删除与填充：输出改变了什么}
+\small 比较同一列的有效值平均与填零平均。dropna 的 subset 明确本次分析依赖哪些列；不能因为日期缺失就删除不依赖日期的成绩。
+\medskip
+\begin{lstlisting}
+print(clean["有效成绩"].mean())
+print(clean["有效成绩"].fillna(0).mean())
+usable_scores = clean.dropna(subset=["有效成绩"])
+print(usable_scores[["学号", "有效成绩"]])
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 分类与映射：明确区间边界}
+\small cut 按固定阈值分段，right=False 表示左闭右开。100 包含在 [90,101) 内；没有有效成绩的行仍保留缺失等级。
+\medskip
+\begin{lstlisting}
+clean["等级"] = pd.cut(clean["有效成绩"],
+    bins=[0, 60, 80, 90, 101], right=False,
+    labels=["待提高", "合格", "良好", "优秀"])
+clean["班级名称"] = clean["班级"].map({"A": "一班", "B": "二班"})
+clean[["学号", "有效成绩", "等级", "班级名称"]]
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{9. 导出与读回：CSV 不保存所有类型}
+\small 先在内存中演示 CSV 往返。读回时显式指定学号类型；分类类型和日期类型需要重建。真实文件路径可替换 StringIO。
+\medskip
+\begin{lstlisting}
+csv_text = clean.to_csv(index=False)
+restored = pd.read_csv(StringIO(csv_text), dtype={"学号": "string"})
+print(restored["学号"].tolist())
+print(len(raw), len(clean), len(restored))
+assert len(raw) == 6 and len(clean) == 5
+assert restored["学号"].iloc[0] == "001"
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{10. 本单元练习：给出可解释的清洗记录}
+\small 交付三项结果：保留几行、排除哪些成绩、哪些日期待核。下一单元学习把这类记录与另一张信息表合并。
+\medskip
+\begin{lstlisting}
+audit = pd.Series({
+    "输入行数": len(raw), "保留行数": len(clean),
+    "有效成绩数": clean["有效成绩"].count(),
+    "异常成绩数": clean["成绩异常"].sum(),
+    "待核日期数": clean["登记日"].isna().sum()})
+print(audit)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：10. 本单元练习：给出可解释的清洗记录}
+找出有效成绩低于 80 的学生，保留学号、姓名、班级、有效成绩。解释为什么没有把缺考者选进来。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}

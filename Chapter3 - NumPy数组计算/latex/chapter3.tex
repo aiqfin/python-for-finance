@@ -191,6 +191,8 @@ p.size       # 6        元素总数
 	\end{itemize}
 \end{frame}
 
+\input{supplements/scores}
+
 \begin{frame}[fragile]{形状变换与拼接}
 	\begin{lstlisting}
 a = np.arange(6)             # [0 1 2 3 4 5]
@@ -251,6 +253,8 @@ p[1:, :]     # 第1行到末尾的所有行
 
 
 %==============================================================
+\input{supplements/views}
+
 \section{向量化运算}
 %==============================================================
 
@@ -291,6 +295,8 @@ b / a        # array([10., 10., 10.])
 		参与运算的两个数组形状必须一致（或满足广播规则），否则报错。
 	\end{alertblock}
 \end{frame}
+
+\input{supplements/broadcast}
 
 \begin{frame}[fragile]{例：一行代码计算收益率}
 	\begin{lstlisting}
@@ -467,6 +473,8 @@ np.cumsum([1, 1, 1, 1])   # array([1, 2, 3, 4]) 累计和
 
 
 %==============================================================
+\input{supplements/walk}
+
 \section{综合案例与小结}
 %==============================================================
 
@@ -549,6 +557,15 @@ print(f"最大回撤：{drawdown.min():.2%}")
 %==============================================================
 %  附录：参考文献 + 结尾页
 %==============================================================
+\begin{frame}{扩展阅读与练习来源}
+\begin{itemize}
+\item Wes McKinney, \textit{Python for Data Analysis}, 3rd ed.
+\item \url{https://wesmckinney.com/book/numpy-basics}
+\item 新增中文说明、合成数据与练习为本课程自行编写。
+\item 阅读正文理解概念；在配套 Notebook 中运行、修改、核对。
+\end{itemize}
+\end{frame}
+
 \appendix
 
 \begin{frame}[allowframebreaks]{参考文献}

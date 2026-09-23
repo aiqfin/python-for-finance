@@ -1,0 +1,50 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{7.4 print 与 return 的区别}
+\small print 负责展示，return 把结果交给调用者。需要继续计算时，应当返回结果。没有 return 的函数调用结果是 None。
+\medskip
+\begin{lstlisting}
+def show_double(number):
+    print(number * 2)
+
+def double(number):
+    return number * 2
+
+shown = show_double(3)
+returned = double(3)
+print(shown, returned + 1)  # None 7
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{7.5 非金融小案例：整理城市名称}
+\small 输入来自手工登记，存在首尾空格和大小写差异。先清理单个值，再循环处理整个列表；不修改输入列表。
+\medskip
+\begin{lstlisting}
+def clean_city(text):
+    return text.strip().title()
+
+raw_cities = [" shanghai ", "BEIJING", "shanghai"]
+cities = [clean_city(text) for text in raw_cities]
+print(cities)
+print(sorted(set(cities)))
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：7.5 非金融小案例：整理城市名称}
+统计每个清理后的城市出现几次，用字典保存。预期 Shanghai 为 2、Beijing 为 1。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{7.6 读报错：定位类型、名字和位置}
+\small 从报错最后一行识别类型，再回看出错行。下面错误行保持注释；课堂逐条取消注释观察，观察后再恢复。
+\medskip
+\begin{lstlisting}
+# float("缺考")       # ValueError：内容不能转成数值
+# "82" + 5           # TypeError：字符串不能与整数相加
+# unknown_score      # NameError：名字还未定义
+# [82, 95][2]        # IndexError：索引超出范围
+print(float("82") + 5)
+print([82, 95][1])
+\end{lstlisting}
+\end{frame}

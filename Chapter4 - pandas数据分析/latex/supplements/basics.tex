@@ -1,0 +1,26 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{3A 先说明一行代表什么}
+\small 这张表每行代表一次学生成绩记录，学号是标识而非数量。金融表也可以每行代表“股票—日期”，不必总是每列一只股票。
+\medskip
+\begin{lstlisting}
+students = pd.DataFrame({
+    "学号": ["001", "002", "003", "004"],
+    "姓名": ["小林", "小周", "小陈", "小许"],
+    "班级": ["A", "A", "B", "B"],
+    "成绩": [82, 95, 68, 88]})
+students.info()
+students.head()
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3B 一列与一列表：维度不同}
+\small 单层方括号取一列得到 Series；列名列表得到 DataFrame。先观察 type 和 shape，再决定后面如何操作。
+\medskip
+\begin{lstlisting}
+one_column = students["成绩"]
+one_table = students[["成绩"]]
+print(type(one_column), one_column.shape)
+print(type(one_table), one_table.shape)
+print(students.describe())
+\end{lstlisting}
+\end{frame}

@@ -1,0 +1,21 @@
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{4.2A 广播：每科加不同的分数}
+\small (2, 3) 与 (3,) 可以逐列配对。广播从末尾维度比较，长度相同或其中一个为 1 才能兼容。
+\medskip
+\begin{lstlisting}
+scores = np.array([[80, 90, 70], [60, 75, 90]])
+bonus = np.array([2, 0, 5])
+adjusted = scores + bonus
+print(adjusted)
+student_mean = scores.mean(axis=1, keepdims=True)
+print(student_mean.shape)  # (2, 1)
+print(scores - student_mean)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：4.2A 广播：每科加不同的分数}
+将每一科减去该科均分；解释结果为什么每列均值为 0。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}

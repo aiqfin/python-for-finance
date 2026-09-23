@@ -134,7 +134,7 @@ print("Hello, Finance!")   # print() 把结果显示出来
 
 \begin{frame}[fragile]{变量：给数据起名字}
 	\begin{itemize}
-		\item \textbf{变量}是贴了标签的盒子：用 \texttt{=} 把数据"装进"名字里。
+		\item \textbf{变量}是对象的名字：用 \texttt{=} 把名字绑定到右侧对象。
 		\item 之后可以通过名字反复使用、修改这份数据。
 	\end{itemize}
 	\begin{lstlisting}
@@ -459,6 +459,8 @@ prices.sort()               # 排序（升序）
 	\end{exampleblock}
 \end{frame}
 
+\input{supplements/references}
+
 \begin{frame}[fragile]{元组（tuple）：不可变的列表}
 	\begin{lstlisting}
 record = ("600519", "贵州茅台", 1500.35)
@@ -560,6 +562,8 @@ for i in range(1, 11):      # 1 到 10（含头不含尾）
 		\item 列表、字符串、字典的键都可以被遍历。
 	\end{itemize}
 \end{frame}
+
+\input{supplements/loops}
 
 \begin{frame}[fragile]{例：批量计算日收益率}
 	\begin{lstlisting}
@@ -664,6 +668,8 @@ future_value(100, rate=0.05, years=3)  # 指明参数名
 
 
 %==============================================================
+\input{supplements/functions}
+
 \section{综合案例与小结}
 %==============================================================
 
@@ -724,6 +730,15 @@ print(f"上涨天数：{up_days} / {len(prices)-1}")
 %==============================================================
 %  附录：参考文献 + 结尾页
 %==============================================================
+\begin{frame}{扩展阅读与练习来源}
+\begin{itemize}
+\item Wes McKinney, \textit{Python for Data Analysis}, 3rd ed.
+\item \url{https://wesmckinney.com/book/python-builtin}
+\item 新增中文说明、合成数据与练习为本课程自行编写。
+\item 阅读正文理解概念；在配套 Notebook 中运行、修改、核对。
+\end{itemize}
+\end{frame}
+
 \appendix
 
 \begin{frame}[allowframebreaks]{参考文献}

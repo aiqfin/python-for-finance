@@ -33,7 +33,7 @@
 {
 	\begin{frame}<beamer>
 		\frametitle{\textbf{目录}}
-		\textbf{\tableofcontents[currentsection]}
+		\tableofcontents[currentsection,sectionstyle=show/hide,subsectionstyle=hide]
 	\end{frame}
 }
 
@@ -73,13 +73,15 @@
 \section*{目录}
 \begin{frame}
 	\frametitle{\textbf{目录}}
-	\textbf{\tableofcontents}
+	\begin{columns}[T]\column{.49\textwidth}\tableofcontents[sections={2-7}]\column{.49\textwidth}\tableofcontents[sections={8-13}]\end{columns}
 \end{frame}
 
 
 %==============================================================
 \section{初识pandas}
 %==============================================================
+
+\input{supplements/roadmap}
 
 \begin{frame}{本章学习目标}
 	\begin{itemize}
@@ -88,7 +90,7 @@
 		\item 掌握排序与分组聚合（\texttt{groupby}）
 		\item 掌握金融时间序列的基本操作：日期索引、\texttt{pct\_change}、重采样
 		\item 会处理缺失值，会用 \texttt{read\_csv} 读入真实数据
-		\item 能够对一张股价表完成"收益率—风险—相关性"的完整分析
+		\item 掌握清洗、连接、长宽表转换与组内统计，能够对一张股价表完成"收益率—风险—相关性"的完整分析
 	\end{itemize}
 	\begin{block}{前置知识}
 		第2章的字典/列表、第3章的NumPy——pandas 就建在 NumPy 之上。
@@ -100,7 +102,7 @@
 		\item 第3章我们算出了收益率数组，但马上会遇到新问题：
 		\begin{itemize}
 			\item 每个数字对应\alert{哪一天}？——NumPy 数组没有标签；
-			\item 行情数据里有日期、代码、名称——数组只能装数字；
+			\item 行情数据里有日期、代码、名称——普通数组通常使用统一的数据类型；
 			\item 数据有\alert{缺失}（停牌）怎么办？
 			\item 从 Excel/CSV 读进来的表格如何直接分析？
 		\end{itemize}
@@ -214,6 +216,8 @@ df.describe()  # 每列的统计摘要：均值、标准差、分位数等
 
 
 %==============================================================
+\input{supplements/basics}
+
 \section{数据选取与筛选}
 %==============================================================
 
@@ -270,6 +274,8 @@ df[(df["茅台"] > 1500) & (df["平安"] > 55)]
 
 
 %==============================================================
+\input{supplements/selection}
+
 \section{排序与分组}
 %==============================================================
 
@@ -311,6 +317,15 @@ stocks.groupby("行业")["市盈率"].mean()
 
 
 %==============================================================
+\section{数据清洗与输入输出}
+\input{supplements/04_2_Cleaning}
+
+\section{合并与长宽表转换}
+\input{supplements/04_3_Wrangling}
+
+\section{分组统计与综合应用}
+\input{supplements/04_4_GroupBy}
+
 \section{金融时间序列}
 %==============================================================
 
@@ -325,16 +340,16 @@ pd.date_range("2026-01-01", periods=5, freq="B")
 	\begin{itemize}
 		\item \texttt{pd.to\_datetime()}：把字符串转成真正的日期类型。
 		\item 变成日期后，可以按年、月、星期\alert{智能取值与聚合}。
-		\item \texttt{date\_range} 生成规则日期序列，\texttt{freq="B"} 表示交易日。
+		\item \texttt{date\_range} 生成规则日期序列，\texttt{freq="B"} 表示周一至周五，不排除交易所节假日。
 	\end{itemize}
 	\begin{exampleblock}{日期索引的威力}
-		\texttt{df["2026-07"]}：直接取出2026年7月的全部数据。
+		\texttt{df.loc["2026-07"]}：直接取出2026年7月的全部数据。
 	\end{exampleblock}
 \end{frame}
 
 \begin{frame}[fragile]{收益率计算：pct\_change 与 shift}
 	\begin{lstlisting}
-df.pct_change()        # 每列的日收益率：(今日-昨日)/昨日
+df.pct_change(fill_method=None)        # 每列的日收益率：(今日-昨日)/昨日
 df.shift(1)            # 整表向下错位一行 -> 昨日价格
 df.diff()              # 价格变动额（今日-昨日）
 \end{lstlisting}
@@ -379,7 +394,7 @@ s.ffill()       # 用前一个有效值填充（金融常用！）
 \end{lstlisting}
 	\begin{itemize}
 		\item \texttt{NaN}（Not a Number）表示缺失：停牌、数据未披露、\texttt{pct\_change} 的第一行。
-		\item \texttt{ffill()}（前向填充）：价格序列中最自然的补法。
+		\item \texttt{ffill()}（前向填充）：沿用上次观测值；是否适合需依据数据含义判断。
 		\item 处理前先想：缺失代表什么经济含义？乱填会引入偏差。
 	\end{itemize}
 \end{frame}
@@ -417,7 +432,7 @@ df = pd.read_csv("../data/eod_data.csv",       # 文件路径
 rng = np.random.default_rng(42)
 dates = pd.date_range("2026-01-05", periods=250, freq="B")
 
-# 模拟三只股票的日收益率，再还原为价格
+# 模拟三只股票的日对数收益率，再还原为价格
 rets = pd.DataFrame({
     "茅台": 0.0004 + 0.015 * rng.standard_normal(250),
     "平安": 0.0002 + 0.020 * rng.standard_normal(250),
@@ -427,14 +442,14 @@ prices = 100 * np.exp(rets.cumsum())
 prices.tail(3)          # 查看最后3天
 \end{lstlisting}
 	\begin{itemize}
-		\item 用 DataFrame 字典一次性构造三列，索引直接是交易日。
+		\item 用 DataFrame 字典一次性构造三列，索引是简化的工作日序列。
 		\item \texttt{cumsum}、\texttt{exp} 对整张表向量化生效——NumPy 功力再现。
 	\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{综合案例：收益率、风险与相关性}
 	\begin{lstlisting}
-rets = prices.pct_change().dropna()   # 日收益率
+rets = prices.pct_change(fill_method=None).dropna()   # 日收益率
 
 rets.describe().round(4)              # 统计摘要
 rets.mean() * 252                     # 年化平均收益
@@ -487,6 +502,15 @@ rets.corr().round(2)                  # 相关系数矩阵
 %==============================================================
 %  附录：参考文献 + 结尾页
 %==============================================================
+\begin{frame}{扩展阅读与练习来源}
+\begin{itemize}
+\item Wes McKinney, \textit{Python for Data Analysis}, 3rd ed.
+\item \url{https://wesmckinney.com/book/pandas-basics}
+\item 新增中文说明、合成数据与练习为本课程自行编写。
+\item 阅读正文理解概念；在配套 Notebook 中运行、修改、核对。
+\end{itemize}
+\end{frame}
+
 \appendix
 
 \begin{frame}[allowframebreaks]{参考文献}

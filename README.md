@@ -18,6 +18,12 @@
 | 第10章 | 统计学与投资组合优化 | `Chapter10 - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 - 统计学与投资组合优化/notebooks/10_Statistics_Portfolio_Optimization.ipynb` |
 | 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
 
+## 前几章扩充与 pandas 多周教学
+
+第2—5章新增基础概念说明、非金融短例子和课堂练习。pandas 作为重点，按“表与索引、数据清洗、合并与变形、分组与应用”四个单元推进，可分多周讲授。
+
+第4章保留原主 Notebook，并增加三个可独立运行的补充 Notebook。具体顺序、学习目标与入口见 [pandas 教学安排](Chapter4%20-%20pandas数据分析/README.md)。新增小数据由课程自行编写，参考 [Python for Data Analysis 在线书](https://wesmckinney.com/book/) 的主题组织。
+
 ## 项目结构
 
 ```
