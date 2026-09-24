@@ -118,6 +118,26 @@
   第一章讨论学习目标；本工具篇准备工作环境；后续章节学习 Python 与数据分析。
 \end{frame}
 
+\begin{frame}{看图认识 VS Code：文件、代码与终端在哪里？}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.70\textwidth}
+      \includegraphics[width=\linewidth]{vscode-interface.png}
+    \end{column}
+    \begin{column}{0.28\textwidth}
+      \small
+      \textbf{A 活动栏}\\切换文件、搜索、Git 等视图。\par\medskip
+      \textbf{B 侧边栏}\\展开项目目录，找到代码文件。\par\medskip
+      \textbf{C 编辑区}\\阅读和修改代码。\par\medskip
+      \textbf{D 面板}\\打开终端，执行项目命令。\par\medskip
+      \textbf{E 状态栏}\\查看分支等当前状态。
+    \end{column}
+  \end{columns}
+  \begin{block}{课堂操作}
+    用“文件 $\rightarrow$ 打开文件夹”打开 \texttt{py4fi-course}，在侧边栏找到环境文件。
+  \end{block}
+  {\tiny 图片：\href{https://code.visualstudio.com/docs/editing/getting-started/userinterface}{VS Code 官方界面指南}；图中为官方示例项目，字母对应右侧中文说明。}
+\end{frame}
+
 \section{虚拟环境搭建}
 
 \begin{frame}{为什么要使用虚拟环境？}
@@ -397,6 +417,19 @@ print(pd.Series([0.01, -0.02, 0.03]).mean())
   \par{\tiny\href{https://code.visualstudio.com/docs/datascience/jupyter-notebooks}{参考：VS Code 官方 Notebook 指南}}
 \end{frame}
 
+\begin{frame}{看图选择 Notebook 内核：认路径，再选环境}
+  \textbf{1. 点击 Notebook 右上角的 Select Kernel，打开内核选择器。}\par\medskip
+  {\centering\includegraphics[width=0.65\linewidth]{vscode-kernel.png}\par}
+  {\small 若列表只有最近用过的环境，选择 \textbf{Select Another Kernel...}，再查看 Python 环境。}\par\medskip
+  \textbf{2. 对照环境路径，找到当前项目的 .venv。}\par\medskip
+  \includegraphics[width=\linewidth]{vscode-notebook.png}
+  \begin{block}{本课程要核对什么？}
+    图中 \texttt{.venv\textbackslash Scripts\textbackslash python.exe} 是虚拟环境入口；全局环境另列一行。\par
+    图示版本为 3.10；课堂应选择自己创建的 Python 3.11 环境，并运行 \texttt{sys.executable} 核对路径。
+  \end{block}
+  {\tiny 图片：\href{https://code.visualstudio.com/docs/datascience/jupyter-kernel-management}{VS Code 内核管理}与\href{https://code.visualstudio.com/docs/datascience/jupyter-notebooks}{Notebook 指南}；不同版本的菜单外观可能不同。}
+\end{frame}
+
 \begin{frame}[fragile]{最后：把自己搭建的环境交给另一台电脑}
   \begin{enumerate}
     \item 保存代码、数据说明及三个文件：\texttt{pyproject.toml}、\texttt{uv.lock}、\texttt{.python-version}。\textbf{不复制 .venv 文件夹。}
@@ -650,6 +683,29 @@ git log -5 --format="%s"
   {\tiny\href{https://git-scm.com/docs/gittutorial}{参考：提交与查看历史}}
 \end{frame}
 
+\begin{frame}{看图理解暂存：先选文件，再记录版本}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.49\textwidth}
+      \includegraphics[width=\linewidth,trim=0 0 610 0,clip]{vscode-stage.png}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \small
+      \textbf{Changes：尚未暂存}\\
+      先点击文件查看差异，再点击该文件旁的 \textbf{+}，选入下一次提交。\par\medskip
+      \textbf{Staged Changes：已经暂存}\\
+      对应 \texttt{git diff --cached}；这里的内容将进入提交。\par\medskip
+      \textbf{Message 与 Commit}\\
+      写明本次完成的任务，核对暂存内容后提交。\par\medskip
+      图中的 \textbf{M} 表示已修改，\textbf{U} 表示尚未跟踪。
+    \end{column}
+  \end{columns}
+  \begin{block}{迁移到收益率练习}
+    找到 \texttt{returns\_demo.py}，核对修改并运行，再暂存该文件；\par
+    暂存后若继续编辑，需要再次暂存，才会把后续修改加入提交。
+  \end{block}
+  {\tiny 图片：\href{https://code.visualstudio.com/docs/sourcecontrol/staging-commits}{VS Code 官方暂存与提交指南}（仅展示左侧操作区域）；示例文件名不同，操作相同。}
+\end{frame}
+
 \begin{frame}[fragile]{日常检查：改了什么，哪些会被提交？}
 \begin{lstlisting}[language={},numbers=none]
 git status
@@ -670,6 +726,24 @@ git log -5 --format="%s"
   \end{block}
   {\tiny\href{https://git-scm.com/docs/git-diff}{参考：git diff}\quad
   \href{https://git-scm.com/docs/git-restore}{git restore}}
+\end{frame}
+
+\begin{frame}{看图阅读 diff：这次到底改了哪些代码？}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.72\textwidth}
+      \includegraphics[width=\linewidth]{vscode-diff.png}
+    \end{column}
+    \begin{column}{0.25\textwidth}
+      \small
+      \textbf{左侧：比较基准}\\红色区域表示删去或被替换的内容。\par\medskip
+      \textbf{右侧：待检查版本}\\绿色区域表示增加或替换后的内容。\par\medskip
+      \textbf{先看比较对象}\\从 Changes 打开时，看未暂存修改；从 Staged Changes 打开时，看将提交的修改。
+    \end{column}
+  \end{columns}
+  \begin{block}{对收益率程序提出三个问题}
+    改动是否只涉及目标文件？累计收益率公式是否正确？扩展后的输入是否已经运行验证？
+  \end{block}
+  {\tiny 图片：\href{https://code.visualstudio.com/docs/sourcecontrol/staging-commits}{VS Code 官方差异编辑器示例}；图中为 JavaScript，只用于认识差异视图，无需学习图中代码。}
 \end{frame}
 
 \begin{frame}{在 Qoder 中查看 Git 修改}

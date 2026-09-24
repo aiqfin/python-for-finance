@@ -35,3 +35,9 @@ xelatex -interaction=nonstopmode -halt-on-error tools.tex
 - [Qoder CN 官方快速入门](https://docs.qoder.cn/qoder/quickstart)
 
 核对日期：2026-09-24。环境与 Git 的参考链接保留在对应课件页。
+
+## VS Code 界面图解
+
+课件增加四页图解：界面分区、Notebook 内核选择、暂存与提交、左右差异对照。采用 VS Code 官方文档的五张截图，配合中文解读与收益率练习说明。
+
+图片保存在 `latex/figures/`，原始链接与展示方式见[图片来源说明](latex/figures/SOURCES.md)。截图中的项目与版本仅作示例，课堂需核对自己的项目路径及 `.venv` 环境。
