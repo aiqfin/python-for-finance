@@ -77,283 +77,389 @@
 \end{frame}
 
 
-%==============================================================
-\section{数据从哪里来，到哪里去}
-%==============================================================
+\section{从同一张表认识文件格式}
 
-\begin{frame}{本章学习目标}
-	\begin{itemize}
-		\item 理解"分析结果要能保存、下次能复用"的工作流意识
-		\item 会用 Python 内置功能读写文本文件（\texttt{open} + \texttt{with}）
-		\item 熟练掌握 CSV：金融数据最常见的交换格式
-		\item 了解 Excel 读写的写法与依赖库安装
-		\item 初步认识 HDF5（PyTables）：大表格的高速二进制存储
-		\item 会根据场景选择合适的数据格式
-	\end{itemize}
-	\begin{block}{本章数据}
-		继续用第6章的真实数据 \texttt{eod\_data.csv}，形成"读入$\to$计算$\to$保存"的完整闭环。
-	\end{block}
-\end{frame}
-
-\begin{frame}{金融分析中的数据流}
-	\begin{itemize}
-		\item 真实工作的典型流程：
-		\begin{enumerate}
-			\item 从数据商/交易所/数据库\textbf{读入}原始数据；
-			\item 清洗、计算（前几章的技能）；
-			\item 把结果\textbf{保存}下来：给报告用、给同事用、给明天的自己用。
-		\end{enumerate}
-		\item 常见格式一览：
-	\end{itemize}
-	\begin{table}
-		\centering
-		\begin{tabular}{lll}
-			\toprule
-			格式 & 特点 & 典型用途 \\
-			\midrule
-			CSV & 纯文本、通用、可读 & 行情、财报交换 \\
-			Excel & 多工作表、人人会开 & 报告、手工整理 \\
-			HDF5 & 二进制、快、省空间 & 大规模数值数据 \\
-			\bottomrule
-		\end{tabular}
-	\end{table}
+\begin{frame}{本章学习路线}
+\begin{enumerate}
+\item 观察同一套虚拟行情：不同文件如何表达同一份数据？
+\item 制作虚拟行情：CSV、Excel、Parquet 三种版本。
+\item 按格式学习操作：类型、分块、嵌套、工作表、选列。
+\item 先验证读回结果，再比较文件体积与读取耗时。
+\item 理解 Parquet 的列式存储，并用选列实验检查效果。
+\end{enumerate}
+\begin{block}{本章产物}
+配套 Notebook 生成可打开的样本文件与实验结果；最后用真实行情完成“读入 $\to$ 计算 $\to$ 保存”。
+\end{block}
 \end{frame}
 
 
-%==============================================================
-\section{Python基本文件操作}
-%==============================================================
 
-\begin{frame}[fragile]{open + with：读写文本}
-	\begin{lstlisting}
-# 写文件：把分析结论记下来
-with open("../outputs/notes.txt", "w", encoding="utf-8") as f:
-    f.write("第6章结论：SPY存在明显厚尾\n")
-    f.write("beta(AAPL) = 0.96\n")
+\begin{frame}{三种格式：分别为谁服务？}
+\small
+\begin{tabular}{p{1.5cm}p{3.5cm}p{4.5cm}}
+\toprule
+格式 & 组织方式 & 常见任务与操作重点 \\
+\midrule
+CSV & 分隔符文本，一张平面表 & 软件间交换；编码、类型、分块 \\
+Excel & 工作簿中的多个工作表 & 人工整理和报告；选表、选列 \\
+Parquet & 带模式信息的列式二进制 & 分析中间表；类型、压缩、按列读取 \\
+\bottomrule
+\end{tabular}
+\begin{block}{课堂观察}
+CSV 用记事本看内容；Excel 用表格软件看工作表；Parquet 用程序看模式和数据，不用文本编辑器解释二进制。
+\end{block}
+\end{frame}
 
-# 读文件：逐行看回来
-with open("../outputs/notes.txt", encoding="utf-8") as f:
-    for line in f:
-        print(line.strip())
+
+
+\begin{frame}{实验数据：先小样本，再同源大表}
+\begin{itemize}
+\item 全章格式示例使用同一套行情，先查看前 6 行理解字段。
+\item 虚拟行情：固定随机种子 7；每行是一条分钟观测。
+\item 8 列：日期、代码、市场、价格、成交量、买价、卖价、评分。
+\item 代码含前导零，市场含中文；评分每隔 17 行缺失一次。
+\item 同一个 DataFrame 写出三种格式，全部不额外保存索引。
+\end{itemize}
+\begin{block}{文件直接放在 data 中}
+\texttt{data/quotes.csv / .xlsx / .parquet}：同一份 20,000 行数据。\\
+用 \texttt{head(6)} 查看小样本，不额外建目录。\\
+数据仅为教学模拟，日期序列并非真实交易日历。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{先制作文件，再开始读取实验}
+\begin{lstlisting}
+# Notebook 已设置 CHAPTER，并导入 sys
+sys.path.insert(0, str(CHAPTER / "scripts"))
+from prepare_data import prepare
+quotes, DATA = prepare(20_000)
+quotes.head(6)
 \end{lstlisting}
-	\begin{itemize}
-		\item \texttt{"w"} 写（覆盖）、\texttt{"r"} 读（默认）、\texttt{"a"} 追加。
-		\item \texttt{with} 语句：用完自动关闭文件，不怕忘写 \texttt{close()}。
-		\item 中文内容务必加 \texttt{encoding="utf-8"}，否则 Windows 上易乱码。
-	\end{itemize}
-	\begin{alertblock}{零基础提醒}
-		\texttt{"w"} 会\alert{清空}原有内容！想追加请用 \texttt{"a"}。
-	\end{alertblock}
+\begin{itemize}
+\item \texttt{scripts/prepare\_data.py} 包含生成规则和三种写法。
+\item 每次从同一张表写出全部文件；生成、写入不进入读取计时。
+\item 所需 pandas、numpy、openpyxl、pyarrow 使用课程环境。
+\item 也可在课前运行脚本；课堂直接查看生成文件。
+\end{itemize}
 \end{frame}
 
-
-%==============================================================
-\section{CSV：金融数据的通用语言}
-%==============================================================
-
-\begin{frame}[fragile]{读CSV：三件套参数}
-	\begin{lstlisting}
-import pandas as pd
-
-df = pd.read_csv("../data/eod_data.csv",
-                 index_col=0,       # 第0列作索引
-                 parse_dates=True)  # 索引解析为日期
-df.head(3)
+\begin{frame}[fragile]{open + with：查看同一份行情文本}
+\begin{lstlisting}
+# DATA 在数据准备步骤中设置；不另造一份示例数据
+with open(DATA / "quotes.csv", encoding="utf-8") as f:
+    for _ in range(7):  # 表头 + 前 6 行
+        print(f.readline().rstrip())
 \end{lstlisting}
-	\begin{itemize}
-		\item CSV = Comma-Separated Values，逗号分隔的纯文本，用记事本都能打开。
-		\item 第6章已见过：真实行情、财报数据绝大多数以 CSV 交付。
-		\item 常用参数还有：\texttt{sep}（分隔符）、\texttt{skiprows}（跳过行）、
-			\texttt{na\_values}（自定义缺失标记）。
-	\end{itemize}
+\begin{itemize}
+\item 第一行是列名，后面每行是一条行情记录。
+\item \texttt{with} 自动关闭文件；中文文本明确使用 UTF-8。
+\item \texttt{r} 读取（默认），\texttt{w} 覆盖，\texttt{a} 追加。
+\item 接下来仍读取这个文件，用 pandas 还原为 DataFrame。
+\end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{写CSV：把计算结果保存下来}
-	\begin{lstlisting}
-import numpy as np
-rets = np.log(df / df.shift(1))
+\begin{frame}{同一份数据：文本与表格预览}
+\centering
+\includegraphics[width=\textwidth,height=.76\textheight,keepaspectratio]{formats_preview.png}
+\end{frame}
 
-stats = pd.DataFrame({
-    "年化收益": rets.mean() * 252,
-    "年化波动率": rets.std() * np.sqrt(252)})
-stats.to_csv("../outputs/stats.csv")            # 默认带索引列
-stats.to_csv("../outputs/stats_no_index.csv",
-             index=False)            # 不写索引
+\section{按格式学习操作特点}
+
+\begin{frame}[fragile]{CSV：明确代码与日期的类型}
+\begin{lstlisting}
+quotes.to_csv(DATA / "quotes.csv", index=False,
+              encoding="utf-8")
+back = pd.read_csv(DATA / "quotes.csv",
+                   dtype={"symbol": str},
+                   parse_dates=["date"], encoding="utf-8")
 \end{lstlisting}
-	\begin{itemize}
-		\item \texttt{to\_csv} 与 \texttt{read\_csv} 是一对"镜像"操作。
-		\item 下次打开 notebook，直接 \texttt{read\_csv("../outputs/stats.csv")}——不用重算。
-	\end{itemize}
-	\begin{alertblock}{往返一致性}
-		写出再读回，\texttt{shape}、数值应完全一致。养成"写后立即读回抽查"的习惯。
-	\end{alertblock}
+\begin{itemize}
+\item CSV 不保存 pandas 模式：\texttt{000001} 可能被推断为整数 1。
+\item \texttt{dtype} 指定代码为字符串；\texttt{parse\_dates} 解析日期。
+\item \texttt{sep} 指定分隔符，\texttt{na\_values} 约定缺失标记。
+\item \texttt{index=False} 不写索引；如果日期在索引中，应明确保留它。
+\end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{读回验证}
-	\begin{lstlisting}
-back = pd.read_csv("../outputs/stats.csv", index_col=0)
-back.head(3)
-back.equals(stats)   # True：一来一回数据没变
+\begin{frame}[fragile]{CSV：选列与分块是两种不同操作}
+\begin{lstlisting}
+small = pd.read_csv(DATA / "quotes.csv",
+                    usecols=["price", "volume"])
+total = 0
+for chunk in pd.read_csv(DATA / "quotes.csv",
+                         usecols=["volume"], chunksize=5000):
+    total += chunk["volume"].sum()
+assert total == quotes["volume"].sum()
 \end{lstlisting}
-	\begin{itemize}
-		\item \texttt{equals()} 检查两个 DataFrame 是否完全相同。
-		\item 注意：CSV 是文本格式，浮点数有打印精度限制；
-			对精度极度敏感的场景用二进制格式（后面讲）。
-	\end{itemize}
+\begin{itemize}
+\item \texttt{usecols}：少构造几列，但仍需扫描 CSV 文本。
+\item \texttt{chunksize}：每次处理部分行，适合求和、计数等任务。
+\item 将全部块重新拼接，仍会回到整表占用内存的情况。
+\item 字段内也可能有逗号或换行，不要用简单字符串切分替代解析器。
+\end{itemize}
 \end{frame}
 
-
-%==============================================================
-\section{Excel：报告和协作的标配}
-%==============================================================
-
-\begin{frame}[fragile]{读写Excel}
-	\begin{lstlisting}
-# 需要先安装引擎库（命令行执行一次即可）：
-#   pip install openpyxl
-
-df.to_excel("../outputs/data.xlsx",            # 写
-            sheet_name="价格")
-stats.to_excel("../outputs/data.xlsx",
-               sheet_name="统计")   # 第二个表
-
-pd.read_excel("../outputs/data.xlsx",          # 读
-              sheet_name="统计",
-              index_col=0)
+\begin{frame}[fragile]{Excel：一个 Writer，多个工作表}
+\begin{lstlisting}
+summary = quotes.groupby("symbol", as_index=False)["volume"].sum()
+with pd.ExcelWriter(DATA / "report.xlsx",
+                     engine="openpyxl") as writer:
+    quotes.head(6).to_excel(writer, sheet_name="行情", index=False)
+    summary.to_excel(writer, sheet_name="汇总", index=False)
+back = pd.read_excel(DATA / "report.xlsx",
+                     sheet_name="汇总", dtype={"symbol": str})
 \end{lstlisting}
-	\begin{itemize}
-		\item pandas 本身不带 Excel 引擎，\texttt{.xlsx} 依赖 \texttt{openpyxl}。
-		\item 一个文件可有多个 \textbf{sheet}（工作表），用 \texttt{sheet\_name} 指定。
-		\item Excel 适合给人看；给程序用、数据量大时，首选 CSV 或 HDF5。
-	\end{itemize}
+\begin{alertblock}{不是连续对同一路径写两次}
+两次独立的 \texttt{to\_excel("report.xlsx")} 默认会重建文件，前一个工作表会被覆盖。
+\end{alertblock}
 \end{frame}
 
-\begin{frame}{CSV vs Excel：怎么选？}
-	\begin{itemize}
-		\item \textbf{CSV}：
-		\begin{itemize}
-			\item 优点：小、快、通用（任何软件都能读）、适合版本管理；
-			\item 缺点：只有一张表、无格式、无公式。
-		\end{itemize}
-		\item \textbf{Excel}：
-		\begin{itemize}
-			\item 优点：多工作表、可加颜色/公式、同事都熟悉；
-			\item 缺点：文件大、读写慢、大表（百万行）会卡。
-		\end{itemize}
-	\end{itemize}
-	\begin{block}{经验法则}
-		中间数据、程序间交换 $\to$ CSV/HDF5；
-		最终交付给业务同事的报告 $\to$ Excel。
-	\end{block}
+\begin{frame}{Excel：给人阅读时的优势与边界}
+\begin{itemize}
+\item \texttt{sheet\_name} 选工作表，\texttt{usecols} 选列。
+\item 用 \texttt{ExcelFile.sheet\_names} 查看工作簿中的表名。
+\item \texttt{.xlsx} 的表格读取在本章明确使用 openpyxl 引擎。
+\item pandas 读写数据表，不负责完整保留原工作簿的图表、样式与公式计算行为。
+\item 大表反复分析前应实测：工作簿结构的解析本身有开销。
+\end{itemize}
+\begin{block}{交付习惯}
+给同事阅读的汇总表可以用 Excel；计算中间表可以另存 Parquet。
+\end{block}
 \end{frame}
 
+\section{Parquet 与列式存储}
 
-%==============================================================
-\section{HDF5：大数据的高速通道}
-%==============================================================
+\begin{frame}{从三列小表理解“按列放在一起”}
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+代码 & 价格 & 成交量 \\
+\midrule
+000001 & 12.5 & 200 \\
+000002 & 20.0 & 300 \\
+000003 & 18.2 & 100 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{block}{按行组织的示意}
+\texttt{[000001, 12.5, 200] [000002, 20.0, 300] [000003, 18.2, 100]}
+\end{block}
+\begin{exampleblock}{按列组织的示意}
+代码：\texttt{[000001, 000002, 000003]}\\
+价格：\texttt{[12.5, 20.0, 18.2]}\quad 成交量：\texttt{[200, 300, 100]}
+\end{exampleblock}
+只计算平均价格时，列式布局有机会少读另外两列。
+\end{frame}
 
-\begin{frame}[fragile]{HDF5 读写：两行搞定}
-	\begin{lstlisting}
-# 写：complevel 开启压缩（引擎是PyTables，pip安装过tables即可）
-df.to_hdf("../outputs/data.h5", key="prices",
-          mode="w", complevel=9, complib="zlib")
+\begin{frame}{Parquet 文件内部：行组与列块}
+\centering
+\includegraphics[width=\textwidth,height=.78\textheight,keepaspectratio]{parquet_layout.png}
+\end{frame}
 
-# 读：一行读回完整DataFrame，日期索引原样保留
-back = pd.read_hdf("../outputs/data.h5", "prices")
-back.equals(df)     # True：一来一回数据没变
+\begin{frame}{Parquet 数据集：分区目录与文件安排}
+\centering
+\includegraphics[width=\textwidth,height=.78\textheight,keepaspectratio]{parquet_directory.png}
+\end{frame}
+
+\begin{frame}[fragile]{读取一个文件，或读取整个分区目录}
+\begin{lstlisting}
+# 单个文件
+one = pd.read_parquet(DATA / "quotes.parquet")
+# 两个市场分区，合起来仍是同一张表
+all_markets = pd.read_parquet(DATA / "quotes_by_market")
+# 根据目录名，跳过另一个市场的文件
+market_a = pd.read_parquet(DATA / "quotes_by_market",
+    engine="pyarrow", filters=[("market", "==", "模拟市场甲")])
 \end{lstlisting}
-	\begin{itemize}
-		\item HDF5 是\textbf{二进制}格式：读写快、可压缩，适合大规模数值数据。
-		\item \texttt{key} 相当于文件里的"表名"，一个 	exttt{.h5} 文件可存多张表。
-		\item 还支持\alert{部分读取}：百万行里只取满足条件的子集，不必全部载入内存。
-	\end{itemize}
+\begin{itemize}
+\item \texttt{market=值} 是目录分区；行组在文件内部，不是文件夹。
+\item 本例分区列从目录名恢复；读回后行顺序和分类类型可能变化。
+\item 分区示例只解释组织方式，不混入三种单文件的速度比较。
+\end{itemize}
 \end{frame}
 
-\begin{frame}{格式对比：同一份数据的三种存法}
-	\begin{table}
-		\centering
-		\begin{tabular}{lcl}
-			\toprule
-			格式 & 实测大小 & 特点 \\
-			\midrule
-			CSV & 约 203 KB & 通用但解析慢 \\
-			HDF5（压缩） & 约 152 KB & 更小更快，程序友好 \\
-			Excel & 通常最大 & 人能直接看，大表会卡 \\
-			\bottomrule
-		\end{tabular}
-	\end{table}
-	\begin{itemize}
-		\item 同样是第6章的行情表（2138行$\times$12列）实测所得。
-		\item 数据量越大，二进制格式的优势越明显——真实研究动辄千万行。
-	\end{itemize}
-	\begin{alertblock}{注意}
-		HDF5 文件不能用记事本/Excel 打开，交换给他人前要确认对方能读。
-	\end{alertblock}
-\end{frame}
-
-
-%==============================================================
-\section{综合案例与小结}
-%==============================================================
-
-\begin{frame}[fragile]{综合案例：一条完整的分析流水线}
-	\begin{lstlisting}
-# 1. 读入原始数据（第6章已熟悉）
-df = pd.read_csv("../data/eod_data.csv", index_col=0,
-                 parse_dates=True).dropna(subset=["SPY"])
-
-# 2. 计算：对数收益率与滚动波动率
-rets = np.log(df / df.shift(1))
-vol = rets["SPY"].rolling(21).std() * np.sqrt(252)
-
-# 3. 保存中间结果：明天不用重算
-vol.dropna().to_csv("../outputs/spy_vol21.csv", header=True)
-
-# 4. 保存给报告的Excel版本
-vol.dropna().to_excel("../outputs/spy_vol21.xlsx")
+\begin{frame}[fragile]{Parquet 读写与类型信息}
+\begin{lstlisting}
+quotes.to_parquet(DATA / "quotes.parquet", index=False,
+                  engine="pyarrow", compression="snappy",
+                  row_group_size=5000)
+back = pd.read_parquet(DATA / "quotes.parquet",
+                       engine="pyarrow")
+back.dtypes
 \end{lstlisting}
-	\begin{itemize}
-		\item 读入 $\to$ 计算 $\to$ 保存：本章把前六章的技能串成真实工作流。
-	\end{itemize}
+\begin{itemize}
+\item 本例日期、字符串代码和数值类型随模式保存。
+\item 20,000 行按每组 5,000 行写入，得到 4 个行组。
+\item \texttt{index=False} 表示不额外保存索引；需要的索引应转成列。
+\item 压缩降低体积但需要解压；速度依赖数据和具体配置。
+\end{itemize}
 \end{frame}
 
-\begin{frame}{本章小结}
-	\begin{itemize}
-		\item \textbf{文本}：\texttt{open + with}，注意 \texttt{"w"} 覆盖与 \texttt{encoding}。
-		\item \textbf{CSV}：\texttt{read\_csv / to\_csv} 镜像操作；
-			三件套 \texttt{index\_col}、\texttt{parse\_dates}、\texttt{index=False}。
-		\item \textbf{Excel}：\texttt{read\_excel / to\_excel} + \texttt{openpyxl}；
-			多工作表用 \texttt{sheet\_name}。
-		\item \textbf{HDF5}：\texttt{to\_hdf / read\_hdf}，二进制高速存储，大数据首选。
-		\item \textbf{选型}：程序交换用 CSV/HDF5，人工报告用 Excel；
-			写完立即读回验证是好习惯。
-	\end{itemize}
+\begin{frame}[fragile]{读取时选列，与读完再切列}
+\begin{lstlisting}
+# 读取时只要两列
+small = pd.read_parquet(DATA / "quotes.parquet",
+                        engine="pyarrow",
+                        columns=["price", "volume"])
+# 对照：先读取整表，再保留两列
+wide = pd.read_parquet(DATA / "quotes.parquet", engine="pyarrow")
+small_after = wide[["price", "volume"]]
+\end{lstlisting}
+\begin{itemize}
+\item 两者返回相同内容，读取和解码的工作量却可能不同。
+\item 列很多、只取少数列时，通常更值得在读取时指定列。
+\item 小文件中初始化成本可能更明显，必须用实测检查。
+\end{itemize}
 \end{frame}
 
-\begin{frame}{课后任务与下章预告}
-	\begin{block}{课后任务}
-		\begin{enumerate}
-			\item 把第6章练习中算出的 MSFT beta 与 AAPL beta 写入一个 CSV 文件，
-				再读回并打印。
-			\item 用 \texttt{with open} 写一个文本文件，记录你对"厚尾现象"的三句话总结。
-			\item 选做：对 \texttt{stats.csv} 分别用 \texttt{index=True} 与
-				\texttt{index=False} 写出，用记事本打开比较两个文件的差别。
-		\end{enumerate}
-	\end{block}
-	\begin{exampleblock}{下章预告}
-		数据读进来了，计算却太慢？下一章讲 \textbf{性能}：
-		为什么循环不如向量化，以及如何衡量代码的运行时间。
-	\end{exampleblock}
-	\begin{center}
-		\vspace{0.5em}
-		本章内容改编自教材第9章\citep{hilpisch2018python}。
-	\end{center}
+\begin{frame}[fragile]{条件筛选：返回更少行，不保证少读所有块}
+\begin{lstlisting}
+selected = pd.read_parquet(DATA / "quotes.parquet",
+    engine="pyarrow", columns=["symbol", "price"],
+    filters=[("symbol", "==", "000001")])
+\end{lstlisting}
+\begin{itemize}
+\item pyarrow 执行条件筛选；条件允许时，统计信息帮助跳过行组。
+\item 若每个行组都含目标代码，可能无法跳过任何行组。
+\item 分区目录可帮助跳过文件；本章同时提供两市场的分区示例。
+\item Parquet 不提供 Excel 的工作表或数据库的逐行更新接口。
+\item 本章修改后重写文件；大数据集可通过增加分区文件扩展。
+\end{itemize}
+\end{frame}
+
+\section{同源数据的读取速度实验}
+
+\begin{frame}{计时之前：确认读回内容一致}
+\begin{enumerate}
+\item 同一张原始表、同样行数、同样列顺序，不混用过滤前后数据。
+\item 检查日期类型与精度、证券代码前导零、缺失位置。
+\item 浮点数采用合理容差，不要求文本往返逐位相等。
+\item 验证通过后才比较速度；不能把“漏读了内容”当成提速。
+\end{enumerate}
+\begin{block}{Notebook 的核对方法}
+先统一日期精度和字符串表示，再使用\\
+\texttt{pd.testing.assert\_frame\_equal(..., check\_exact=False,}\\
+\texttt{rtol=1e-9, atol=1e-8)}。\\
+标准化与断言在计时外完成；读取参数的解析成本在计时内。
+\end{block}
+\end{frame}
+
+\begin{frame}{实验设计：回答一个明确的问题}
+\begin{itemize}
+\item 问题：同一份 20,000 行 $\times$ 8 列数据，完整读成 DataFrame 要多久？
+\item 生成、写入与验证不计时；计时包围一次读取调用。
+\item 先预读，再重复 5 轮；每轮随机调整三种格式的顺序。
+\item 保存每次耗时，报告中位数、最小值、最大值与文件体积。
+\item 记录 Python、pandas、pyarrow、openpyxl 与操作系统版本。
+\end{itemize}
+\begin{alertblock}{明确实验边界}
+未清空操作系统缓存，是有缓存条件下的端到端读取实验；不是磁盘带宽或冷启动测试，也没有测量峰值内存。
+\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{perf\_counter：只给读取过程计时}
+\begin{lstlisting}
+from time import perf_counter
+start = perf_counter()
+back = pd.read_parquet(DATA / "quotes.parquet", engine="pyarrow")
+elapsed_ms = (perf_counter() - start) * 1000
+print(elapsed_ms)
+\end{lstlisting}
+\begin{itemize}
+\item 不把打印、生成、写文件或一致性断言放进计时区间。
+\item 单次波动大，Notebook 将三种读取器放入同一重复计时函数。
+\item 每次得到完整 DataFrame 后再停止计时，随后释放结果。
+\item 耗时用毫秒，文件体积用 KiB（1024 字节）。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{如何读实验表，而不是背排名}
+\begin{itemize}
+\item Notebook 输出：格式、中位数、最小值、最大值、文件体积。
+\item 哪个最快？哪个最小？耗时波动是否会影响你的判断？
+\item CSV 本例不压缩；xlsx 容器有压缩；Parquet 用 Snappy。
+\item 因此比较的是这些常用配置，不是只改变“按行或按列”。
+\item 不填固定的“实测大小”或通用排名：以本次运行结果为准。
+\end{itemize}
+\begin{block}{第二组实验：只需要价格与成交量}
+比较 CSV 的 \texttt{usecols}、Parquet 的 \texttt{columns}、Parquet 全表后切列。先确认相同结果，再重复计时。
+\end{block}
+\end{frame}
+
+\begin{frame}{速度差异从哪里来？}
+\begin{itemize}
+\item 文本格式需要将字符解析为数字、日期与缺失值。
+\item Excel 还要解释工作簿和单元格结构。
+\item Parquet 需要读元数据、解码与解压；选列可减少工作量。
+\item 小文件可能由初始化开销主导；宽表的选列收益可能更明显。
+\item 缓存、硬件、引擎、压缩、数据类型和重复率都会改变结果。
+\end{itemize}
+\begin{alertblock}{结论写法}
+写“在这台机器、这份数据和这组参数下……”。不要写“二进制永远更快”或“某格式永远最小”。
+\end{alertblock}
+\end{frame}
+
+\section{综合案例与练习}
+
+\begin{frame}[fragile]{真实行情：计算一次，保存后复用}
+\begin{lstlisting}
+raw = pd.read_csv(DATA / "eod_data.csv", index_col=0,
+                  parse_dates=True).dropna(subset=["SPY"])
+rets = np.log(raw / raw.shift(1))
+vol = (rets["SPY"].rolling(21).std() * np.sqrt(252)).dropna()
+table = vol.rename("vol21").rename_axis("date").reset_index()
+table.to_parquet(DATA / "spy_vol21.parquet", index=False)
+table.to_excel(DATA / "spy_vol21.xlsx", index=False)
+\end{lstlisting}
+\begin{itemize}
+\item 日期索引显式转成列，让输出结构清楚。
+\item Parquet 保存中间表，Excel 提供给人工查看。
+\item Notebook 随后读回并验证：保存成功还要核对内容。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{课堂练习与课后任务}
+\begin{enumerate}
+\item 预览三种文件的前 6 行，找到第一条记录和缺失值的表达方式。
+\item 去掉 CSV 的 \texttt{dtype}，观察代码前导零与日期类型。
+\item 用一个 ExcelWriter 写两个工作表，读回并打印表名。
+\item 对 2,000 行和 20,000 行分别重做实验，记录环境、体积和耗时。
+\item 选做：增加 20 个数值列，再比较 Parquet 全表与选两列。
+\item 选做：将第6章的 beta 表分别保存为 CSV 与 Parquet，读回核对。
+\end{enumerate}
+\begin{block}{回答时至少包含}
+任务是什么、数据有多大、参数是什么、结果如何、结论适用到哪里。
+\end{block}
+\end{frame}
+
+\begin{frame}{本章小结：格式会影响操作方式}
+\begin{itemize}
+\item CSV：文本交换，明确编码和类型；选列、分块控制工作量。
+\item Excel：以工作表组织，多个表共用一个 Writer。
+\item Parquet：列式、类型与压缩；在读取时指定列和筛选条件。
+\item 先验证数据一致，再用重复计时比较，不预设通用冠军。
+\end{itemize}
+\begin{exampleblock}{下章预告}
+本章比较“读数据”；下一章比较“算数据”：循环、向量化与性能测量。
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}{参考资料与实验入口}
+\small
+\begin{itemize}
+\item 配套 Notebook：\texttt{notebooks/07\_Input\_Output.ipynb}
+\item 数据生成脚本：\texttt{scripts/prepare\_data.py}
+\item 教材基础：第9章\citep{hilpisch2018python}；新增 API 参照官方文档。
+\item \href{https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html}{pandas：read\_csv}
+\item \href{https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html}{pandas：ExcelWriter}
+\item \href{https://pandas.pydata.org/docs/reference/api/pandas.read_parquet.html}{pandas：read\_parquet}
+\item \href{https://parquet.apache.org/docs/overview/}{Apache Parquet：Overview} 与
+\href{https://parquet.apache.org/docs/file-format/}{File Format}
+\end{itemize}
+官方文档查阅日期：2026-09-24。实验排名由本地运行产生。
 \end{frame}
 
 
-%==============================================================
-%  附录：参考文献 + 结尾页
-%==============================================================
 \appendix
 
 \begin{frame}[allowframebreaks]{参考文献}
