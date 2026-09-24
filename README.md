@@ -7,7 +7,7 @@
 | 章节 | 主题 | 课件 | 课堂代码 |
 |------|------|------|----------|
 | 第1章 | 课程简介与引言 | `Chapter1 - 课程简介与引言/latex/chapter1.pdf` | — |
-| 工具篇 | AI 辅助编程与项目版本管理 | `工具篇 - AI辅助编程与项目版本管理/latex/tools.pdf` | [学习入口](工具篇%20-%20AI辅助编程与项目版本管理/README.md) |
+| 工具篇 | AI 辅助编程与项目版本管理 | `ChapterX - AI辅助编程与项目版本管理/latex/tools.pdf` | [学习入口](ChapterX%20-%20AI辅助编程与项目版本管理/README.md) |
 | 第2章 | Python 基础语法 | `Chapter2 - Python基础语法/latex/chapter2.pdf` | `Chapter2 - Python基础语法/notebooks/02_Python_Basics.ipynb` |
 | 第3章 | NumPy 数组计算 | `Chapter3 - NumPy数组计算/latex/chapter3.pdf` | `Chapter3 - NumPy数组计算/notebooks/03_NumPy.ipynb` |
 | 第4章 | pandas 数据分析 | `Chapter4 - pandas数据分析/latex/chapter4.pdf` | `Chapter4 - pandas数据分析/notebooks/04_pandas.ipynb` |
