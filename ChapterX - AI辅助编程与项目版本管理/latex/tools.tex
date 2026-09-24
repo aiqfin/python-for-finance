@@ -99,7 +99,7 @@
 \end{frame}
 
 
-\section{工具分工与项目流程}
+\section{VS Code 与学习路线}
 
 \begin{frame}{本章目标：把一次分析做成可检查的项目}
   \begin{tabular}{p{0.22\textwidth}p{0.66\textwidth}}
@@ -108,12 +108,13 @@
     \midrule
     VS Code & 查看和编辑文件，运行脚本与 Notebook。\\[7pt]
     Python 与 uv & 执行代码，管理项目的解释器与依赖。\\[7pt]
-    Qoder & 根据任务读取项目，辅助编写、修改和验证代码。\\[7pt]
-    Git & 比较修改，记录版本，在分支中尝试新方案。\\
+    Git 与 GitHub & 记录版本，获取课程，保留练习并同步更新。\\[7pt]
+    Qoder & 根据任务读取项目，辅助编写、修改和验证代码。\\
     \bottomrule
   \end{tabular}
   \begin{block}{贯穿全章的工作流程}
-    建立项目 $\rightarrow$ 提出任务 $\rightarrow$ 检查修改与结果 $\rightarrow$ 保存版本。
+    认识编辑器 $\rightarrow$ 配置环境 $\rightarrow$ 学会 Git $\rightarrow$ 克隆课程。\par
+    再用 AI 辅助编程，检查修改与结果，保存可运行版本。
   \end{block}
   第一章讨论学习目标；本工具篇准备工作环境；后续章节学习 Python 与数据分析。
 \end{frame}
@@ -133,7 +134,8 @@
     \end{column}
   \end{columns}
   \begin{block}{课堂操作}
-    用“文件 $\rightarrow$ 打开文件夹”打开 \texttt{py4fi-course}，在侧边栏找到环境文件。
+    先找到“文件 $\rightarrow$ 打开文件夹”和“终端 $\rightarrow$ 新建终端”。\par
+    下一节创建 \texttt{py4fi-course} 后，打开该目录，观察环境文件。
   \end{block}
   {\tiny 图片：\href{https://code.visualstudio.com/docs/editing/getting-started/userinterface}{VS Code 官方界面指南}；图中为官方示例项目，字母对应右侧中文说明。}
 \end{frame}
@@ -448,135 +450,11 @@ uv run python -c "import pandas as pd; print(pd.__version__)"
     \item 复现包版本是基础；分析结果还取决于数据、随机种子及运行平台等。
   \end{itemize}
   \begin{block}{课堂回顾}
-    先亲手创建环境和添加依赖，再理解：课程提供的环境文件，就是这些步骤留下的可复用记录。
+    现在已能创建和重建环境。接下来学习 Git，再从 GitHub 获取课程及其环境文件。
   \end{block}
 \end{frame}
 
-\section{AI 辅助编程：以 Qoder 为例}
-
-\begin{frame}{认识 Qoder：围绕项目完成编程任务}
-  \begin{itemize}
-    \item 在 Qoder 中打开本地项目，说明需要完成的任务和涉及的文件。
-    \item 让 AI 辅助阅读代码、保存修改、执行命令，并报告运行结果。
-    \item 在 VS Code 中阅读代码、运行 Notebook，核对计算和输出。
-  \end{itemize}
-  \begin{block}{本章统一使用 Qoder 示例}
-    本章使用 Qoder CN 桌面端；同类工具可沿用相同的任务描述与验证流程。
-  \end{block}
-  \begin{block}{一次任务的交付物}
-    修改后的项目文件、实际运行结果，以及对修改内容的解释。
-  \end{block}
-  {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{参考：Qoder CN 官方快速入门}}
-\end{frame}
-
-\begin{frame}{AI 编程：模型、上下文与工具}
-  \begin{block}{AI 编程是什么？}
-    用自然语言描述需求，让 AI 辅助编写、解释和修改代码，\par
-    再通过实际运行与结果检查，逐步完成任务。
-  \end{block}
-  \begin{tabular}{p{0.18\textwidth}p{0.71\textwidth}}
-    \toprule
-    组成 & 在课程项目中的作用 \\
-    \midrule
-    大语言模型 & 根据需求与已有信息，生成代码和解释。\\[7pt]
-    项目上下文 & 提供当前代码、数据字段、报错和环境信息。\\[7pt]
-    工具 & 在授权范围内读取文件、保存修改、执行命令。\\
-    \bottomrule
-  \end{tabular}
-  \vspace{0.2cm}
-  \begin{itemize}
-    \item 编程智能体（Agent）把模型与工具结合，按任务需要反复执行和调整。
-    \item 回复中的代码要经过运行；程序能运行，还要检查公式和数据口径。
-    \item 学习时请 AI 解释关键步骤，并尝试自己修改输入、预测输出。
-  \end{itemize}
-  {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{软件操作参考：Qoder CN 官方快速入门}}
-\end{frame}
-
-\begin{frame}{打开 Qoder，并关联课程项目}
-  \begin{enumerate}
-    \item 从 \href{https://qoder.cn/download}{Qoder CN 官方下载页}安装桌面端并登录。
-    \item 选择\textbf{编程}，将前面创建的 \texttt{py4fi-course} 文件夹添加为工作区。
-    \item 选择\textbf{本地模式}，确认工作区完整路径与当前分支，再开始新任务。
-    \item 在 VS Code 中打开同一个目录，选好 \texttt{.venv} 解释器或 Notebook 内核。
-    \item 先发送一个阅读任务：“列出本项目的环境文件，解释它们的作用，暂不修改文件。”
-  \end{enumerate}
-  \begin{block}{两个窗口，一份项目文件}
-    对照两边的完整路径；确认 Qoder 读取的文件就是 VS Code 中的文件。
-  \end{block}
-  {\small 桌面端入口名称可能随版本变化；以官方指南和当前界面为准。}
-  \par{\tiny\href{https://docs.qoder.cn/qoder/quickstart}{参考：Qoder CN 官方快速入门}}
-\end{frame}
-
-\begin{frame}{协作流程：提出需求、查看修改、运行验证}
-  \centering
-  \begin{tikzpicture}[
-    workflowstage/.style={draw, rounded corners=3pt, text width=2.6cm,
-      minimum height=1.7cm, align=center, font=\small, inner sep=6pt},
-    arr/.style={->, >=stealth, thick, draw=shublue}]
-    \node[workflowstage,draw=shugold,fill=shugold!12] (human) at (0,0)
-      {\textbf{1. 人明确任务}\\[5pt]分析目标与数据\\允许修改的文件\\预期输出与判断标准};
-    \node[workflowstage,draw=shusky,fill=shusky!10] (ai) at (3.65,0)
-      {\textbf{2. Qoder 执行}\\[5pt]读取项目上下文\\生成或修改代码\\说明修改及运行情况};
-    \node[workflowstage,draw=shugold,fill=shugold!12] (review) at (7.3,0)
-      {\textbf{3. 人验证结果}\\[5pt]阅读代码与变更\\使用项目环境运行\\核对输出与金融含义};
-    \draw[arr] (human) -- (ai);
-    \draw[arr] (ai) -- (review);
-    \draw[arr] (review.south) -- ++(0,-0.55) -|
-      node[pos=0.25,below,font=\footnotesize,text=shugray]
-      {把具体报错或差异反馈给 AI，修改后再次验证} (human.south);
-  \end{tikzpicture}
-  \vspace{0.4cm}
-  \begin{block}{向 AI 交代环境和边界}
-    使用本项目的 \texttt{.venv}；先说明修改方案；保留已有编辑；\par
-    修改后列出变更文件、执行的命令，以及仍需我确认的结果。
-  \end{block}
-  \begin{itemize}
-    \item 交给 AI 修改前，先保存 VS Code 中的编辑；同一文件避免同时修改。
-    \item AI 完成后查看磁盘上的最新内容；不要用未保存的旧内容覆盖新修改。
-    \item 人负责核对数据、公式与经济解释，AI 的完成提示是验证的起点。
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{向 AI 描述任务：目标、输入、约束、验收}
-  \begin{block}{课堂提示词示例：在桌面端关联 py4fi-course 后输入}
-    请新建 \texttt{returns\_demo.py}，计算价格序列
-    \texttt{[100, 110, 99]} 的两期简单收益率和累计收益率。\par\medskip
-    仅使用 Python 标准库；用本项目的 \texttt{.venv} 运行；
-    不修改其他文件。先解释公式，再编写和运行代码。\par\medskip
-    输出两期收益率和累计收益率，保留两位小数并显示百分号；
-    列出运行命令，解释累计收益率为什么不等于两期收益率之和。
-  \end{block}
-  \begin{itemize}
-    \item \textbf{目标与输入}：指定计算任务与完整的示例数据。
-    \item \textbf{约束}：说明文件范围、Python 环境和可用依赖。
-    \item \textbf{验收}：明确输出格式、运行证据和需要解释的问题。
-    \item 若结果有误，反馈实际输出与预期差异；若报错，附完整报错。
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{课堂验证：两期收益率如何累计？}
-  \textbf{在 VS Code 阅读 AI 生成的文件，并与下面的计算核对：}
-\begin{lstlisting}[language=Python,numbers=none]
-prices = [100, 110, 99]
-r1 = prices[1] / prices[0] - 1
-r2 = prices[2] / prices[1] - 1
-total = (1 + r1) * (1 + r2) - 1
-print(f"Period 1: {r1:.2%}")
-print(f"Period 2: {r2:.2%}")
-print(f"Total: {total:.2%}")
-\end{lstlisting}
-  \begin{block}{手算验收}
-    两期收益率为 $+10\%$ 和 $-10\%$；累计收益率为\par
-    $(1+10\%)(1-10\%)-1=-1\%$，也等于 $99/100-1$。
-  \end{block}
-  \begin{itemize}
-    \item 在项目目录运行 \texttt{uv run python returns\_demo.py}，核对三个输出。
-    \item 两期简单收益率直接相加得到 $0\%$，不代表持有期累计收益率。
-    \item 将末期价格改成 100，先预测再运行：累计收益率应为 $0\%$。
-  \end{itemize}
-\end{frame}
-
-\section{Git 版本管理与 Agent 协作}
+\section{Git 本地版本管理}
 
 \begin{frame}{Git 是什么，可以做什么？}
   \begin{block}{为项目记录可以追溯的版本}
@@ -584,14 +462,14 @@ print(f"Total: {total:.2%}")
     并保存作者、时间、说明和版本之间的关系。
   \end{block}
   \begin{itemize}
-    \item \textbf{比较修改}：Agent 改了哪些文件、哪些行，计算逻辑是否改变？
+    \item \textbf{比较修改}：自己改了哪些文件、哪些行，计算逻辑是否改变？
     \item \textbf{查阅历史}：哪个版本能运行？某个公式为什么被修改？
     \item \textbf{尝试新方案}：在分支上实验，验证后再合并到主线。
     \item \textbf{恢复与协作}：找回已记录的内容，与他人交换已提交的版本。
   \end{itemize}
   \begin{block}{本课程中的例子}
-    为 \texttt{returns\_demo.py} 记录“完成两期收益率计算”，
-    再记录“支持任意长度价格序列”，无需保存多个“最终版”文件。
+    为 \texttt{mean\_demo.py} 记录“计算三个数的平均值”，
+    再记录“增加一个输入数字”，无需保存多个“最终版”文件。
   \end{block}
   {\tiny\href{https://git-scm.com/docs/gittutorial}{参考：Git 官方入门教程}}
 \end{frame}
@@ -602,7 +480,7 @@ print(f"Total: {total:.2%}")
     box/.style={draw=shublue,fill=shulight,rounded corners=3pt,
       text width=2.6cm,minimum height=1.7cm,align=center,font=\small},
     arr/.style={->,>=stealth,thick,draw=shublue}]
-    \node[box] (work) at (0,0) {\textbf{工作区}\\[6pt]磁盘上的项目文件\\你与 Agent 在这里编辑};
+    \node[box] (work) at (0,0) {\textbf{工作区}\\[6pt]磁盘上的项目文件\\保存与编辑发生在这里};
     \node[box] (stage) at (3.65,0) {\textbf{暂存区}\\[6pt]选入下一次提交的内容\\可以只选部分文件};
     \node[box] (repo) at (7.3,0) {\textbf{本地仓库}\\[6pt]已经提交的版本历史\\通常存放在 \texttt{.git}};
     \draw[arr] (work) -- node[above,font=\scriptsize]{\texttt{git add}} (stage);
@@ -663,19 +541,39 @@ data/raw/
   {\tiny\href{https://git-scm.com/docs/gitignore}{参考：Git 忽略规则}}
 \end{frame}
 
-\begin{frame}[fragile]{第三步：记录第一个可运行版本}
-  \textbf{承接收益率示例：先保存文件，再在项目目录执行。}
+\begin{frame}[fragile]{准备一个能手算核对的小程序}
+  \textbf{在 py4fi-course 中新建 mean\_demo.py，输入并保存：}
+\begin{lstlisting}[language=Python,numbers=none]
+values = [2, 4, 6]
+mean = sum(values) / len(values)
+print(mean)
+\end{lstlisting}
+  \begin{block}{先预测，再运行}
+    三个数的和是 12，个数是 3，平均值应为 $12/3=4$。
+  \end{block}
 \begin{lstlisting}[language={},numbers=none]
-uv run python returns_demo.py
+uv run python mean_demo.py
+\end{lstlisting}
+  \begin{itemize}
+    \item 终端应输出 \texttt{4.0}；\texttt{sum} 求和，\texttt{len} 统计元素个数。
+    \item 本节关注如何保存、运行和记录版本；Python 语法会在后续章节展开。
+    \item 下一页把这份可运行程序与环境文件一起提交。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{第三步：记录第一个可运行版本}
+  \textbf{承接上一页的平均值程序：先保存文件，再在项目目录执行。}
+\begin{lstlisting}[language={},numbers=none]
+uv run python mean_demo.py
 git status
-git add returns_demo.py .gitignore
+git add mean_demo.py .gitignore
 git add pyproject.toml uv.lock .python-version
 git diff --cached
-git commit -m "Add two-period returns example"
+git commit -m "Add mean example"
 git log -5 --format="%s"
 \end{lstlisting}
   \begin{itemize}
-    \item 核对收益率输出为 $10\%$、$-10\%$ 和 $-1\%$，再记录这一版本。
+    \item 核对平均值输出为 \texttt{4.0}，再记录这一版本。
     \item \texttt{diff --cached} 展示即将提交的内容；有遗漏时补充 add。
     \item \texttt{commit -m} 写明这次做了什么；最后一行查看最近 5 次提交的标题。
     \item 如果提示 \texttt{nothing to commit}，说明当前没有可提交的新内容。
@@ -699,8 +597,8 @@ git log -5 --format="%s"
       图中的 \textbf{M} 表示已修改，\textbf{U} 表示尚未跟踪。
     \end{column}
   \end{columns}
-  \begin{block}{迁移到收益率练习}
-    找到 \texttt{returns\_demo.py}，核对修改并运行，再暂存该文件；\par
+  \begin{block}{迁移到平均值练习}
+    找到 \texttt{mean\_demo.py}，核对修改并运行，再暂存该文件；\par
     暂存后若继续编辑，需要再次暂存，才会把后续修改加入提交。
   \end{block}
   {\tiny 图片：\href{https://code.visualstudio.com/docs/sourcecontrol/staging-commits}{VS Code 官方暂存与提交指南}（仅展示左侧操作区域）；示例文件名不同，操作相同。}
@@ -709,8 +607,8 @@ git log -5 --format="%s"
 \begin{frame}[fragile]{日常检查：改了什么，哪些会被提交？}
 \begin{lstlisting}[language={},numbers=none]
 git status
-git diff -- returns_demo.py
-git diff --cached -- returns_demo.py
+git diff -- mean_demo.py
+git diff --cached -- mean_demo.py
 git log -5 --format="%s"
 \end{lstlisting}
   \begin{itemize}
@@ -721,7 +619,7 @@ git log -5 --format="%s"
   \end{itemize}
   \begin{block}{只想撤销暂存，保留代码修改}
     已有首次提交后，执行
-    \texttt{git restore --staged returns\_demo.py}。\par
+    \texttt{git restore --staged mean\_demo.py}。\par
     不带 \texttt{--staged} 的 restore 会改写工作区文件，含义不同。
   \end{block}
   {\tiny\href{https://git-scm.com/docs/git-diff}{参考：git diff}\quad
@@ -740,10 +638,527 @@ git log -5 --format="%s"
       \textbf{先看比较对象}\\从 Changes 打开时，看未暂存修改；从 Staged Changes 打开时，看将提交的修改。
     \end{column}
   \end{columns}
-  \begin{block}{对收益率程序提出三个问题}
-    改动是否只涉及目标文件？累计收益率公式是否正确？扩展后的输入是否已经运行验证？
+  \begin{block}{对平均值程序提出三个问题}
+    改动是否只涉及目标文件？平均值公式是否正确？修改后的输入是否已经运行验证？
   \end{block}
   {\tiny 图片：\href{https://code.visualstudio.com/docs/sourcecontrol/staging-commits}{VS Code 官方差异编辑器示例}；图中为 JavaScript，只用于认识差异视图，无需学习图中代码。}
+\end{frame}
+
+\begin{frame}[fragile]{用分支尝试修改，再合并回主线}
+  \textbf{先提交当前版本，确认 git status 显示工作区干净。}
+\begin{lstlisting}[language={},numbers=none]
+git switch -c mean-update
+\end{lstlisting}
+  把 \texttt{mean\_demo.py} 的输入改为 \texttt{[2,4,6,8]}，预期平均值为 5。
+\begin{lstlisting}[language={},numbers=none]
+uv run python mean_demo.py
+git diff -- mean_demo.py
+git add mean_demo.py
+git commit -m "Add a fourth value"
+git switch main
+git merge mean-update
+\end{lstlisting}
+  \begin{block}{怎样理解分支？}
+    新提交先记在 \texttt{mean-update}，合并后主线也包含这次修改。\par
+    普通分支共用工作目录；切换会更新文件，不会自动隔离未提交的编辑。
+  \end{block}
+  {\small 合并出现冲突时，理解两边意图，编辑为正确结果，再运行、暂存并提交。}
+  \par{\tiny\href{https://git-scm.com/docs/git-switch}{参考：git switch}\quad
+  \href{https://git-scm.com/docs/gittutorial}{分支与合并}}
+\end{frame}
+
+\begin{frame}[fragile]{远程协作：Git 与 GitHub 的区别}
+  \begin{itemize}
+    \item \textbf{Git} 是版本管理工具；\textbf{GitHub / Gitee} 是托管远程仓库的平台。
+    \item \textbf{commit} 保存到本地；\textbf{push} 上传提交；\textbf{pull} 获取并整合远程更新。
+    \item 从他人已有仓库开始，用 \texttt{git clone 仓库地址}，无需再执行 init。
+  \end{itemize}
+  \textbf{可选练习：在平台创建空仓库并完成认证后，回到本地主分支执行。}
+\begin{lstlisting}[language={},numbers=none]
+git remote add origin https://github.com/USER/REPO.git
+git push -u origin main
+\end{lstlisting}
+  \relax
+  {\small 将 \texttt{USER/REPO} 替换为实际地址；\texttt{origin} 是远程仓库的简称。
+  上面假设此前未配置 origin；后续可用 \texttt{git push} 同步新提交。}
+  \begin{block}{本节最低目标}
+    完成一次“修改 $\rightarrow$ 查看差异 $\rightarrow$ 运行验证 $\rightarrow$ 提交”。\par
+    下一节用 clone 获取老师已有的仓库；此处发布个人仓库的命令可课后尝试。
+  \end{block}
+  {\tiny\href{https://git-scm.com/docs/git-push}{参考：git push}\quad
+  \href{https://git-scm.com/docs/gittutorial}{远程协作}}
+\end{frame}
+
+\section{从 GitHub 获取与同步课程}
+
+\begin{frame}{老师更新课程后，怎样同步到自己的电脑？}
+  \begin{block}{本课程仓库（repo，即 repository）}
+    \url{https://github.com/aiqfin/python-for-finance}\par
+    \texttt{aiqfin} 是仓库所属组织，\texttt{python-for-finance} 是仓库名称。
+  \end{block}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={draw=shublue,fill=shulight,rounded corners=3pt,
+      text width=3.6cm,minimum height=1.5cm,align=center,font=\small},
+    arr/.style={->,>=stealth,thick,draw=shublue}]
+    \node[box] (remote) at (0,0) {\textbf{GitHub 上的课程仓库}\\老师推送后的课程版本};
+    \node[box] (local) at (6.4,0) {\textbf{学生电脑上的本地仓库}\\VS Code 阅读与运行};
+    \draw[arr] (remote) -- node[above,font=\small]{首次 clone}
+      node[below,font=\small]{以后 pull} (local);
+  \end{tikzpicture}
+  \end{center}
+  \begin{itemize}
+    \item 课程仓库当前公开：浏览和通过 HTTPS 克隆通常不需要 GitHub 账号。
+    \item \textbf{clone} 建立本地副本并保存远程地址；\textbf{pull} 获取更新并整合到当前分支。
+    \item \textbf{Download ZIP} 只下载文件快照，解压目录不能直接用 Git pull 更新。
+    \item 老师在本机保存或提交还不够；\textbf{推送到 GitHub 后}，学生才能拉取到更新。
+  \end{itemize}
+  {\tiny 仓库与默认分支于 2026-09-24 核对；参考：\href{https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository}{GitHub 克隆指南}。}
+\end{frame}
+
+\begin{frame}{看图找到课程仓库的 HTTPS 地址}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.56\textwidth}
+      \includegraphics[width=\linewidth]{github-clone-https.png}
+    \end{column}
+    \begin{column}{0.41\textwidth}
+      \small
+      \textbf{1. 打开课程仓库主页}\\先确认地址中的组织和仓库名。\par\medskip
+      \textbf{2. 点击绿色 Code 按钮}\\选择 Local 下的 HTTPS。\par\medskip
+      \textbf{3. 点击复制图标}\\把地址用于 Git clone 或 VS Code 的克隆入口。\par\medskip
+      \textbf{图中是官方示例仓库}\\课堂请使用下方课程地址，不复制截图里的 github/docs。
+    \end{column}
+  \end{columns}
+  \begin{block}{本课程的克隆地址}
+    \url{https://github.com/aiqfin/python-for-finance.git}
+  \end{block}
+  {\tiny 图片：\href{https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository}{GitHub 官方克隆指南}。}
+\end{frame}
+
+\begin{frame}[fragile]{首次获取：克隆仓库，再用 VS Code 打开}
+  \textbf{已学会 Git 和 uv；在 py4fi-course 外的父目录打开终端。}
+\begin{lstlisting}[language={},numbers=none]
+git clone https://github.com/aiqfin/python-for-finance.git
+cd python-for-finance
+git remote -v
+git branch --show-current
+\end{lstlisting}
+  \begin{itemize}
+    \item clone 自动新建 \texttt{python-for-finance} 文件夹；首次执行即可。
+    \item \texttt{origin} 应指向课程地址；当前默认分支是 \texttt{master}。
+    \item 在 VS Code 中选择“文件 $\rightarrow$ 打开文件夹”，打开刚克隆的目录。
+  \end{itemize}
+  \begin{block}{也可以直接用 VS Code 克隆}
+    打开命令面板，选择 \textbf{Git: Clone}，粘贴课程 HTTPS 地址，选择保存位置并打开。\par
+    两种方式任选其一；从 GitHub 克隆后已经有仓库，\textbf{不用再次 git init}。
+  \end{block}
+  {\small 前面空目录练习使用 \texttt{main}；课程仓库使用 \texttt{master}，以实际分支名为准。}
+  \par{\tiny 参考：\href{https://code.visualstudio.com/docs/sourcecontrol/repos-remotes}{VS Code 仓库与远程操作}。}
+\end{frame}
+
+\begin{frame}[fragile]{克隆之后：重建环境，找到课程材料}
+  \textbf{在 python-for-finance 根目录运行：}
+\begin{lstlisting}[language={},numbers=none]
+uv sync --locked
+uv run --locked python -c "import sys; print(sys.executable)"
+\end{lstlisting}
+  \begin{itemize}
+    \item 使用仓库已有的 \texttt{pyproject.toml} 和 \texttt{uv.lock} 建立本机 \texttt{.venv}。
+    \item 已有项目不需要重新 \texttt{uv init} 或逐个添加课程依赖。
+    \item 在 VS Code 打开对应章节的 \texttt{notebooks/}，选择仓库根目录的 \texttt{.venv} 内核。
+    \item 先阅读根目录和本章 README，按要求获取数据，再运行 Notebook。
+  \end{itemize}
+  \begin{block}{为什么某些文件没有下载下来？}
+    Git 只传输已跟踪且已推送的文件。本仓库忽略生成的课件 PDF、环境目录及部分大型数据。\par
+    PDF 按各章说明编译或从老师提供的渠道获取；缺失数据按章节说明准备。
+  \end{block}
+  {\small 若锁文件与依赖声明不一致，保留报错并反馈；不要为了安装而随意改锁文件。}
+  \par{\tiny 参考：\href{https://docs.astral.sh/uv/concepts/projects/sync/}{uv 锁文件与环境同步}；文件范围依据本仓库 \texttt{.gitignore}。}
+\end{frame}
+
+\begin{frame}[fragile]{每次上课前：拉取老师的新版本}
+  \textbf{先保存编辑器内容，在仓库根目录检查：}
+\begin{lstlisting}[language={},numbers=none]
+git status
+git branch --show-current
+\end{lstlisting}
+  \textbf{确认工作区干净、位于 master，且没有自己的本地提交后：}
+\begin{lstlisting}[language={},numbers=none]
+git pull --ff-only origin master
+uv sync --locked
+git log -3 --format="%s"
+\end{lstlisting}
+  \begin{itemize}
+    \item \texttt{--ff-only} 只允许分支直接前进；若历史分叉，会停止，避免自动生成合并。
+    \item 环境同步成功后，重新打开有更新的 Notebook，核对老师公布的内容。
+    \item \texttt{Already up to date.} 表示当前分支无需再整合该远程分支的更新。
+  \end{itemize}
+  \begin{block}{已有练习修改怎么办？}
+    先按下一页保存到个人分支，再更新课程主分支。Notebook 的输出变化也可能被 Git 识别为修改。
+  \end{block}
+  {\tiny 参考：\href{https://git-scm.com/docs/git-pull}{Git pull 文档}。}
+\end{frame}
+
+\begin{frame}[fragile]{开始写练习：把个人修改保存在自己的分支}
+  \textbf{首次开始练习时，从课程 master 创建个人分支：}
+\begin{lstlisting}[language={},numbers=none]
+git switch -c my-work
+\end{lstlisting}
+  \textbf{完成一段练习，保存 Notebook，检查并提交指定文件：}
+\begin{lstlisting}[language={},numbers=none]
+git status
+git add "Chapter2 - Python基础语法/notebooks/02_Python_Basics.ipynb"
+git diff --cached
+git commit -m "Complete chapter 2 practice"
+\end{lstlisting}
+  \begin{itemize}
+    \item 按实际修改的文件替换路径；提交前按前文设置自己的作者姓名和邮箱。
+    \item 已有 \texttt{my-work} 时用 \texttt{git switch my-work}，不要重复创建。
+    \item 若已在 master 上编辑但尚未提交，先创建个人分支再提交；确认 Git 状态。
+  \end{itemize}
+  \begin{block}{本地提交与上传作业是两回事}
+    commit 只保存在自己电脑。克隆公开课程不授予向老师仓库 push 的权限；作业按老师要求提交。
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{保留练习，同时合并老师的后续更新}
+  \textbf{前提：个人练习已提交，git status 显示工作区干净。}
+\begin{lstlisting}[language={},numbers=none]
+git switch master
+git pull --ff-only origin master
+git switch my-work
+git merge master
+\end{lstlisting}
+  \begin{itemize}
+    \item master 用于接收课程更新；my-work 保存练习，合并后同时包含两边的提交。
+    \item 合并成功后执行 \texttt{uv sync --locked}，再运行本次涉及的例子。
+    \item 同一位置两边都改过可能发生冲突；保留双方意图，处理后检查、运行、提交。
+  \end{itemize}
+  \begin{block}{遇到报错时，先判断属于哪一类}
+    提示本地修改将被覆盖：先保存并提交自己的修改。\par
+    提示无法快进：主分支已有分叉，先请老师协助检查。\par
+    Notebook 合并冲突：不熟悉其格式时先求助，不要用丢弃全部修改来解决。
+  \end{block}
+  {\small Fork 是在自己 GitHub 账号下建立仓库副本，适合以后上传与协作；接收课程更新不要求先 Fork。}
+\end{frame}
+
+\begin{frame}{课堂检查：我拿到的是哪一份课程？}
+  \begin{enumerate}
+    \item 展示本地仓库路径、\texttt{origin} 地址和当前分支名。
+    \item 确认老师已推送一次更新，拉取后打开对应文件，指出新增内容。
+    \item 展示 Notebook 使用的解释器路径，说明它属于哪个项目。
+  \end{enumerate}
+  \begin{block}{讨论}
+    为什么下载 ZIP 后不能直接 pull？为什么老师 commit 后学生可能仍看不到更新？\par
+    为什么运行 Notebook 后，下一次同步前仍需查看 git status？
+  \end{block}
+  \uncover<2->{
+    \begin{exampleblock}{参考答案（下一步展开）}
+      ZIP 不包含完整 Git 仓库；老师还需要 push；Notebook 保存的输出也可能改变文件。\par
+      验收关注仓库地址、分支、具体文件更新及解释器路径，不能只看“命令已执行”。
+    \end{exampleblock}
+  }
+\end{frame}
+
+
+\section{AI 辅助编程：以 Qoder 为例}
+
+\begin{frame}{认识 Qoder：围绕项目完成编程任务}
+  \begin{itemize}
+    \item 在 Qoder 中打开本地项目，说明需要完成的任务和涉及的文件。
+    \item 让 AI 辅助阅读代码、保存修改、执行命令，并报告运行结果。
+    \item 在 VS Code 中阅读代码、运行 Notebook，核对计算和输出。
+  \end{itemize}
+  \begin{block}{本章统一使用 Qoder 示例}
+    本章使用 Qoder CN 桌面端；同类工具可沿用相同的任务描述与验证流程。
+  \end{block}
+  \begin{block}{一次任务的交付物}
+    修改后的项目文件、实际运行结果，以及对修改内容的解释。
+  \end{block}
+  {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{参考：Qoder CN 官方快速入门}}
+\end{frame}
+
+\begin{frame}{打开 Qoder，确认当前练习项目}
+  \begin{enumerate}
+    \item 从 \href{https://qoder.cn/download}{Qoder CN 官方下载页}安装桌面端并登录。
+    \item 选择\textbf{编程}，打开前面创建的 \texttt{py4fi-course}，继续平均值与收益率练习。
+    \item 选择\textbf{本地模式}，确认工作区完整路径与当前分支，再开始新任务。
+    \item 在 VS Code 中打开同一个目录，选好 \texttt{.venv} 解释器或 Notebook 内核。
+    \item 先发送一个阅读任务：“列出本项目的环境文件，解释它们的作用，暂不修改文件。”
+  \end{enumerate}
+  \begin{block}{两个窗口，一份项目文件}
+    课程仓库 \texttt{python-for-finance} 用于同步教材；本节切回 \texttt{py4fi-course}。\par
+    两个项目各有自己的环境和 Git 历史；核对 VS Code 与 Qoder 打开的完整路径。
+  \end{block}
+  {\small 桌面端入口名称可能随版本变化；以官方指南和当前界面为准。}
+  \par{\tiny\href{https://docs.qoder.cn/qoder/quickstart}{参考：Qoder CN 官方快速入门}}
+\end{frame}
+
+\begin{frame}{协作流程：提出需求、查看修改、运行验证}
+  \centering
+  \begin{tikzpicture}[
+    workflowstage/.style={draw, rounded corners=3pt, text width=2.6cm,
+      minimum height=1.7cm, align=center, font=\small, inner sep=6pt},
+    arr/.style={->, >=stealth, thick, draw=shublue}]
+    \node[workflowstage,draw=shugold,fill=shugold!12] (human) at (0,0)
+      {\textbf{1. 人明确任务}\\[5pt]分析目标与数据\\允许修改的文件\\预期输出与判断标准};
+    \node[workflowstage,draw=shusky,fill=shusky!10] (ai) at (3.65,0)
+      {\textbf{2. Qoder 执行}\\[5pt]读取项目上下文\\生成或修改代码\\说明修改及运行情况};
+    \node[workflowstage,draw=shugold,fill=shugold!12] (review) at (7.3,0)
+      {\textbf{3. 人验证结果}\\[5pt]阅读代码与变更\\使用项目环境运行\\核对输出与金融含义};
+    \draw[arr] (human) -- (ai);
+    \draw[arr] (ai) -- (review);
+    \draw[arr] (review.south) -- ++(0,-0.55) -|
+      node[pos=0.25,below,font=\footnotesize,text=shugray]
+      {把具体报错或差异反馈给 AI，修改后再次验证} (human.south);
+  \end{tikzpicture}
+  \vspace{0.4cm}
+  \begin{block}{向 AI 交代环境和边界}
+    使用本项目的 \texttt{.venv}；先说明修改方案；保留已有编辑；\par
+    修改后列出变更文件、执行的命令，以及仍需我确认的结果。
+  \end{block}
+  \begin{itemize}
+    \item 交给 AI 修改前，先保存 VS Code 中的编辑；同一文件避免同时修改。
+    \item AI 完成后查看磁盘上的最新内容；不要用未保存的旧内容覆盖新修改。
+    \item 人负责核对数据、公式与经济解释，AI 的完成提示是验证的起点。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{AI 编程：模型、上下文与工具}
+  \begin{block}{AI 编程是什么？}
+    用自然语言描述需求，让 AI 辅助编写、解释和修改代码，\par
+    再通过实际运行与结果检查，逐步完成任务。
+  \end{block}
+  \begin{tabular}{p{0.18\textwidth}p{0.71\textwidth}}
+    \toprule
+    组成 & 在课程项目中的作用 \\
+    \midrule
+    大语言模型 & 根据需求与已有信息，生成代码和解释。\\[7pt]
+    项目上下文 & 提供当前代码、数据字段、报错和环境信息。\\[7pt]
+    工具 & 在授权范围内读取文件、保存修改、执行命令。\\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item 编程智能体（Agent）把模型与工具结合，按任务需要反复执行和调整。
+    \item 回复中的代码要经过运行；程序能运行，还要检查公式和数据口径。
+    \item 学习时请 AI 解释关键步骤，并尝试自己修改输入、预测输出。
+  \end{itemize}
+  {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{软件操作参考：Qoder CN 官方快速入门}}
+\end{frame}
+
+\begin{frame}[fragile]{从一个小任务理解工具调用}
+  \begin{block}{问题：让 AI 算出平均值，并确认程序真的运行过}
+    请读取已有的 \texttt{mean\_demo.py}，把输入改回 \texttt{[2,4,6]}，运行并说明结果。
+  \end{block}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.49\textwidth}
+      \textbf{模型核对并修改的程序}
+\begin{lstlisting}[numbers=none]
+values = [2, 4, 6]
+mean = sum(values) / len(values)
+print(mean)
+\end{lstlisting}
+      \small 人先手算：$(2+4+6)/3=4$。
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{执行工具的调用示意}
+\begin{lstlisting}[language={},numbers=none]
+tool: run_command
+arguments:
+  command: >
+    uv run python mean_demo.py
+result:
+  stdout: "4.0"
+  exit_code: 0
+\end{lstlisting}
+    \end{column}
+  \end{columns}
+  \begin{itemize}
+    \item \textbf{Tool calling（工具调用）}：模型提出工具名称与参数，运行环境执行并返回结果。
+    \item 文件要由写入工具保存；Python 解释器负责计算；模型再解释输出。
+    \item 上面的接口名称是教学示意，\textbf{不是 Qoder 的实际 API}。执行记录才是运行证据。
+  \end{itemize}
+  {\tiny 概念参考：\href{https://docs.qoder.cn/cli/how-it-works}{Qoder 任务执行原理}。}
+\end{frame}
+
+\begin{frame}{Agent 如何把工具调用串成一个任务？}
+  \centering
+  \begin{tikzpicture}[
+    box/.style={draw=shublue,fill=shulight,rounded corners=3pt,
+      text width=2.65cm,minimum height=1.8cm,align=center,font=\small},
+    arr/.style={->,>=stealth,thick,draw=shublue}]
+    \node[box] (model) at (0,0) {\textbf{模型决定下一步}\\读取已有程序\\提出修改或调用请求};
+    \node[box] (runtime) at (3.65,0) {\textbf{运行环境执行}\\检查工具权限\\读写文件、运行 Python};
+    \node[box] (result) at (7.3,0) {\textbf{返回工具结果}\\文件内容、输出\\退出状态或报错};
+    \draw[arr] (model) -- (runtime);
+    \draw[arr] (runtime) -- (result);
+    \draw[arr] (result.south) -- ++(0,-0.65) -|
+      node[pos=0.25,below,font=\footnotesize]{结果进入上下文，模型据此继续或结束} (model.south);
+  \end{tikzpicture}
+  \vspace{0.6cm}
+  \begin{block}{沿着平均值例子观察执行记录}
+    读取项目约定 $\rightarrow$ 保存程序 $\rightarrow$ 运行命令 $\rightarrow$ 得到 4.0 $\rightarrow$ 核对手算值。
+  \end{block}
+  \begin{itemize}
+    \item 上下文包括当前任务、读到的文件和工具返回值；模型不天然知道磁盘内容。
+    \item 工具失败时，根据具体报错修正；缺少工具或权限时，应说明未完成的步骤。
+    \item 退出状态为 0 说明程序正常结束；\textbf{是否算对，仍要核对输入和公式}。
+  \end{itemize}
+  {\tiny 概念参考：\href{https://docs.qoder.cn/cli/how-it-works}{Qoder Agent 主循环与工具执行}。}
+\end{frame}
+
+\begin{frame}[fragile]{AGENTS.md：把反复交代的项目约定写下来}
+  每次都要说明“用哪个环境、文件放哪里、怎样验证”，可以写入项目根目录的 \texttt{AGENTS.md}。
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\small]
+# 项目约定
+
+- 用中文解释关键步骤。
+- 使用项目 .venv；运行脚本用 uv run python 文件名.py。
+- 输入数据放 data/，运行结果放 outputs/。
+- 修改前查看 Git 状态，保留已有编辑。
+- 修改后运行相关示例，列出命令与实际输出。
+- 未运行的检查要明确说明。
+\end{lstlisting}
+  \begin{itemize}
+    \item 它是供 Agent 阅读的 Markdown 文本，可用 VS Code 编辑，文件名采用大写 \texttt{AGENTS.md}。
+    \item 项目共享约定可纳入 Git；只写简短、稳定、能执行和检查的要求。
+    \item “今天只修改平均值程序”属于本次提示词；不必写成长期规则。
+  \end{itemize}
+  {\tiny 示例为本课程自编；文件机制参考：\href{https://docs.qoder.cn/cli/memory}{Qoder CLI 静态记忆文档}。}
+\end{frame}
+
+\begin{frame}{怎样让 AGENTS.md 在当前任务中发挥作用？}
+  \begin{enumerate}
+    \item 在练习项目根目录保存 \texttt{AGENTS.md}，先检查里面的命令和目录是否真实可用。
+    \item 开始任务时要求：“先读取项目根目录的 AGENTS.md，概括与本次任务相关的约定。”
+    \item 提交具体任务，例如修改 \texttt{mean\_demo.py}；检查实际命令是否使用项目环境。
+    \item 约定变化时修改该文件，查看差异并随项目提交。
+  \end{enumerate}
+  \begin{block}{区分产品与作用范围}
+    Qoder CLI 文档明确支持项目 \texttt{AGENTS.md}，可用 \texttt{/memory} 查看加载情况。\par
+    桌面端课堂练习先显式要求读取；不要把 CLI 的自动加载规则直接套到所有客户端。
+  \end{block}
+  \begin{block}{规则的作用与边界}
+    文件为模型提供指令，\textbf{不保证每条要求都被正确执行}，也不等于系统权限。\par
+    检查运行路径、输出和 diff，才能判断任务有没有按约定完成。
+  \end{block}
+  {\tiny 参考：\href{https://docs.qoder.cn/cli/memory}{Qoder CLI 的 AGENTS.md 与加载机制}。}
+\end{frame}
+
+\begin{frame}[fragile]{Skill：把一类任务整理成可复用流程}
+  \begin{block}{从重复任务出发}
+    不同练习都需要“读代码、手算小样本、运行、核对输出”，可以整理为一个验算技能。
+  \end{block}
+  \textbf{示例：技能目录 verify-example 中的 SKILL.md}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\small]
+---
+name: verify-example
+description: 验算简短 Python 教学示例时使用。
+---
+1. 阅读指定程序，说明输入、计算公式与输出。
+2. 选一个可以手算的小例子，先写出预期值。
+3. 用项目环境运行程序，记录命令和实际输出。
+4. 对比预期值；若有差异，解释原因并重新验证。
+5. 汇报修改的文件，以及尚未检查的内容。
+\end{lstlisting}
+  {\small 文件头说明名称和适用任务，正文给出步骤；技能还可附带脚本、模板和参考资料。}
+  \par{\tiny 格式参考：\href{https://agentskills.io/specification}{Agent Skills 规范}；上例是教学用流程，并未安装到当前项目。}
+\end{frame}
+
+\begin{frame}{在 Qoder 中使用一个 Skill}
+  \begin{enumerate}
+    \item 打开“扩展 $\rightarrow$ 技能”，先阅读技能用途、说明及附带脚本。
+    \item 安装已有技能；或通过“添加技能”导入自己准备的 \texttt{SKILL.md} 或技能 ZIP。
+    \item 在任务输入框输入 \texttt{/}，从建议列表选择技能，再补充文件与验收要求。
+    \item 检查执行过程和结果；技能提供流程，实际读写与运行仍通过工具完成。
+  \end{enumerate}
+  \begin{block}{沿用平均值练习}
+    选择 \texttt{verify-example} 技能后输入：\par
+    “验算 \texttt{mean\_demo.py}。输入为 \texttt{[2,4,6]}，先手算再运行；只检查该文件。”
+  \end{block}
+  \begin{itemize}
+    \item Qoder 也可根据任务匹配已安装技能；初次学习先明确选择，便于观察。
+    \item Skill 不会重新训练模型；导入技能后仍需核对依赖和权限是否满足任务要求。
+    \item 把文件放进任意目录不代表已经安装；先确认“已安装”和建议列表中可见。
+  \end{itemize}
+  {\tiny 操作参考：\href{https://docs.qoder.cn/qoder/skills}{Qoder CN 桌面端技能指南}；入口随版本变化。}
+\end{frame}
+
+\begin{frame}{把几个概念放回同一个工作流程}
+  \begin{tabular}{@{}p{0.23\textwidth}p{0.23\textwidth}p{0.43\textwidth}@{}}
+    \toprule
+    概念 & 回答的问题 & 在平均值任务中的例子 \\
+    \midrule
+    本次提示词 & 这次做什么？ & 为三个数字计算平均值。\\[7pt]
+    \texttt{AGENTS.md} & 项目怎么协作？ & 用项目环境，保留已有修改。\\[7pt]
+    Skill & 这类任务怎么做？ & 先手算，再运行，最后核对。\\[7pt]
+    Tool calling & 具体怎么执行？ & 保存文件、执行命令、取得输出。\\[7pt]
+    Git & 如何记录与比较？ & 查看程序差异，提交验证后的版本。\\
+    \bottomrule
+  \end{tabular}
+  \begin{block}{从平均值迁移到收益率}
+    任务改为累计收益率后，项目约定与验算流程仍可复用；\par
+    需要重新确定金融公式与预期结果，不能直接沿用平均值的算法。
+  \end{block}
+\end{frame}
+
+\begin{frame}{课堂练习：给一次 AI 任务留下可核对的记录}
+  \begin{enumerate}
+    \item 在练习目录写三条项目约定，说明 Python 环境、修改范围和验证方式。
+    \item 让 Qoder 读取约定，把平均值输入改为 \texttt{[3,6,9]}，先手算再运行。
+    \item 在执行记录中分别找到一次读取、一次修改和一次运行，并说明返回了什么。
+    \item 按前述方式导入验算技能，再让它检查 \texttt{[2,4,9]}，解释输出。
+  \end{enumerate}
+  \begin{block}{讨论：这些信息应该放在哪里？}
+    “一直用项目环境”；“这次输入为三个数字”；“先手算再运行”；“运行后的输出是 5.0”。
+  \end{block}
+  \uncover<2->{
+    \begin{exampleblock}{参考答案（下一步展开）}
+      预期平均值分别为 6 和 5。四类信息分别对应：项目约定、本次提示词、技能流程、工具结果。\par
+      后面的收益率例子也要先确定预期值，再对照执行结果。
+    \end{exampleblock}
+  }
+\end{frame}
+
+
+\begin{frame}{向 AI 描述任务：目标、输入、约束、验收}
+  \begin{block}{课堂提示词示例：在桌面端关联 py4fi-course 后输入}
+    请新建 \texttt{returns\_demo.py}，计算价格序列
+    \texttt{[100, 110, 99]} 的两期简单收益率和累计收益率。\par\medskip
+    仅使用 Python 标准库；用本项目的 \texttt{.venv} 运行；
+    不修改其他文件。先解释公式，再编写和运行代码。\par\medskip
+    输出两期收益率和累计收益率，保留两位小数并显示百分号；
+    列出运行命令，解释累计收益率为什么不等于两期收益率之和。
+  \end{block}
+  \begin{itemize}
+    \item \textbf{目标与输入}：指定计算任务与完整的示例数据。
+    \item \textbf{约束}：说明文件范围、Python 环境和可用依赖。
+    \item \textbf{验收}：明确输出格式、运行证据和需要解释的问题。
+    \item 若结果有误，反馈实际输出与预期差异；若报错，附完整报错。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{课堂验证：两期收益率如何累计？}
+  \textbf{在 VS Code 阅读 AI 生成的文件，并与下面的计算核对：}
+\begin{lstlisting}[language=Python,numbers=none]
+prices = [100, 110, 99]
+r1 = prices[1] / prices[0] - 1
+r2 = prices[2] / prices[1] - 1
+total = (1 + r1) * (1 + r2) - 1
+print(f"Period 1: {r1:.2%}")
+print(f"Period 2: {r2:.2%}")
+print(f"Total: {total:.2%}")
+\end{lstlisting}
+  \begin{block}{手算验收}
+    两期收益率为 $+10\%$ 和 $-10\%$；累计收益率为\par
+    $(1+10\%)(1-10\%)-1=-1\%$，也等于 $99/100-1$。
+  \end{block}
+  \begin{itemize}
+    \item 在项目目录运行 \texttt{uv run python returns\_demo.py}，核对三个输出。
+    \item 两期简单收益率直接相加得到 $0\%$，不代表持有期累计收益率。
+    \item 将末期价格改成 100，先预测再运行：累计收益率应为 $0\%$。
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{在 Qoder 中查看 Git 修改}
@@ -762,27 +1177,26 @@ git log -5 --format="%s"
   {\tiny\href{https://docs.qoder.cn/qoder/quickstart}{参考：Qoder CN 官方快速入门}}
 \end{frame}
 
-\begin{frame}[fragile]{用分支尝试 Agent 的新方案}
-  \textbf{先提交当前可运行版本，确认 git status 显示工作区干净。}
+\begin{frame}[fragile]{把已验证的收益率程序交给 Git 管理}
+  \textbf{回到 py4fi-course，先保存、验证并提交两期版本：}
+\begin{lstlisting}[language={},numbers=none]
+uv run python returns_demo.py
+git add returns_demo.py
+git diff --cached
+git commit -m "Add two-period returns example"
+git status
+\end{lstlisting}
+  \begin{itemize}
+    \item 输入保持 \texttt{[100,110,99]}，核对累计收益率为 $-1\%$。
+    \item 平均值程序、项目约定等若还有修改，另行检查并提交相关文件。
+    \item 工作区干净后，从练习主线创建分支，再让 AI 扩展收益率程序。
+  \end{itemize}
 \begin{lstlisting}[language={},numbers=none]
 git switch -c agent-returns
 \end{lstlisting}
-  \begin{itemize}
-    \item 分支是一条开发路线；新提交先记录在 \texttt{agent-returns} 上。
-    \item 让 Agent 在该分支修改，审查、运行并提交后，再回到主线合并。
-  \end{itemize}
-\begin{lstlisting}[language={},numbers=none]
-git switch main
-git merge agent-returns
-\end{lstlisting}
-  \begin{block}{分支与文件夹的区别}
-    普通分支共用当前工作目录；切换分支会更新其中的文件。\par
-    分支不会自动隔离未提交的编辑。多人或多个 Agent 同时工作时，
-    可进一步学习 worktree，在不同目录中工作。
+  \begin{block}{复用已经学过的方法}
+    前面手动修改平均值程序；现在由 AI 辅助修改，仍需查看差异、运行验证和记录版本。
   \end{block}
-  {\small 若合并出现冲突，需要理解两边意图，编辑为正确结果，再运行、暂存并提交。}
-  \par{\tiny\href{https://git-scm.com/docs/git-switch}{参考：git switch}\quad
-  \href{https://git-scm.com/docs/gittutorial}{分支与合并}}
 \end{frame}
 
 \begin{frame}[fragile]{Git 与 Agent：先明确范围，再审查和提交}
@@ -802,38 +1216,16 @@ git diff --cached
 git commit -m "Support multiple return periods"
 \end{lstlisting}
   {\small 也可以在审查后明确让 Agent 提交指定文件；一次提交对应一个清楚的任务。
-  Git 记录修改，人仍需判断计算结果是否正确。}
-\end{frame}
-
-\begin{frame}[fragile]{远程协作：Git 与 GitHub 的区别}
-  \begin{itemize}
-    \item \textbf{Git} 是版本管理工具；\textbf{GitHub / Gitee} 是托管远程仓库的平台。
-    \item \textbf{commit} 保存到本地；\textbf{push} 上传提交；\textbf{pull} 获取并整合远程更新。
-    \item 从他人已有仓库开始，用 \texttt{git clone 仓库地址}，无需再执行 init。
-  \end{itemize}
-  \textbf{可选练习：在平台创建空仓库并完成认证后，回到本地主分支执行。}
-\begin{lstlisting}[language={},numbers=none]
-git remote add origin https://github.com/USER/REPO.git
-git push -u origin main
-\end{lstlisting}
-  \relax
-  {\small 将 \texttt{USER/REPO} 替换为实际地址；\texttt{origin} 是远程仓库的简称。
-  上面假设此前未配置 origin；后续可用 \texttt{git push} 同步新提交。}
-  \begin{block}{本节最低目标}
-    完成一次“修改 $\rightarrow$ 查看差异 $\rightarrow$ 运行验证 $\rightarrow$ 提交”。\par
-    本地练习不需要远程账号；发布前确认仓库可见性及上传文件范围。
-  \end{block}
-  {\tiny\href{https://git-scm.com/docs/git-push}{参考：git push}\quad
-  \href{https://git-scm.com/docs/gittutorial}{远程协作}}
+  确认后用 \texttt{git switch main}、\texttt{git merge agent-returns} 合并回练习主线。}
 \end{frame}
 
 \section{综合练习与后续应用}
 
 \begin{frame}{综合练习：为收益率程序保存两个版本}
   \begin{enumerate}
-    \item 在练习目录创建环境，用 Qoder 生成两期收益率程序。
-    \item 手算并核对 $[100,110,99]$ 的结果，提交第一个可运行版本。
-    \item 创建分支，让 Qoder 将程序扩展到至少两个正价格的序列。
+    \item 沿用 \texttt{py4fi-course} 的环境与 Git 历史，整理两期收益率程序。
+    \item 手算核对 $[100,110,99]$，找到或补充提交两期版本。
+    \item 在扩展分支中让 Qoder 支持至少两个正价格；已完成时直接检查该版本。
     \item 核对三期示例 $[100,110,99,108.9]$：累计收益率应为 $8.9\%$。
     \item 查看差异、运行验证，提交扩展版本，再合并回主分支。
   \end{enumerate}

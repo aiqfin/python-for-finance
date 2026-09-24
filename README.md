@@ -65,14 +65,14 @@
 
 ```bash
 # 克隆仓库
-git clone <repo-url>
-cd "Lecture materials"
+git clone https://github.com/aiqfin/python-for-finance.git
+cd python-for-finance
 
 # 创建虚拟环境并安装所有依赖
-uv sync
+uv sync --locked
 ```
 
-`uv sync` 将自动创建 `.venv` 虚拟环境，并安装以下核心依赖：
+`uv sync --locked` 将按课程锁文件创建 `.venv` 虚拟环境并安装依赖；声明与锁文件不一致时会报错。核心依赖如下：
 
 | 类别 | 包 |
 |------|-----|
@@ -82,6 +82,17 @@ uv sync
 | 金融数据 | pandas-datareader |
 | 文件 I/O | tables (HDF5), openpyxl (Excel), pyarrow (Parquet) |
 | 交互环境 | jupyterlab, ipykernel |
+
+### 获取老师的后续更新
+
+在课程仓库根目录先运行 `git status` 和 `git branch --show-current`。确认工作区干净、位于 `master`，且该分支没有个人提交后运行：
+
+```bash
+git pull --ff-only origin master
+uv sync --locked
+```
+
+个人练习先保存在自己的分支，再合并老师更新；具体步骤见[工具篇的 GitHub 同步说明](ChapterX%20-%20AI辅助编程与项目版本管理/README.md#从-github-获取与同步课程)。老师推送到 GitHub 后，学生才能拉取到对应内容。生成的课件 PDF 和部分大型数据未纳入 Git，按各章说明编译或获取。
 
 ### 启动 Jupyter Lab
 
