@@ -47,9 +47,9 @@
 	%%%%----副标题（本章主题）
 	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第3章\quad NumPy数组计算}}
 	%%%%----个人信息
-	\author[王伟冠]{%
+	\author[王伟冠, 吕文俊]{%
 		\begin{tabular}{ll}%
-			主讲人： & 王伟冠\tabularnewline%
+			主讲人： & 王伟冠, 吕文俊\tabularnewline%
 			院\quad 系： & 经济学院金融系\tabularnewline
 		\end{tabular}
 	}
@@ -191,7 +191,17 @@ p.size       # 6        元素总数
 	\end{itemize}
 \end{frame}
 
-\input{supplements/scores}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{2.3A 用成绩表理解 shape 与 axis}
+\small 每行是一名学生，每列是一门课。axis=0 沿学生方向汇总，得到各科均分；axis=1 沿科目方向汇总，得到各学生均分。
+\medskip
+\begin{lstlisting}
+scores = np.array([[80, 90, 70], [60, 75, 90]])
+print(scores.shape)        # 2名学生、3门课
+print(scores.mean(axis=0)) # [70. 82.5 80.]
+print(scores.mean(axis=1)) # [80. 75.]
+\end{lstlisting}
+\end{frame}
 
 \begin{frame}[fragile]{形状变换与拼接}
 	\begin{lstlisting}
@@ -253,7 +263,26 @@ p[1:, :]     # 第1行到末尾的所有行
 
 
 %==============================================================
-\input{supplements/views}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{3.3 切片视图与显式复制}
+\small 基本切片通常共享原数组的数据。需要独立修改时加 copy()。这与 Python 列表的切片不同。
+\medskip
+\begin{lstlisting}
+measurements = np.array([10, 20, 30, 40])
+view = measurements[1:3]
+independent = measurements[1:3].copy()
+view[0] = 99
+print(measurements)  # [10 99 30 40]
+print(independent)   # [20 30]
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3.3 切片视图与显式复制}
+改成 measurements[[1, 2]] 后再修改结果，原数组会变化吗？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \section{向量化运算}
 %==============================================================
@@ -296,7 +325,27 @@ b / a        # array([10., 10., 10.])
 	\end{alertblock}
 \end{frame}
 
-\input{supplements/broadcast}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{4.2A 广播：每科加不同的分数}
+\small (2, 3) 与 (3,) 可以逐列配对。广播从末尾维度比较，长度相同或其中一个为 1 才能兼容。
+\medskip
+\begin{lstlisting}
+scores = np.array([[80, 90, 70], [60, 75, 90]])
+bonus = np.array([2, 0, 5])
+adjusted = scores + bonus
+print(adjusted)
+student_mean = scores.mean(axis=1, keepdims=True)
+print(student_mean.shape)  # (2, 1)
+print(scores - student_mean)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：4.2A 广播：每科加不同的分数}
+将每一科减去该科均分；解释结果为什么每列均值为 0。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \begin{frame}[fragile]{例：一行代码计算收益率}
 	\begin{lstlisting}
@@ -473,7 +522,27 @@ np.cumsum([1, 1, 1, 1])   # array([1, 2, 3, 4]) 累计和
 
 
 %==============================================================
-\input{supplements/walk}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{6.4 非金融小案例：左右走动}
+\small 每步向左或向右移动一格，起点为 0。先生成步长，再用 cumsum 得到位置；随机种子使课堂输出可复现。
+\medskip
+\begin{lstlisting}
+walk_rng = np.random.default_rng(7)
+directions = walk_rng.integers(0, 2, size=12)
+steps = np.where(directions == 0, -1, 1)
+positions = np.r_[0, steps.cumsum()]
+print(steps)
+print(positions)
+print("最远距离：", np.abs(positions).max())
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：6.4 非金融小案例：左右走动}
+改成 100 步，并计算走动后位于起点右侧的比例；分母是否包括起点？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \section{综合案例与小结}
 %==============================================================

@@ -47,9 +47,9 @@
 	%%%%----副标题（本章主题）
 	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第5章\quad Matplotlib可视化}}
 	%%%%----个人信息
-	\author[王伟冠]{%
+	\author[王伟冠, 吕文俊]{%
 		\begin{tabular}{ll}%
-			主讲人： & 王伟冠\tabularnewline%
+			主讲人： & 王伟冠, 吕文俊\tabularnewline%
 			院\quad 系： & 经济学院金融系\tabularnewline
 		\end{tabular}
 	}
@@ -159,7 +159,43 @@ plt.show()                              # 4. 显示
 	\end{itemize}
 \end{frame}
 
-\input{supplements/everyday}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1.2A 先选图，再写代码}
+\small 类别比较用柱状图；时间变化用折线图；单变量分布用直方图；两个数值的关系用散点图。先用非金融小表练习同一套绘图接口。
+\medskip
+\begin{lstlisting}
+drink_names = ["茶", "咖啡", "果汁"]
+drink_counts = [12, 8, 5]
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.bar(drink_names, drink_counts, color="#2B6A6C")
+ax.set(title="课堂合成数据：饮品销量", xlabel="饮品", ylabel="销量（杯）")
+ax.set_ylim(bottom=0)
+fig.tight_layout()
+plt.show()
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{1.2B 折线图：横轴需要有顺序}
+\small 连续五日的气温有时间顺序，适合连线；不能为了让曲线好看先按温度大小排序。所有数值均为教学合成数据。
+\medskip
+\begin{lstlisting}
+days = [1, 2, 3, 4, 5]
+temperature = [25, 27, 26, 29, 28]
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.plot(days, temperature, marker="o", color="#B40D49")
+ax.set(title="连续五日气温（合成）", xlabel="第几日", ylabel="气温（摄氏度）")
+ax.set_xticks(days)
+fig.tight_layout()
+plt.show()
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：1.2B 折线图：横轴需要有顺序}
+在 28 摄氏度画一条虚线并添加图例；为什么折线图不一定要求纵轴从 0 开始？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \begin{frame}[fragile]{多条曲线与图例}
 	\begin{lstlisting}
@@ -267,7 +303,34 @@ ax.legend()
 	\end{figure}
 \end{frame}
 
-\input{supplements/distributions}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{2.3A 直方图：每个柱子数什么}
+\small 合成成绩用于解释分箱：每根柱子数一个分数区间内的学生人数。它与“每班一根柱子”的类别柱状图不同。
+\medskip
+\begin{lstlisting}
+exam_scores = [55, 62, 68, 71, 75, 78, 82, 85, 91, 96]
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.hist(exam_scores, bins=[50, 60, 70, 80, 90, 100],
+        edgecolor="white", color="#2B6A6C")
+ax.set(title="合成成绩的分布", xlabel="成绩（分）", ylabel="人数")
+fig.tight_layout()
+plt.show()
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2.3B 散点图：一行观测对应一个点}
+\small 每个点代表一名虚构学生。横轴学习时间、纵轴成绩；即使有正向关系，也不能仅凭这张图认定学习时间造成成绩差异。
+\medskip
+\begin{lstlisting}
+study_hours = [1, 2, 2, 3, 4, 4, 5, 6, 6, 7]
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.scatter(study_hours, exam_scores, alpha=0.8, color="#B40D49")
+ax.set(title="学习时间与成绩（合成）", xlabel="学习时间（小时）", ylabel="成绩（分）")
+ax.grid(alpha=0.2)
+fig.tight_layout()
+plt.show()
+\end{lstlisting}
+\end{frame}
 
 \begin{frame}[fragile]{柱状图与散点图}
 	\begin{lstlisting}
@@ -309,7 +372,35 @@ rets["茅台"].hist(bins=30)                   # 单列直方图
 
 
 %==============================================================
-\input{supplements/reading}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{3A 从计算结果到可读的图}
+\small 绘图前核对统计口径，绘图后核对标题、单位、样本范围与坐标。柱状图通常从零开始；缺失观测不要随意画成零。
+\medskip
+\begin{lstlisting}
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.5))
+axes[0].bar(drink_names, drink_counts, color="#2B6A6C")
+axes[0].set(title="饮品类别比较", ylabel="销量（杯）")
+axes[1].scatter(study_hours, exam_scores, color="#B40D49")
+axes[1].set(title="两变量关系", xlabel="学习时间（小时）", ylabel="成绩（分）")
+fig.suptitle("课堂合成数据：按问题选择图形")
+fig.tight_layout()
+fig.savefig(OUTPUTS / "nonfinancial_examples.png", dpi=160)
+plt.show()
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3A 从计算结果到可读的图}
+用自己的合成小数据各画一张柱状图和散点图，写一句图能支持的观察，再写一句图不能支持的结论。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}{非金融例子的绘图结果}
+\centering
+\includegraphics[width=.96\textwidth]{nonfinancial_examples.png}\par\medskip
+\small 同样的绘图接口可以迁移到行业比较与收益率关系；先明确每个柱子或点代表什么。
+\end{frame}
 
 \section{综合案例与小结}
 %==============================================================

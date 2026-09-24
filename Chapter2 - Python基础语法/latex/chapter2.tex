@@ -47,9 +47,9 @@
 	%%%%----副标题（本章主题）
 	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第2章\quad Python基础语法}}
 	%%%%----个人信息
-	\author[王伟冠]{%
+	\author[王伟冠, 吕文俊]{%
 		\begin{tabular}{ll}%
-			主讲人： & 王伟冠\tabularnewline%
+			主讲人： & 王伟冠, 吕文俊\tabularnewline%
 			院\quad 系： & 经济学院金融系\tabularnewline
 		\end{tabular}
 	}
@@ -459,7 +459,40 @@ prices.sort()               # 排序（升序）
 	\end{exampleblock}
 \end{frame}
 
-\input{supplements/references}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{5.2A 赋值是起别名，复制才得到新列表}
+\small 变量是指向对象的名字。赋值不会自动复制列表；copy() 创建一个新的外层列表。先预测三个列表的内容，再执行。
+\medskip
+\begin{lstlisting}
+original = [80, 90]
+alias = original
+copied = original.copy()
+alias.append(100)
+print(original)          # [80, 90, 100]
+print(copied)            # [80, 90]
+print(alias is original) # True
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：5.2A 赋值是起别名，复制才得到新列表}
+把 alias[0] 改成 60，哪些列表会改变？如果列表元素本身还是列表，copy() 会复制内层吗？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{5.2B sort 与 sorted：先看返回值}
+\small sort() 修改原列表并返回 None；sorted() 返回新列表。不能把 names.sort() 的返回值当作排好序的名单。
+\medskip
+\begin{lstlisting}
+names = ["Wang", "Li", "Zhang"]
+ordered = sorted(names, key=len)
+print(names, ordered)
+result = names.sort()
+print(names)
+print(result)  # None
+\end{lstlisting}
+\end{frame}
 
 \begin{frame}[fragile]{元组（tuple）：不可变的列表}
 	\begin{lstlisting}
@@ -563,7 +596,51 @@ for i in range(1, 11):      # 1 到 10（含头不含尾）
 	\end{itemize}
 \end{frame}
 
-\input{supplements/loops}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{6.2A enumerate：编号和内容一起取}
+\small 给签到名单编号时，不需要自己维护计数器。enumerate 的 start=1 只改变显示的编号，不改变列表索引。
+\medskip
+\begin{lstlisting}
+attendees = ["小林", "小周", "小陈"]
+for number, person in enumerate(attendees, start=1):
+    print(number, person)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6.2B zip：把姓名与成绩配对}
+\small zip 按位置配对；默认到最短序列就停止。配对前检查长度，避免悄悄漏掉学生。这与 pandas 按标签对齐不同。
+\medskip
+\begin{lstlisting}
+students = ["小林", "小周", "小陈"]
+scores = [82, 95, 68]
+print(len(students), len(scores))
+for student, score in zip(students, scores):
+    print(f"{student}: {score}分")
+score_map = dict(zip(students, scores))
+print(score_map)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：6.2B zip：把姓名与成绩配对}
+输出分数至少为 80 的学生姓名。删去 scores 的最后一个元素，观察配对数量。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{6.2C 列表推导式：从已有循环缩写}
+\small 先理解循环，再使用推导式。读法是“对每个 score，若达到 80，就保留 score”。复杂流程仍分步写。
+\medskip
+\begin{lstlisting}
+scores = [82, 95, 68]
+passed = []
+for score in scores:
+    if score >= 80:
+        passed.append(score)
+short_form = [score for score in scores if score >= 80]
+print(passed, short_form)
+\end{lstlisting}
+\end{frame}
 
 \begin{frame}[fragile]{例：批量计算日收益率}
 	\begin{lstlisting}
@@ -668,7 +745,56 @@ future_value(100, rate=0.05, years=3)  # 指明参数名
 
 
 %==============================================================
-\input{supplements/functions}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{7.4 print 与 return 的区别}
+\small print 负责展示，return 把结果交给调用者。需要继续计算时，应当返回结果。没有 return 的函数调用结果是 None。
+\medskip
+\begin{lstlisting}
+def show_double(number):
+    print(number * 2)
+
+def double(number):
+    return number * 2
+
+shown = show_double(3)
+returned = double(3)
+print(shown, returned + 1)  # None 7
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{7.5 非金融小案例：整理城市名称}
+\small 输入来自手工登记，存在首尾空格和大小写差异。先清理单个值，再循环处理整个列表；不修改输入列表。
+\medskip
+\begin{lstlisting}
+def clean_city(text):
+    return text.strip().title()
+
+raw_cities = [" shanghai ", "BEIJING", "shanghai"]
+cities = [clean_city(text) for text in raw_cities]
+print(cities)
+print(sorted(set(cities)))
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：7.5 非金融小案例：整理城市名称}
+统计每个清理后的城市出现几次，用字典保存。预期 Shanghai 为 2、Beijing 为 1。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{7.6 读报错：定位类型、名字和位置}
+\small 从报错最后一行识别类型，再回看出错行。下面错误行保持注释；课堂逐条取消注释观察，观察后再恢复。
+\medskip
+\begin{lstlisting}
+# float("缺考")       # ValueError：内容不能转成数值
+# "82" + 5           # TypeError：字符串不能与整数相加
+# unknown_score      # NameError：名字还未定义
+# [82, 95][2]        # IndexError：索引超出范围
+print(float("82") + 5)
+print([82, 95][1])
+\end{lstlisting}
+\end{frame}
 
 \section{综合案例与小结}
 %==============================================================

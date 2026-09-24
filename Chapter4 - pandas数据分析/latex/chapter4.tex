@@ -47,9 +47,9 @@
 	%%%%----副标题（本章主题）
 	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第4章\quad pandas数据分析}}
 	%%%%----个人信息
-	\author[王伟冠]{%
+	\author[王伟冠, 吕文俊]{%
 		\begin{tabular}{ll}%
-			主讲人： & 王伟冠\tabularnewline%
+			主讲人： & 王伟冠, 吕文俊\tabularnewline%
 			院\quad 系： & 经济学院金融系\tabularnewline
 		\end{tabular}
 	}
@@ -81,7 +81,30 @@
 \section{初识pandas}
 %==============================================================
 
-\input{supplements/roadmap}
+% 多周教学路线
+\begin{frame}{教学路线：可分四个单元推进}
+\begin{enumerate}
+\item 表与索引：选择、赋值、对齐，先说明一行代表什么。
+\item 清洗：类型、重复、缺失、异常，保留处理依据。
+\item 合并与变形：连接关系、行数变化、长表与宽表。
+\item 分组与应用：聚合、组内计算、订单日报与金融迁移。
+\end{enumerate}
+\begin{block}{课堂节奏}
+每单元可安排一周，也可将讲解、上机和讲评分开。完成本单元练习后再推进，不要求一周讲完整章。
+\end{block}
+\end{frame}
+\begin{frame}{配套 Notebook 与学习顺序}
+\begin{itemize}
+\item 单元一：\texttt{04\_pandas} 第1--5节。
+\item 单元二：\texttt{04\_2\_Cleaning}，整理成绩登记。
+\item 单元三：\texttt{04\_3\_Wrangling}，合并订单与商品。
+\item 单元四：\texttt{04\_4\_GroupBy}，完成订单日报；\\
+再回到 \texttt{04\_pandas} 第6--9节，完成金融案例。
+\end{itemize}
+\begin{block}{运行方式}
+三个补充 Notebook 均可单独从头运行。返回主 Notebook 时从头执行，恢复本文件的变量。
+\end{block}
+\end{frame}
 
 \begin{frame}{本章学习目标}
 	\begin{itemize}
@@ -216,7 +239,32 @@ df.describe()  # 每列的统计摘要：均值、标准差、分位数等
 
 
 %==============================================================
-\input{supplements/basics}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{3A 先说明一行代表什么}
+\small 这张表每行代表一次学生成绩记录，学号是标识而非数量。金融表也可以每行代表“股票—日期”，不必总是每列一只股票。
+\medskip
+\begin{lstlisting}
+students = pd.DataFrame({
+    "学号": ["001", "002", "003", "004"],
+    "姓名": ["小林", "小周", "小陈", "小许"],
+    "班级": ["A", "A", "B", "B"],
+    "成绩": [82, 95, 68, 88]})
+students.info()
+students.head()
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3B 一列与一列表：维度不同}
+\small 单层方括号取一列得到 Series；列名列表得到 DataFrame。先观察 type 和 shape，再决定后面如何操作。
+\medskip
+\begin{lstlisting}
+one_column = students["成绩"]
+one_table = students[["成绩"]]
+print(type(one_column), one_column.shape)
+print(type(one_table), one_table.shape)
+print(students.describe())
+\end{lstlisting}
+\end{frame}
 
 \section{数据选取与筛选}
 %==============================================================
@@ -274,7 +322,48 @@ df[(df["茅台"] > 1500) & (df["平安"] > 55)]
 
 
 %==============================================================
-\input{supplements/selection}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{4A 标签切片与位置切片}
+\small 学号设为索引后，loc 用学号找人，iloc 按当前位置找人。在此唯一且有序的索引上，loc 切片包括末端标签，iloc 不包括末端位置。
+\medskip
+\begin{lstlisting}
+by_id = students.set_index("学号")
+print(by_id.loc["001":"003", ["姓名", "成绩"]])
+print(by_id.iloc[0:2, [0, 2]])
+print(by_id.reset_index().columns.tolist())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{4B 条件筛选与安全赋值}
+\small 用 loc 一次指定行与列进行赋值；不要在 df[条件][列名] 的临时结果上修改原表。保留原始成绩，另建调整列。
+\medskip
+\begin{lstlisting}
+students["调整成绩"] = students["成绩"]
+mask = students["班级"].eq("B")
+students.loc[mask, "调整成绩"] = students.loc[mask, "成绩"] + 2
+selected = students.loc[students["成绩"].ge(80),
+                        ["姓名", "班级", "成绩"]].copy()
+print(selected)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：4B 条件筛选与安全赋值}
+筛选 A 班且成绩至少为 90 的学生，仅展示姓名与成绩。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{4C 对齐：标签相同才相加}
+\small Series 运算按标签匹配。缺少对应项会得到缺失值；fill\_value=0 只适合“未出现确实表示没有”的业务含义。
+\medskip
+\begin{lstlisting}
+morning = pd.Series([3, 5], index=["茶", "咖啡"])
+afternoon = pd.Series([2, 4], index=["咖啡", "果汁"])
+print(morning + afternoon)
+print(morning.add(afternoon, fill_value=0))
+\end{lstlisting}
+\end{frame}
 
 \section{排序与分组}
 %==============================================================
@@ -318,13 +407,545 @@ stocks.groupby("行业")["市盈率"].mean()
 
 %==============================================================
 \section{数据清洗与输入输出}
-\input{supplements/04_2_Cleaning}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 原始登记表：保留文本才能看见问题}
+\small 教学合成数据，每行一次成绩登记。故意保留首尾空格、重复记录、缺考和不合理成绩；学号按字符串读入以保留前导零。
+\medskip
+\begin{lstlisting}
+from io import StringIO
+import pandas as pd
+raw_csv = """学号,姓名,班级,成绩,日期
+001, 小林 ,A,82,2026-09-01
+002,小周,a,95,2026-09-01
+003,小陈,B,缺考,2026-09-02
+004,小许,B,108,2026-09-02
+001, 小林 ,A,82,2026-09-01
+005,小吴, B ,76,日期待核"""
+raw = pd.read_csv(StringIO(raw_csv), dtype="string")
+raw
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2. 先检查，再清洗}
+\small info 看类型和非缺失数，duplicated 找整行重复。这里“缺考”是普通文本，尚不会被 isna 自动识别。
+\medskip
+\begin{lstlisting}
+raw.info()
+print(raw.isna().sum())
+print("整行重复数：", raw.duplicated().sum())
+raw.loc[raw.duplicated(keep=False)]
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3. str 方法：把单个字符串操作扩展到整列}
+\small copy 保留原始登记。统一班级格式后再分组，否则 A 和 a 会被算成两个班。
+\medskip
+\begin{lstlisting}
+clean = raw.copy()
+clean["姓名"] = clean["姓名"].str.strip()
+clean["班级"] = clean["班级"].str.strip().str.upper()
+print(clean["班级"].value_counts())
+print(clean["姓名"].str.contains("小", na=False))
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{4. 类型转换：转换失败的行必须可追踪}
+\small 先把明确的缺考编码改成缺失，再转数值。coerce 将无法解析的值变成缺失；保留原列才能区分缺考与格式错误。
+\medskip
+\begin{lstlisting}
+score_text = clean["成绩"].replace("缺考", pd.NA)
+clean["分数"] = pd.to_numeric(score_text, errors="coerce")
+clean["登记日"] = pd.to_datetime(clean["日期"], errors="coerce")
+parse_failed = score_text.notna() & clean["分数"].isna()
+print(clean.loc[parse_failed | clean["登记日"].isna()])
+print(clean.dtypes)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{5. 重复键不等于重复行}
+\small 本例每名学生只有一次考试，学号应唯一。已确认整行相同的重复登记可以删除；若同一学号分数不同，应先核实，不能任意保留。
+\medskip
+\begin{lstlisting}
+print(clean.loc[clean.duplicated("学号", keep=False)])
+clean = clean.drop_duplicates().reset_index(drop=True)
+print("清理后记录数：", len(clean))
+print("学号唯一：", clean["学号"].is_unique)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6. 异常值与缺失值分开记录}
+\small 考试满分 100，因此 108 是待核异常，不能直接截成 100。缺考也不等于 0 分。设置标记后，在统计列中排除异常。
+\medskip
+\begin{lstlisting}
+clean["成绩异常"] = (clean["分数"].notna() &
+                       ~clean["分数"].between(0, 100))
+clean["有效成绩"] = clean["分数"].mask(clean["成绩异常"])
+print(clean[["学号", "成绩", "成绩异常", "有效成绩"]])
+print("有效成绩均值：", clean["有效成绩"].mean())
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：6. 异常值与缺失值分开记录}
+计算有效成绩数量、缺考数量、异常成绩数量。为什么不能把三者混成一类？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{7. 删除与填充：输出改变了什么}
+\small 比较同一列的有效值平均与填零平均。dropna 的 subset 明确本次分析依赖哪些列；不能因为日期缺失就删除不依赖日期的成绩。
+\medskip
+\begin{lstlisting}
+print(clean["有效成绩"].mean())
+print(clean["有效成绩"].fillna(0).mean())
+usable_scores = clean.dropna(subset=["有效成绩"])
+print(usable_scores[["学号", "有效成绩"]])
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 分类与映射：明确区间边界}
+\small cut 按固定阈值分段，right=False 表示左闭右开。100 包含在 [90,101) 内；没有有效成绩的行仍保留缺失等级。
+\medskip
+\begin{lstlisting}
+clean["等级"] = pd.cut(clean["有效成绩"],
+    bins=[0, 60, 80, 90, 101], right=False,
+    labels=["待提高", "合格", "良好", "优秀"])
+clean["班级名称"] = clean["班级"].map({"A": "一班", "B": "二班"})
+clean[["学号", "有效成绩", "等级", "班级名称"]]
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{9. 导出与读回：CSV 不保存所有类型}
+\small 先在内存中演示 CSV 往返。读回时显式指定学号类型；分类类型和日期类型需要重建。真实文件路径可替换 StringIO。
+\medskip
+\begin{lstlisting}
+csv_text = clean.to_csv(index=False)
+restored = pd.read_csv(StringIO(csv_text), dtype={"学号": "string"})
+print(restored["学号"].tolist())
+print(len(raw), len(clean), len(restored))
+assert len(raw) == 6 and len(clean) == 5
+assert restored["学号"].iloc[0] == "001"
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{10. 本单元练习：给出可解释的清洗记录}
+\small 交付三项结果：保留几行、排除哪些成绩、哪些日期待核。下一单元学习把这类记录与另一张信息表合并。
+\medskip
+\begin{lstlisting}
+audit = pd.Series({
+    "输入行数": len(raw), "保留行数": len(clean),
+    "有效成绩数": clean["有效成绩"].count(),
+    "异常成绩数": clean["成绩异常"].sum(),
+    "待核日期数": clean["登记日"].isna().sum()})
+print(audit)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：10. 本单元练习：给出可解释的清洗记录}
+找出有效成绩低于 80 的学生，保留学号、姓名、班级、有效成绩。解释为什么没有把缺考者选进来。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \section{合并与长宽表转换}
-\input{supplements/04_3_Wrangling}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 两张表的粒度与键}
+\small 合成订单表每行一笔订单，商品表每行一种商品。同一商品可以出现在多笔订单中，因此合并关系是多对一。
+\medskip
+\begin{lstlisting}
+import pandas as pd
+orders = pd.DataFrame({
+    "订单": [1, 2, 3, 4], "商品": ["T", "C", "T", "X"],
+    "数量": [2, 1, 3, 1]})
+products = pd.DataFrame({
+    "商品": ["T", "C", "J"],
+    "名称": ["茶", "咖啡", "果汁"], "单价": [10, 20, 15]})
+print(orders)
+print(products)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2. 左连接：保留每笔订单}
+\small on 明确匹配键；left 保留左表订单。indicator 标记未匹配行，validate 检查商品表的键唯一，避免合并后订单被复制。
+\medskip
+\begin{lstlisting}
+joined = orders.merge(products, on="商品", how="left",
+    validate="many_to_one", indicator=True)
+print(joined)
+print(joined["_merge"].value_counts())
+assert len(joined) == len(orders)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3. 内连接与外连接：观察谁消失、谁新增}
+\small inner 只保留双方存在的商品匹配；outer 还会显示没有订单的商品。未匹配不代表金额为零，应单独列出。
+\medskip
+\begin{lstlisting}
+inner = orders.merge(products, on="商品", how="inner")
+outer = orders.merge(products, on="商品", how="outer",
+                     indicator=True)
+print(len(inner), len(outer))  # 3, 5
+print(outer[["订单", "商品", "_merge"]])
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3. 内连接与外连接：观察谁消失、谁新增}
+哪笔订单在 inner 中消失？哪个商品只在右表中？如果要核对全部订单，该选哪种连接？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{4. 重复键：合并可能让行数变多}
+\small 在商品表中故意重复 T，观察两笔 T 订单各匹配两次。解决方法是核实键与版本，而不是合并后随意去重。
+\medskip
+\begin{lstlisting}
+bad_products = pd.concat([products, products.iloc[[0]]],
+                          ignore_index=True)
+expanded = orders.merge(bad_products, on="商品", how="left")
+print(len(orders), len(expanded))  # 4, 6
+print(bad_products.duplicated("商品").sum())
+# 加 validate="many_to_one" 将直接报错，课堂可自行尝试。
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{5. concat：把同结构记录上下接起来}
+\small concat 不按商品键寻找匹配。ignore\_index 重建行号，不检查业务编号是否重复；拼接后仍要检查订单号。
+\medskip
+\begin{lstlisting}
+next_orders = pd.DataFrame({
+    "订单": [5, 6], "商品": ["C", "T"], "数量": [2, 1]})
+all_orders = pd.concat([orders, next_orders], ignore_index=True)
+print(all_orders)
+print(all_orders["订单"].is_unique)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6. concat 的另一方向：横向按索引对齐}
+\small axis=1 横向拼接时按索引标签对齐，不会因为行数相同就按位置贴在一起。先检查索引含义。
+\medskip
+\begin{lstlisting}
+left = pd.Series([80, 90], index=["001", "002"], name="数学")
+right = pd.Series([70, 85], index=["002", "001"], name="英语")
+print(pd.concat([left, right], axis=1))
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{7. 长表转宽表：pivot 不做统计}
+\small 长表每行是一名学生的一门课成绩；宽表每行一名学生、每列一门课。pivot 要求“学号—课程”组合唯一。
+\medskip
+\begin{lstlisting}
+long_scores = pd.DataFrame({
+    "学号": ["001", "001", "002", "002"],
+    "课程": ["数学", "英语", "数学", "英语"],
+    "成绩": [80, 90, 70, 85]})
+wide = long_scores.pivot(index="学号", columns="课程", values="成绩")
+print(wide)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 宽表转长表：melt 保留身份列}
+\small id\_vars 指定不被展开的标识列。melt 将列名变成课程字段，将原来的单元格变成成绩字段。
+\medskip
+\begin{lstlisting}
+back = wide.reset_index().melt(id_vars="学号",
+    var_name="课程", value_name="成绩")
+print(back.sort_values(["学号", "课程"]))
+assert len(back) == len(long_scores)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{9. 重复组合：先决定是否需要聚合}
+\small 加入一次补考后，同一学生同一课程出现两次。pivot\_table 可以聚合；取最大值代表“保留最高成绩”，这是业务规则。
+\medskip
+\begin{lstlisting}
+retake = pd.DataFrame({"学号": ["002"],
+                       "课程": ["数学"], "成绩": [88]})
+attempts = pd.concat([long_scores, retake], ignore_index=True)
+best = attempts.pivot_table(index="学号", columns="课程",
+    values="成绩", aggfunc="max")
+print(best)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：9. 重复组合：先决定是否需要聚合}
+将 max 改为 mean，002 的数学成绩变成多少？两种答案分别回答什么问题？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{10. 多层索引：把组合键显式写出来}
+\small MultiIndex 可以表示“学号—课程”这类组合标签。先学 set\_index 和 reset\_index，再选学 stack、unstack。
+\medskip
+\begin{lstlisting}
+indexed = long_scores.set_index(["学号", "课程"]).sort_index()
+print(indexed.loc[("001", "数学"), "成绩"])
+print(indexed.unstack("课程"))
+print(indexed.reset_index())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{11. 综合检查：只汇总匹配成功的金额}
+\small 价格未知的 X 订单不能当作零金额。先列出未匹配订单，再汇总可计算的部分，并说明覆盖范围。
+\medskip
+\begin{lstlisting}
+matched = joined.loc[joined["_merge"] == "both"].copy()
+matched["金额"] = matched["数量"] * matched["单价"]
+print(matched[["订单", "名称", "金额"]])
+print("已知金额合计：", matched["金额"].sum())  # 70
+print("未匹配订单数：", (joined["_merge"] == "left_only").sum())
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：11. 综合检查：只汇总匹配成功的金额}
+将商品 X 补录为“水”、单价 5，重新合并全部原订单。总金额应是多少？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \section{分组统计与综合应用}
-\input{supplements/04_4_GroupBy}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 校园饮品订单：一行一笔订单}
+\small 六笔合成订单用于手工核对。金额为数量乘单价；本例价格均已匹配，日期是实际有订单的日期。
+\medskip
+\begin{lstlisting}
+import pandas as pd
+sales = pd.DataFrame({
+    "订单": [1, 2, 3, 4, 5, 6],
+    "日期": ["2026-09-01"] * 3 + ["2026-09-02"] * 3,
+    "门店": ["东", "东", "西", "东", "西", "西"],
+    "商品": ["茶", "咖啡", "茶", "茶", "咖啡", "茶"],
+    "数量": [2, 1, 1, 3, 2, 2], "单价": [10, 20, 10, 10, 20, 10]})
+sales["日期"] = pd.to_datetime(sales["日期"])
+sales["金额"] = sales["数量"] * sales["单价"]
+sales
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{2. groupby：拆分、计算、合并}
+\small 先按门店拆成小表，在各小表内求和，再组成汇总表。as\_index=False 使门店保留为普通列，便于继续合并。
+\medskip
+\begin{lstlisting}
+store_total = sales.groupby("门店", as_index=False)["金额"].sum()
+print(store_total)
+print(sales.groupby(["门店", "商品"])["金额"].sum())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{3. 命名聚合：明确每个指标的含义}
+\small 总金额、订单数和平均每单金额是不同指标。命名聚合直接给结果列起名；金额均值的分母是订单行数。
+\medskip
+\begin{lstlisting}
+summary = sales.groupby("门店", as_index=False).agg(
+    总金额=("金额", "sum"),
+    订单数=("订单", "size"),
+    总杯数=("数量", "sum"),
+    平均每单金额=("金额", "mean"))
+print(summary)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{4. size 与 count：分母不能混淆}
+\small size 统计组内行数，count 统计某列非缺失值数。先明确要数订单、有效金额还是不同顾客，再选择统计方法。
+\medskip
+\begin{lstlisting}
+with_missing = sales.copy()
+with_missing.loc[0, "金额"] = float("nan")
+counts = with_missing.groupby("门店").agg(
+    行数=("金额", "size"), 有效金额数=("金额", "count"))
+print(counts)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：4. size 与 count：分母不能混淆}
+东店的行数与有效金额数各是多少？金额缺失能否当作免费订单？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{5. 加权均值：平均每杯价格}
+\small 平均每单金额不等于平均每杯价格。后者用总金额除以总杯数，相当于按购买数量给单价加权。
+\medskip
+\begin{lstlisting}
+summary["平均每杯价格"] = summary["总金额"] / summary["总杯数"]
+print(summary[["门店", "平均每单金额", "平均每杯价格"]])
+print("全体每杯均价：", sales["金额"].sum() / sales["数量"].sum())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{6. transform：把组内统计带回原行}
+\small agg 每组输出一行，transform 返回与原表等长且对齐的结果。用每笔金额除以所属门店总金额得到组内占比。
+\medskip
+\begin{lstlisting}
+sales["门店总金额"] = sales.groupby("门店")["金额"].transform("sum")
+sales["门店内占比"] = sales["金额"] / sales["门店总金额"]
+print(sales[["订单", "门店", "金额", "门店内占比"]])
+print(sales.groupby("门店")["门店内占比"].sum())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{7. 排名与组内前两名}
+\small 先按金额降序，再按订单号升序决定并列次序，组内取前两行。结果是两笔订单，而不一定是两个不同金额档位。
+\medskip
+\begin{lstlisting}
+ordered = sales.sort_values(["门店", "金额", "订单"],
+                             ascending=[True, False, True])
+top2 = ordered.groupby("门店").head(2)
+print(top2[["订单", "门店", "金额"]])
+sales["组内名次"] = sales.groupby("门店")["金额"].rank(
+    ascending=False, method="min")
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 交叉表：计数与金额表不同}
+\small crosstab 默认数记录。pivot\_table 显式指定金额与 sum 才是金额汇总。本例已知交易明细完整，因此没有订单的组合可填零。
+\medskip
+\begin{lstlisting}
+print(pd.crosstab(sales["门店"], sales["商品"]))
+amount_table = sales.pivot_table(index="门店", columns="商品",
+    values="金额", aggfunc="sum", fill_value=0)
+print(amount_table)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{9. 按日汇总与滚动窗口}
+\small 先汇总到“日”，再滚动才是相邻观测日的窗口。rolling(2) 是两行，不自动补齐日历中没有记录的日期。
+\medskip
+\begin{lstlisting}
+daily = sales.groupby("日期")["金额"].sum().sort_index()
+print(daily)
+print(daily.rolling(2, min_periods=2).mean())
+print(sales.set_index("日期")["金额"].resample("D").sum(min_count=1))
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{10. 金融迁移：按股票计算收益率}
+\small 合成长表每行一只股票一天的收盘价。先按股票和日期排序，在每只股票内部错位，避免把另一只股票的价格当作昨日价。
+\medskip
+\begin{lstlisting}
+quotes = pd.DataFrame({
+    "股票": ["A", "B", "A", "B", "A", "B"],
+    "日期": pd.to_datetime(["2026-09-01"] * 2 +
+                          ["2026-09-02"] * 2 + ["2026-09-03"] * 2),
+    "收盘价": [100, 50, 102, 49, 101, 50]})
+quotes = quotes.sort_values(["股票", "日期"])
+quotes["昨日价"] = quotes.groupby("股票")["收盘价"].shift(1)
+quotes["收益率"] = quotes["收盘价"] / quotes["昨日价"] - 1
+print(quotes)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{11. 金融迁移：从长表到收益率矩阵}
+\small pivot 后每列一只股票；pct\_change(fill\_method=None) 不自动填补缺失价格。比较两种写法的同一观测值。
+\medskip
+\begin{lstlisting}
+price_matrix = quotes.pivot(index="日期", columns="股票", values="收盘价")
+return_matrix = price_matrix.pct_change(fill_method=None)
+print(return_matrix)
+expected = quotes.loc[(quotes["股票"] == "A") &
+    (quotes["日期"] == "2026-09-02"), "收益率"].iloc[0]
+assert abs(return_matrix.loc["2026-09-02", "A"] - expected) < 1e-12
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{12. 综合练习与验收}
+\small 先用订单手算，再检查汇总表。全表金额应为 140 元、总杯数为 11；两门店各 70 元，但每杯均价不同。
+\medskip
+\begin{lstlisting}
+assert sales["金额"].sum() == 140
+assert sales["数量"].sum() == 11
+assert summary["总金额"].sum() == sales["金额"].sum()
+print(summary)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：12. 综合练习与验收}
+按“日期—门店”统计金额与杯数，并计算每杯均价。哪一天全体销售金额更高？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{13. 综合案例起点：从原始订单到日报}
+\small 下面重新开始一套独立的合成数据。每行原本应是一笔订单，但有重复登记、数量缺失和未知商品；目标是输出可核对的已知金额日报。
+\medskip
+\begin{lstlisting}
+raw_orders = pd.DataFrame({
+    "订单": ["01", "02", "03", "04", "05", "06", "01"],
+    "日期": ["2026-09-01"] * 3 + ["2026-09-02"] * 3 + ["2026-09-01"],
+    "门店": ["东", "东", "西", "东", "西", "西", "东"],
+    "商品": [" t ", "C", "T", "T", "C", "X", " t "],
+    "数量": ["2", "1", "缺失", "3", "2", "1", "2"]})
+catalog = pd.DataFrame({"商品": ["T", "C"], "单价": [10, 20]})
+raw_orders
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{14. 清洗：原始值与统计值并存}
+\small 保留 raw\_orders。先统一商品代码，再删除完全相同的登记，转换日期和数量；原始数量列保留，便于回查缺失原因。
+\medskip
+\begin{lstlisting}
+tidy_orders = raw_orders.copy()
+tidy_orders["商品"] = tidy_orders["商品"].str.strip().str.upper()
+tidy_orders = tidy_orders.drop_duplicates().reset_index(drop=True)
+tidy_orders["日期"] = pd.to_datetime(tidy_orders["日期"])
+tidy_orders["有效数量"] = pd.to_numeric(tidy_orders["数量"], errors="coerce")
+assert tidy_orders["订单"].is_unique
+print(tidy_orders)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{15. 合并：把待核订单单独列出}
+\small 左连接保留每笔订单。已匹配商品且数量为正才进入本例金额统计；数量缺失和价格未知都保留在待核清单中。
+\medskip
+\begin{lstlisting}
+enriched = tidy_orders.merge(catalog, on="商品", how="left",
+    validate="many_to_one", indicator=True)
+eligible = enriched["_merge"].eq("both") & enriched["有效数量"].gt(0)
+pending = enriched.loc[~eligible].copy()
+known = enriched.loc[eligible].copy()
+known["金额"] = known["有效数量"] * known["单价"]
+print(pending[["订单", "数量", "商品", "_merge"]])
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{16. 汇总：金额与覆盖范围一起报告}
+\small 已知金额日报仅覆盖四笔订单，不能称为全部销售额。汇总前后金额应一致，同时报告两笔待核订单。
+\medskip
+\begin{lstlisting}
+known_report = known.groupby(["日期", "门店"], as_index=False).agg(
+    已知金额=("金额", "sum"), 可计算订单数=("订单", "size"))
+print(known_report)
+print("待核订单数：", len(pending))
+assert len(raw_orders) == 7 and len(tidy_orders) == 6
+assert len(known) == 4 and len(pending) == 2
+assert known_report["已知金额"].sum() == 110
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{17. 变形：缺失单元格不能随意填零}
+\small 日报透视成“日期×门店”方便比较。西店首日有数量待核订单，不能把该格写成零销售；即使已有金额的格子也可能尚未完整。
+\medskip
+\begin{lstlisting}
+known_wide = known_report.pivot(index="日期", columns="门店", values="已知金额")
+pending_wide = pending.groupby(["日期", "门店"]).size().unstack("门店")
+print("已知金额（不是完整销售额）：")
+print(known_wide)
+print("待核订单数：")
+print(pending_wide)
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{课堂练习：17. 变形：缺失单元格不能随意填零}
+核实订单03数量为1、商品X是5元的水。重新清洗合并并汇总，完整金额应为125元。不要在最终报表中直接改金额。
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
 
 \section{金融时间序列}
 %==============================================================
