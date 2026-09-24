@@ -1,0 +1,16 @@
+format,repeat,read_ms
+Parquet columns,1,1.2813999928766862
+CSV usecols,1,8.497300004819408
+Parquet full then slice,1,2.856399994925596
+CSV usecols,2,8.128600005875342
+Parquet columns,2,1.3001999905100092
+Parquet full then slice,2,2.574900005129166
+CSV usecols,3,8.63260000187438
+Parquet columns,3,1.5358999953605235
+Parquet full then slice,3,2.5290000048698857
+Parquet columns,4,1.0877000022446737
+Parquet full then slice,4,2.3416999902110547
+CSV usecols,4,8.487299986882135
+Parquet columns,5,1.571100001456216
+Parquet full then slice,5,2.4927999911597
+CSV usecols,5,8.578099994338118
