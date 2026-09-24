@@ -7,6 +7,7 @@
 | 章节 | 主题 | 课件 | 课堂代码 |
 |------|------|------|----------|
 | 第1章 | 课程简介与引言 | `Chapter1 - 课程简介与引言/latex/chapter1.pdf` | — |
+| 工具篇 | AI 辅助编程与项目版本管理 | `工具篇 - AI辅助编程与项目版本管理/latex/tools.pdf` | [学习入口](工具篇%20-%20AI辅助编程与项目版本管理/README.md) |
 | 第2章 | Python 基础语法 | `Chapter2 - Python基础语法/latex/chapter2.pdf` | `Chapter2 - Python基础语法/notebooks/02_Python_Basics.ipynb` |
 | 第3章 | NumPy 数组计算 | `Chapter3 - NumPy数组计算/latex/chapter3.pdf` | `Chapter3 - NumPy数组计算/notebooks/03_NumPy.ipynb` |
 | 第4章 | pandas 数据分析 | `Chapter4 - pandas数据分析/latex/chapter4.pdf` | `Chapter4 - pandas数据分析/notebooks/04_pandas.ipynb` |
@@ -17,6 +18,8 @@
 | 第9章 | 模拟与期权定价 | `Chapter9 - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 - 模拟与期权定价/notebooks/09_Monte_Carlo.ipynb` |
 | 第10章 | 统计学与投资组合优化 | `Chapter10 - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 - 统计学与投资组合优化/notebooks/10_Statistics_Portfolio_Optimization.ipynb` |
 | 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
+
+工具篇安排在第1章之后，集中讲授环境配置、VS Code、以 Qoder 为例的 AI 编程及 Git 工作流程；第2—12章编号保持不变。
 
 ## 前几章扩充与 pandas 多周教学
 
