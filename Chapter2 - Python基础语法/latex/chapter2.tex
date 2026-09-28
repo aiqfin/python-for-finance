@@ -13,6 +13,8 @@
 \usepackage{graphicx,hyperref,url}
 \usepackage{subcaption}
 \usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage[super,square]{natbib}
 \usepackage{wrapfig}          % 文字绕排
 \usepackage{calligra}         % 结尾页花体字
@@ -88,6 +90,7 @@
 		\item 掌握常用运算符与表达式
 		\item 掌握列表、元组、字典、集合四种基本数据结构
 		\item 掌握 \texttt{if}、\texttt{for}、\texttt{while} 控制流与函数定义
+		\item 理解类、对象、属性和方法，能编写简单持仓类
 		\item 能够编写简单的金融计算脚本（收益率、复利等）
 	\end{itemize}
 	\vspace{0.3em}
@@ -796,6 +799,503 @@ print([82, 95][1])
 \end{lstlisting}
 \end{frame}
 
+% 面向对象入门：与 Notebook 第8节逐例对应
+\section{类与对象：面向对象入门}
+\begin{frame}[fragile]{问题：怎样管理多个矩形？}
+已知宽和高，怎样求面积？先沿用第2章的字典和函数。长度单位为厘米，面积单位为平方厘米。
+\begin{lstlisting}
+def rectangle_area(rect):
+    return rect["width"] * rect["height"]
+
+rect_a = {"width": 3, "height": 4}
+rect_b = {"width": 5, "height": 2}
+print(rectangle_area(rect_a), rectangle_area(rect_b))
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 12 10}
+\end{exampleblock}
+\small 手算得到 3 × 4 = 12、5 × 2 = 10。字典保存数据，函数接收数据并计算；当相关操作增多时，可以用类组织这些数据和操作。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.1}
+
+\end{frame}
+
+\begin{frame}{类、对象与实例：先分清三个词}
+类（class）定义一类对象的属性与行为，例如 Rectangle。对象（object）是程序中具体存在的值；实例强调“这个对象属于哪个类”。
+\par
+一个具体矩形是 Rectangle 的实例。宽、高是属性（数据），求面积是方法（操作）。同一个类可以创建多个对象，每个对象保存自己的宽和高。
+\par
+学习目标：读懂“对象.属性”和“对象.方法()”，写出简单的类，再用股票持仓练习。前面学过的变量、函数、字典和循环，正好是本节的基础。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.2}
+
+\end{frame}
+
+\begin{frame}{类定义规则，实例保存各自的数据}
+
+\centering
+\begin{tikzpicture}[box/.style={draw=shublue,rounded corners,fill=shulight,align=center,minimum width=3.5cm,minimum height=1.25cm},>=Stealth]
+\node[box] (cls) {Rectangle 类\\初始化规则、area 方法};
+\node[box,below left=1.1cm and 0.1cm of cls] (a) {实例 a\\width = 3，height = 4};
+\node[box,below right=1.1cm and 0.1cm of cls] (b) {实例 b\\width = 5，height = 2};
+\draw[->,thick] (cls) -- node[left]{创建} (a);
+\draw[->,thick] (cls) -- node[right]{创建} (b);
+\end{tikzpicture}
+\par\vspace{0.6cm}
+同一套面积计算规则，分别使用各自的宽与高。\\
+调用 a.area() 得到 12；调用 b.area() 得到 10。
+
+\end{frame}
+
+\begin{frame}[fragile]{第一个类：矩形的宽、高与面积}
+class 后面是类名；类体中的 def 定义方法。按缩进看结构：两个方法并列，方法内部再缩进。
+\begin{lstlisting}
+class Rectangle:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        return self.width * self.height
+\end{lstlisting}
+\small 这里只定义规则，没有创建具体矩形，因此没有输出。\_\_init\_\_ 初始化实例属性；area 读取这些属性并返回面积。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.3}
+
+\end{frame}
+
+\begin{frame}[fragile]{创建两个实例：同一套规则，不同数据}
+调用 Rectangle(宽, 高) 创建实例。变量 a、b 分别引用两个不同的矩形对象。
+\begin{lstlisting}
+a = Rectangle(3, 4)
+b = Rectangle(5, 2)
+print(a.width, a.height, a.area())
+print(b.width, b.height, b.area())
+print(isinstance(a, Rectangle))
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 3 4 12\\
+5 2 10\\
+True}
+\end{exampleblock}
+\small 第一行是 a 的宽、高、面积；第二行是 b 的。isinstance 检查对象是否属于给定类或其子类。类定义通常只写一次，实例可以创建很多个。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.4}
+
+\end{frame}
+
+\begin{frame}[fragile]{self：这一次操作的是哪个对象？}
+实例方法的第一个参数通常叫 self，表示当前实例。通过 a.area() 调用时，Python 自动把 a 传入该参数。
+\begin{lstlisting}
+print(a.area())
+print(Rectangle.area(a))
+print(b.area())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 12\\
+12\\
+10}
+\end{exampleblock}
+\small 前两行在这里等价，都是读取 a 的宽和高；第三行读取 b 的。self 是约定的参数名，不是关键字。调用 a.area() 时不用再手动传 a。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.5}
+
+\end{frame}
+
+\begin{frame}{\_\_init\_\_：把输入保存到实例中}
+以 a = Rectangle(3, 4) 为例：实例创建后，\_\_init\_\_ 接收到 self、width=3、height=4。
+\par
+self.width = width：右侧 width 是本次调用的参数；左侧 self.width 是保存在实例上的属性。初始化结束后，仍能通过 a.width 访问它。
+\par
+\_\_init\_\_ 是初始化方法，不负责返回实例；不要在其中返回业务结果。默认对象创建机制还涉及 \_\_new\_\_，本节不展开。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.6}
+
+\end{frame}
+
+\begin{frame}[fragile]{属性与方法：什么时候加括号？}
+读取属性用点号；执行方法用点号和圆括号。方法本身也是一个可被引用的对象。
+\begin{lstlisting}
+print(a.width)
+print(a.area())
+area_function = a.area
+print(callable(area_function))
+print(area_function())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 3\\
+12\\
+True\\
+12}
+\end{exampleblock}
+\small a.area 取得绑定到 a 的方法，a.area() 才执行它。a.width 保存整数，写成 a.width() 会因整数不可调用而报 TypeError。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.7}
+
+\end{frame}
+
+\begin{frame}[fragile]{方法返回结果，还是修改状态？}
+area() 返回一个计算结果，不修改矩形。直接给属性赋值会改变对象的状态；下一次计算使用新状态。
+\begin{lstlisting}
+a.width = 6
+result = a.area()
+print(result)
+print(b.area())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 24\\
+10}
+\end{exampleblock}
+\small a 的面积变成 6 × 4 = 24；b 仍是 10。return 使结果可以继续参与运算；只有 print 而没有 return 的方法默认返回 None。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.8}
+
+\end{frame}
+
+\begin{frame}[fragile]{你已经用过对象和方法}
+列表和字符串也是对象。可以先学会使用某个类的实例，再逐步学习怎样自定义类。
+\begin{lstlisting}
+numbers = [3, 1, 2]
+returned = numbers.append(4)
+print(numbers, returned)
+name = " python "
+print(name.strip().upper())
+print(repr(name))
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small [3, 1, 2, 4] None\\
+PYTHON\\
+' python '}
+\end{exampleblock}
+\small append 修改列表并返回 None；strip 和 upper 返回新字符串，原字符串仍有空格。判断一个方法的行为，要看其约定，不能仅凭圆括号猜测。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.9}
+
+\end{frame}
+
+\begin{frame}[fragile]{赋值不会复制对象}
+两个变量可以指向同一实例。先预测：改 alias.width 后，original 的面积会不会变？
+\begin{lstlisting}
+original = Rectangle(3, 4)
+alias = original
+independent = Rectangle(3, 4)
+alias.width = 8
+print(original.area(), independent.area())
+print(alias is original)
+print(independent is original)
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 32 12\\
+True\\
+False}
+\end{exampleblock}
+\small original 和 alias 指向同一个对象，面积为 32；independent 是新建对象，面积仍为 12。is 比较是否为同一对象。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.10}
+
+\end{frame}
+
+\begin{frame}{问题：一笔持仓现在值多少钱？}
+现在把矩形的“数据＋操作”迁移到持仓。一个 StockPosition 实例表示一只股票的一笔持仓。全部数字均为自编教学数据，不需要下载行情。
+\par
+symbol 是代码字符串；shares 是股数（股）；cost\_price 是每股买入成本；price 是当前每股价格，价格单位均为元/股。
+\par
+手算：100 股，成本 10 元，现价 12 元。市值为 100 × 12 = 1200 元，未实现盈亏为 100 × (12 − 10) = 200 元。暂不计费用、分红及交易。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.11}
+
+\end{frame}
+
+\begin{frame}[fragile]{持仓类：保存字段，定义两个计算方法}
+每个属性只保存基础信息；市值与盈亏在调用时由当前价格计算，避免另存一份容易过期的结果。
+\begin{lstlisting}
+class StockPosition:
+    def __init__(self, symbol, shares, cost_price, price):
+        self.symbol = symbol
+        self.shares = shares
+        self.cost_price = cost_price
+        self.price = price
+
+    def market_value(self):
+        return self.shares * self.price
+
+    def unrealized_pnl(self):
+        return self.shares * (self.price - self.cost_price)
+
+    def update_price(self, new_price):
+        self.price = new_price
+\end{lstlisting}
+\small market\_value 和 unrealized\_pnl 返回金额；update\_price 修改状态，没有显式 return，因此返回 None。教学示例假定股数与价格为非负数。 这也是封装：将持仓数据和相关操作放在同一个类中，提供统一的调用接口；本例属性仍可直接访问。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.12}
+
+\end{frame}
+
+\begin{frame}[fragile]{创建持仓：输出每个数字的含义}
+代码是字符串，避免丢掉前导零。下例只表示一笔持仓，不代表完整账户或真实成交。
+\begin{lstlisting}
+position = StockPosition("000001", 100, 10.0, 12.0)
+print(position.symbol, position.shares)
+print(f"Market value: {position.market_value():.2f}")
+print(f"Unrealized P&L: {position.unrealized_pnl():.2f}")
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 000001 100\\
+Market value: 1200.00\\
+Unrealized P\&L: 200.00}
+\end{exampleblock}
+\small 第一行是代码和股数；随后是市值 1200 元、未实现盈亏 200 元。“未实现”表示尚未卖出；这些数值只是所给价格下的估值。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.13}
+
+\end{frame}
+
+\begin{frame}[fragile]{更新价格：对象状态与返回值}
+将价格改为 11 元/股。先预测：股数、成本、市值和盈亏各有哪些变化？
+\begin{lstlisting}
+returned = position.update_price(11.0)
+print(returned)
+print(position.shares, position.cost_price)
+print(position.market_value(), position.unrealized_pnl())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small None\\
+100 10.0\\
+1100.0 100.0}
+\end{exampleblock}
+\small 股数仍为 100，成本仍为 10；市值变成 1100 元，盈亏变成 100 元。不要写 position = position.update\_price(11.0)，否则变量会被重新绑定到 None。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.14}
+
+\end{frame}
+
+\begin{frame}[fragile]{对象列表：用同一种方法处理多笔持仓}
+列表的每个元素是一笔持仓对象，循环中 p 指向当前元素。本例重新创建数据，避免依赖前面改过的价格。
+\begin{lstlisting}
+positions = [
+    StockPosition("000001", 100, 10.0, 12.0),
+    StockPosition("600000", 200, 8.0, 7.5),
+]
+total_value = 0
+total_pnl = 0
+for p in positions:
+    print(p.symbol, p.market_value(), p.unrealized_pnl())
+    total_value += p.market_value()
+    total_pnl += p.unrealized_pnl()
+print(total_value, total_pnl)
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 000001 1200.0 200.0\\
+600000 1500.0 -100.0\\
+2700.0 100.0}
+\end{exampleblock}
+\small 两笔市值分别为 1200、1500 元；盈亏为 200、−100 元。合计市值 2700 元、盈亏 100 元。这里只相加相同币种的金额。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.15}
+
+\end{frame}
+
+\begin{frame}[fragile]{继承：在已有类上增加一种能力（选学）}
+Square 是一种特殊的 Rectangle。通过继承复用 area，通过 super() 调用父类初始化，避免重复写面积公式。
+\begin{lstlisting}
+class Square(Rectangle):
+    def __init__(self, side):
+        super().__init__(side, side)
+
+square = Square(3)
+print(square.area())
+print(isinstance(square, Rectangle))
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 9\\
+True}
+\end{exampleblock}
+\small 边长 3，面积为 9。这个简化实现没有阻止分别修改宽和高，不能保证修改后仍为正方形；本例只演示继承与初始化。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.16}
+
+\end{frame}
+
+\begin{frame}[fragile]{重写方法：同名操作可以有不同实现（选学）}
+子类可以重新定义父类已有的方法。调用哪个实现，取决于当前对象的类。
+\begin{lstlisting}
+class Greeter:
+    def greet(self):
+        return "Hello"
+
+class ChineseGreeter(Greeter):
+    def greet(self):
+        return "你好"
+
+for speaker in [Greeter(), ChineseGreeter()]:
+    print(speaker.greet())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small Hello\\
+你好}
+\end{exampleblock}
+\small 循环使用相同的 greet() 调用，得到不同问候语。这是多态的一个例子：同一个接口由不同对象实现。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.17}
+
+\end{frame}
+
+\begin{frame}[fragile]{多态也可以不依赖共同父类（选学）}
+Python 常按对象能否提供所需方法来使用它。下面两个类没有自定义的共同父类，但都有 market\_value()。
+\begin{lstlisting}
+class Cash:
+    def __init__(self, amount):
+        self.amount = amount
+
+    def market_value(self):
+        return self.amount
+
+assets = [StockPosition("000001", 100, 10.0, 12.0),
+          Cash(800.0)]
+print(sum(asset.market_value() for asset in assets))
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 2000.0}
+\end{exampleblock}
+\small 合计 2000 元。调用者关心的是能否按同一含义返回以元计的市值；这种使用方式通常称为鸭子类型，方法名相同还必须有一致的业务含义。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.18}
+
+\end{frame}
+
+\begin{frame}[fragile]{组合：一个组合持有多项资产（选学）}
+Portfolio 不是一种 StockPosition，而是包含多个资产对象。用组合关系组织“有一个/有多个”。
+\begin{lstlisting}
+class Portfolio:
+    def __init__(self, assets):
+        self.assets = list(assets)
+
+    def market_value(self):
+        return sum(a.market_value() for a in self.assets)
+
+portfolio = Portfolio(assets)
+print(portfolio.market_value())
+assets[0].update_price(11.0)
+print(portfolio.market_value())
+\end{lstlisting}
+\begin{exampleblock}{实际输出}
+{\ttfamily\small 2000.0\\
+1900.0}
+\end{exampleblock}
+\small 市值从 2000 变成 1900 元。list(assets) 复制了外层列表，但内部仍是相同资产对象，所以更新股票价格会影响组合估值。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.19}
+
+\end{frame}
+
+\begin{frame}{什么时候需要自己写类？}
+函数：一次明确的输入到输出，例如计算收益率。
+\par
+类：同一份状态需要多种操作，或需要创建许多有相同行为的实例，例如更新和估值多笔持仓。
+\par
+字典：少量字段记录也很直观，不必为了面向对象而写类。后续 NumPy、pandas 已提供成熟对象；批量表格运算仍优先学习数组和表格操作。
+\par
+封装组织接口；继承复用和扩展；多态让统一接口处理不同对象；组合把多个对象组装起来。本节不展开多重继承、元类和复杂设计模式。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.20}
+
+\end{frame}
+
+\begin{frame}{读报错：定位到调用和属性}
+以下是需要手动尝试的错误写法，主 Notebook 不会执行这些错误。
+\par
+Rectangle(3)：缺少 height 参数，出现 TypeError。
+\par
+a.heigth：拼错属性名，出现 AttributeError。
+\par
+a.width()：将整数当函数调用，出现 TypeError。
+\par
+方法中写 width 而非 self.width：不会自动读取实例属性；没有同名可用变量时出现 NameError。
+\par
+先读报错最后一行，再定位代码行，核对对象、属性名、参数和括号。
+\par\vspace{0.1cm}{\scriptsize\color{shugray}对应 Notebook：8.21}
+
+\end{frame}
+
+\begin{frame}{练习1：补全矩形的周长方法}
+参照 Rectangle，定义 PracticeRectangle，包含初始化、area() 和 perimeter()。宽 3、高 4 时，面积和周长各是多少？再建立宽 5、高 2 的第二个实例。
+\vspace{0.5cm}
+先手算与画对象关系，再打开 Notebook 编写代码。\par 参考答案放在本节练习之后，讨论后再翻页。
+\end{frame}
+
+\begin{frame}{练习2：预测引用与修改}
+建立 first = Rectangle(2, 5)，执行 second = first、second.height = 8。first.area() 是多少？怎样再创建一个不受此次修改影响的 2 × 5 矩形？
+\vspace{0.5cm}
+先手算与画对象关系，再打开 Notebook 编写代码。\par 参考答案放在本节练习之后，讨论后再翻页。
+\end{frame}
+
+\begin{frame}{练习3：持仓汇总与价格变化}
+创建 A：100 股、成本 10、现价 12；B：200 股、成本 8、现价 7.5。计算合计市值和盈亏，再将 A 价格更新为 11 并重新汇总。先手算，后写循环。
+\vspace{0.5cm}
+先手算与画对象关系，再打开 Notebook 编写代码。\par 参考答案放在本节练习之后，讨论后再翻页。
+\end{frame}
+
+\begin{frame}{练习4（选学）：为估值接口增加现金}
+创建 100 股、现价 12 的持仓与 800 元现金，放入 Portfolio。若股票涨至 13，组合价值是多少？解释为何 Portfolio 不应继承 StockPosition。
+\vspace{0.5cm}
+先手算与画对象关系，再打开 Notebook 编写代码。\par 参考答案放在本节练习之后，讨论后再翻页。
+\end{frame}
+
+\begin{frame}{类与对象：复盘}
+class 定义类；调用类创建实例；\_\_init\_\_ 初始化实例属性。
+\par
+self 指当前实例；点号读取属性；圆括号执行方法。
+\par
+赋值可以让多个名字引用同一个对象；需要独立状态时明确创建新对象。
+\par
+持仓保存代码、股数、成本和现价；方法更新价格并计算市值、未实现盈亏。
+\par
+回到本章综合案例，练习选择合适的数据结构与函数；下一章继续识别 NumPy 对象的属性与方法。
+\end{frame}
+
+\begin{frame}[fragile]{参考答案1：补全矩形的周长方法}
+\begin{lstlisting}
+class PracticeRectangle:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        return self.width * self.height
+
+    def perimeter(self):
+        return 2 * (self.width + self.height)
+
+r1 = PracticeRectangle(3, 4)
+r2 = PracticeRectangle(5, 2)
+print(r1.area(), r1.perimeter())
+print(r2.area(), r2.perimeter())
+\end{lstlisting}
+\small 分别为面积 12、周长 14；面积 10、周长 14。面积相同与周长相同是不同的问题。
+\end{frame}
+
+\begin{frame}[fragile]{参考答案2：预测引用与修改}
+\begin{lstlisting}
+first = Rectangle(2, 5)
+second = first
+separate = Rectangle(2, 5)
+second.height = 8
+print(first.area(), separate.area())
+print(first is second, first is separate)
+\end{lstlisting}
+\small 输出面积 16 与 10；first 与 second 是同一个对象，separate 是独立新建的实例。
+\end{frame}
+
+\begin{frame}[fragile]{参考答案3：持仓汇总与价格变化}
+\begin{lstlisting}
+holdings = [StockPosition("A", 100, 10.0, 12.0),
+            StockPosition("B", 200, 8.0, 7.5)]
+def totals(holdings):
+    value = 0
+    pnl = 0
+    for holding in holdings:
+        value += holding.market_value()
+        pnl += holding.unrealized_pnl()
+    return value, pnl
+
+print(totals(holdings))
+holdings[0].update_price(11.0)
+print(totals(holdings))
+\end{lstlisting}
+\small 初始市值 2700 元、盈亏 100 元；更新后市值 2600 元、盈亏 0 元。股数与成本没有变化。
+\end{frame}
+
+\begin{frame}[fragile]{参考答案4（选学）：为估值接口增加现金}
+\begin{lstlisting}
+stock = StockPosition("A", 100, 10.0, 12.0)
+cash = Cash(800.0)
+account = Portfolio([stock, cash])
+stock.update_price(13.0)
+print(account.market_value())
+\end{lstlisting}
+\small 价值为 2100 元。Portfolio 包含持仓与现金，因此用组合；它本身不是一笔股票持仓。
+\end{frame}
+
 \section{综合案例与小结}
 %==============================================================
 
@@ -831,6 +1331,7 @@ print(f"上涨天数：{up_days} / {len(prices)-1}")
 		\item \textbf{数据结构}：列表（可变序列）、元组（不可变）、字典（键值对）、集合（去重）。
 		\item \textbf{控制流}：\texttt{if/elif/else}、\texttt{for}、\texttt{while}；\alert{缩进即语法}。
 		\item \textbf{函数}：\texttt{def} 定义，\texttt{return} 返回，复用与封装。
+		\item \textbf{类与对象}：\texttt{class} 定义类，实例保存状态，方法提供操作。
 	\end{itemize}
 \end{frame}
 
@@ -839,6 +1340,7 @@ print(f"上涨天数：{up_days} / {len(prices)-1}")
 		\begin{enumerate}
 			\item 在 Notebook 中完成本章所有课堂练习并截图保存。
 			\item 编写脚本：输入本金、年利率、年限，打印复利终值。
+			\item 完成矩形、对象引用与持仓估值练习；选做组合估值。
 			\item 选做：用列表与循环计算一组价格的最大值与最小值（不许用 \texttt{max/min}）。
 		\end{enumerate}
 	\end{block}
