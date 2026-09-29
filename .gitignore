@@ -23,8 +23,12 @@ Backups/
 texput.log
 *.*.minted
 
-# ---- PDF（课件成品，编译即可再生成）----
+# ---- PDF（保留各章主课件成品，其余默认忽略）----
 *.pdf
+# 各章主课件
+!/Chapter*/latex/chapter[0-9].pdf
+!/Chapter*/latex/chapter[0-9][0-9].pdf
+!/Chapter*/latex/tools.pdf
 # 但保留 Beamer 主题所需的 logo/背景图
 !**/logo/*.pdf
 
