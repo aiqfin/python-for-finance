@@ -1,0 +1,449 @@
+% !TeX program = xelatex
+\documentclass[9pt]{ctexbeamer}
+\usepackage{style/shubeamer}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,tikz}
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\graphicspath{{figures/}}
+\input{analysis_numbers.tex}
+\title[横截面量价策略]{Python金融数据分析}
+\subtitle{第13章\quad 横截面量价策略}
+\author[王伟冠, 吕文俊]{王伟冠, 吕文俊\quad 经济学院金融系}
+\institute[SHU]{上海大学}
+\date{\today}
+\newcommand{\nbref}[1]{\par\vspace{0.15cm}{\scriptsize\color{shugray}对应 Notebook：#1}}
+\newcommand{\chartpage}[3]{\begin{frame}{#1}\centering\includegraphics[width=0.98\textwidth,height=0.68\textheight,keepaspectratio]{#2}\par\small #3\end{frame}}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+
+\begin{frame}{过去涨得多，下一期还会涨得多吗？}
+\begin{block}{从第12章接着问}
+市值只是同日比较股票的一种方式。\par
+过去收益、波动与交易活跃程度，能否提供不同信息？
+\end{block}
+\begin{enumerate}
+\item 动量与反转：追随过去赢家，还是关注过去输家？
+\item 低波动与换手：收益与风险是否一起变化？
+\item 多指标：统一方向后合成，能否改善结果？
+\end{enumerate}
+\vspace{0.2cm}
+先规定实验，再检查结果；不预设任何策略有效。
+\nbref{第1节}
+\end{frame}
+\begin{frame}{本章路线}\tableofcontents\end{frame}
+
+\section{研究问题与共同数据}
+\begin{frame}{共享第11章行情：一行是一只股票的一天}
+\small
+\begin{tabular}{lp{7.1cm}}\toprule
+字段 & 口径与本章用途\\\midrule
+\texttt{Stkcd / Trddt} & 股票代码、日期；二者构成唯一键。\\[4pt]
+\texttt{Adjprcwd} & 含红利再投资的可比价格，用于收益和持仓估值。\\[4pt]
+\texttt{Clsprc} & 未复权收盘价，元/股；用于反推流通股数。\\[4pt]
+\texttt{Dnshrtrd} & 成交股数，单位股；与流通股数比较。\\[4pt]
+\texttt{Dsmvosd} & 流通市值，千元；换成元须乘1000。\\[4pt]
+\texttt{Dsmvtl2} & 总市值2，千元；用来观察附带的规模暴露。\\[4pt]
+\texttt{Trdsta / Filling} & 正常交易状态为1；非填充记录为0。\\\bottomrule
+\end{tabular}
+\par\vspace{0.2cm}
+输入：第11章 \texttt{data/stock\_daily.parquet}，只读引用。\par
+日期：\DataStart{}至\DataEnd{}；保留沪深京A股。
+\nbref{第2节；本地CSMAR授权数据与原包字段说明}
+\end{frame}
+
+\begin{frame}{先固定规则，再展示结果}
+\begin{itemize}
+\item 窗口：短期20日；较长120日跳过20日；波动60日；换手20日。
+\item 同一股票池、相同五组方法、月末等权建仓、月内持有。
+\item 合成方向：较长动量高、波动低、换手低；三项排名等权平均。
+\item 2025年之前为开发段，2025年起为时间留出段。
+\end{itemize}
+\begin{alertblock}{留出段的解释边界}
+这是回顾性教学切分；历史已用于其他课程章节，不能证明从未查看。\par
+不按本次留出结果调整窗口、方向或权重。
+\end{alertblock}
+\nbref{第1节}
+\end{frame}
+
+\begin{frame}[fragile]{估值可前向填充，风险信号保留缺失}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+observed = actual.pivot(
+    index="Trddt", columns="Stkcd", values="Adjprcwd"
+).reindex(calendar)
+prices = observed.ffill()
+daily_observed = observed.pct_change(fill_method=None)
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{prices}：按最后有效正价格估值，沿用第12章。
+\item \texttt{observed}：不把缺失变成零收益；用于波动计算。
+\item 长信号120日至少100个实际价格；波动60日至少50个有效收益。
+\item 换手20日至少15个有效值；真实零成交与无记录不同。
+\end{itemize}
+\nbref{第2.1节；价格矩阵行是日期、列是股票}
+\end{frame}
+
+\section{动量、低波动与换手率}
+\begin{frame}{短期动量与反转：同一个排序，两种方向}
+\[
+R_{20,s}=\frac{P_s}{P_{s-20}}-1
+\]
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{block}{动量假设}
+过去较强者继续较强。\par
+关注过去20日收益较高端。
+\end{block}
+\end{column}
+\begin{column}{0.47\textwidth}
+\begin{block}{反转假设}
+过去较弱者随后反弹。\par
+关注过去20日收益较低端。
+\end{block}
+\end{column}
+\end{columns}
+\vspace{0.3cm}
+两种说法都只是待检验假设；不先挑当期涨得好的股票回画历史。
+\nbref{第3节}
+\end{frame}
+
+\begin{frame}[fragile]{较长窗口：跳过最近20日}
+\[
+M_s=\frac{P_{s-20}}{P_{s-120}}-1
+\]
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+short_return = prices / prices.shift(20) - 1
+long_momentum = prices.shift(20) / prices.shift(120) - 1
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{shift(20)}把20个市场交易日前的值对齐到当前行。
+\item 较长窗口累计100个交易日收益；不包含最近20日。
+\item 若价格依次为100、120、108：长窗口20\%，短窗口$-10$\%。
+\end{itemize}
+\nbref{第3节；一只股票可以此前强、最近弱}
+\end{frame}
+
+\begin{frame}{教学动量与经典动量分开说明}
+\begin{itemize}
+\item 经典动量常用过去第2至12个月收益，排除最近一个月。
+\item 本章120/20是较短的教学窗口；不能称为经典12--2动量。
+\item Kenneth French的Mom还使用规模与过去收益交叉分组。
+\item 本章A股五组收益不等于标准Mom因子，更不等于alpha。
+\end{itemize}
+\vspace{0.3cm}
+\small 方法参考：\href{https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_mom_factor_daily.html}{Kenneth French：Daily Momentum Factor}。\par
+参考说明提供方法，本章行情来自本地CSMAR文件。
+\nbref{第3节；扩展练习可比较252/21交易日近似}
+\end{frame}
+
+\begin{frame}[fragile]{低波动：过去60日的收益有多不稳定？}
+\[
+\widehat\sigma_s=\operatorname{std}(r_{s-59},\ldots,r_s)\sqrt{252}
+\]
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+volatility = daily_observed.rolling(
+    60, min_periods=50
+).std(ddof=1) * np.sqrt(252)
+low_vol_score = -volatility
+\end{lstlisting}
+\begin{itemize}
+\item 60个市场交易日内至少50个有效日收益，缺失不填零。
+\item 0.30表示近似年化波动30\%；分数取负号，高分代表低波动。
+\item 过去个股波动低，不保证未来组合回撤小。
+\end{itemize}
+\nbref{第4节；相关性和未来环境也影响组合风险}
+\end{frame}
+
+\begin{frame}{股票换手率：成交股数占流通股数的比例}
+日换手率衡量当日股票交易的活跃程度。先由流通市值反推流通股数：
+\[
+N^{float}_s=\frac{Dsmvosd_s\times1000}{Clsprc_s},\qquad
+Turn_s=\frac{Dnshrtrd_s\times Clsprc_s}{Dsmvosd_s\times1000}
+\]
+\begin{itemize}
+\item 100万股成交，收盘10元，流通市值20万千元。
+\item 流通股数为2000万股，日换手率为5\%。
+\item 分子与分母都用“股”；市值单位转换不能省略。
+\end{itemize}
+\nbref{第5节}
+\end{frame}
+
+\begin{frame}[fragile]{换手率的价格口径与滚动平均}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+actual["turnover"] = (
+    actual.Dnshrtrd * actual.Clsprc
+    / (actual.Dsmvosd * 1000)
+).where(valid_turn)
+turnover_mean = turn_daily.rolling(
+    20, min_periods=15
+).mean()
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{valid\_turn}要求正价格、正流通市值与非负成交股数。
+\item 使用未复权\texttt{Clsprc}；不能用可比价格反推当日股数。
+\item 低换手方向取负号，只是预设的研究假设。
+\end{itemize}
+\nbref{第5节}
+\end{frame}
+
+\begin{frame}{个股换手、组合换手、交易容量是三件事}
+\begin{tabular}{lp{7.2cm}}\toprule
+概念 & 具体问题\\\midrule
+个股换手率 & 一天成交了流通股数的多大比例？\\[7pt]
+组合换手率 & 调仓时新权重相对漂移后的旧权重变化多大？\\[7pt]
+交易容量 & 指定资金规模下，能否以可接受冲击买入与卖出？\\\bottomrule
+\end{tabular}
+\vspace{0.4cm}\par
+低个股换手不等于低组合换手，也不保证大资金容易成交。\par
+容量还需要成交额、价差、深度、交易限制和订单规模。
+\nbref{第5节及练习6；本章不估计实际容量}
+\end{frame}
+
+\section{统一分组与月度持有}
+\begin{frame}{信号、建仓和收益：三个时间点}
+\begin{enumerate}
+\item 月末倒数第二个交易日收盘：只用截至当天的信息评分。
+\item 月末最后交易日收盘：按信号建立等权组合。
+\item 下一交易日起：计入新组合收益，持有到下个月末收盘。
+\end{enumerate}
+\begin{block}{本次实际起点}
+首个信号日\FirstSignal{}；建仓日\FirstExecution{}。\par
+收益区间\ReturnStart{}至\ReturnEnd{}，共\ReturnDays{}个收益日。
+\end{block}
+较长动量需要120日历史，前段用于预热。\par
+最后一个不完整月份只估值，不新增月末建仓；共\Rebalances{}次建仓。
+\nbref{第6节}
+\end{frame}
+
+\begin{frame}{共同股票池：先有效，再比较}
+\begin{enumerate}
+\item 信号日A股、正常状态、非填充记录。
+\item 正的有效总市值、过去已出现有效估值价格。
+\item 满足最低历史观测要求，四项原始指标均有效。
+\item 所有评分使用完全相同的候选股票；每期保存筛选数量。
+\end{enumerate}
+\vspace{0.2cm}
+本次每期共同池为\PoolMin{}至\PoolMax{}只。\par
+这有利于比较，但样本更偏向历史较长、记录较完整的股票。
+\begin{alertblock}{不要用未来筛选}
+不得因之后无记录、亏损或退市就从历史持仓中删除。
+\end{alertblock}
+\nbref{第6节；估值限制仍需单独说明}
+\end{frame}
+
+\begin{frame}{真实信号截面：每行是一只候选股票}
+\centering\footnotesize
+\input{signal_example.tex}
+\par\raggedright\vspace{0.35cm}\small
+信号日：\FirstSignal{}，展示按代码排列的前4只。\par
+前四项数值单位为\%；合成分是三个同日百分位排名的平均。\par
+一只股票可以短期强而较长期弱；合成分不是预测收益率。
+\nbref{第6节；表由Notebook实际执行生成}
+\end{frame}
+
+\begin{frame}[fragile]{排名合成：先统一方向，再统一尺度}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+cross["lowvol"] = -cross.vol
+cross["lowturn"] = -cross.turn
+ranks = cross[["mom", "lowvol", "lowturn"]].rank(
+    pct=True, method="average")
+cross["combo"] = ranks.mean(axis=1)
+\end{lstlisting}
+\begin{itemize}
+\item 同一天，沿股票方向排名；不是沿日期排名。
+\item 波动、换手与收益不可直接按原始量纲平均。
+\item 每项同等权重，固定后不根据留出结果修改。
+\item 排名保留次序，丢失差距；相关指标可能重复同一信息。
+\end{itemize}
+\nbref{第6节}
+\end{frame}
+
+\begin{frame}{合成手算：优势可以互相抵消}
+\centering
+\begin{tabular}{lrrrr}\toprule
+股票 & 动量排名 & 低波动排名 & 低换手排名 & 平均\\\midrule
+A & $2/3$ & $1$ & $1/3$ & $2/3$\\[6pt]
+B & $1$ & $1/3$ & $2/3$ & $2/3$\\[6pt]
+C & $1/3$ & $2/3$ & $1$ & $2/3$\\\bottomrule
+\end{tabular}
+\vspace{0.4cm}\par\raggedright
+三只股票的原始优势不同，合成分却完全相同。\par
+平均排名不能自动创造预测能力。并列时采用平均排名，\par
+最终分组用股票代码稳定处理，可能把并列股票分入相邻组。
+\nbref{第6.1节}
+\end{frame}
+
+\begin{frame}[fragile]{同一套分组，只替换评分列}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+ordered = cross.reset_index().sort_values([signal, "Stkcd"])
+group = np.arange(len(ordered)) * 5 // len(ordered) + 1
+labels = pd.Series(group, index=ordered.Stkcd)
+selected = labels.eq(5).astype(float)
+weights = selected / selected.sum()
+\end{lstlisting}
+\begin{itemize}
+\item 按分数由小到大分G1至G5；组内股票数最多差1。
+\item G5是高分端；低波动评分取负号，所以G5才是低波动端。
+\item 短期反转看\texttt{r20}的G1；短期动量看同一排序的G5。
+\item ALL是共同池自建等权基准，不冒称官方指数。
+\end{itemize}
+\nbref{第7节；完整函数一次返回所有组合权重}
+\end{frame}
+
+\begin{frame}[fragile]{月内持有：先算价值，再算收益}
+\[
+V_t=\sum_i w_{i,e}\frac{P_{i,t}}{P_{i,e}},\quad r_{p,t}=V_t/V_{t-1}-1
+\]
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+relative = prices.loc[dates, weights.index].div(
+    prices.loc[execution, weights.index])
+values = relative @ weights
+period_returns = values.pct_change(fill_method=None).iloc[1:]
+\end{lstlisting}
+两股初始各50\%，价格分别为100、110、121与100、100、100：\par
+买入持有末值1.105；每日恢复等权末值1.1025。\par
+建仓当天只作为基点，下次建仓当天的收益仍属于旧组合。
+\nbref{第7.1节；沿用第12章权重漂移口径}
+\end{frame}
+
+\begin{frame}[fragile]{串联月份：循环改变日期，不改变规则}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+parts = []
+for row in schedule.itertuples(index=False):
+    cross = cross_section(row.signal_date)
+    weights = target_weights(cross)
+    parts.append(holding_returns(
+        weights, row.execution_date, row.holding_end))
+returns = pd.concat(parts)
+\end{lstlisting}
+\begin{itemize}
+\item 收益日期不重复，覆盖首次建仓之后的所有市场交易日。
+\item 每组全额投资，初始权重之和为1；月内不恢复等权。
+\item 同时保存每组人数、市值、波动与换手中位数。
+\end{itemize}
+\nbref{第7.2节}
+\end{frame}
+
+\section{读结果与时间留出检验}
+\begin{frame}{读绩效时，把四个问题分开}
+\begin{tabular}{lp{7.1cm}}\toprule
+指标 & 回答什么问题\\\midrule
+累计收益 & 这一段投入1元，最终增长多少？\\[6pt]
+几何年化收益 & 按252个交易日折算的增长率是多少？\\[6pt]
+年化波动率 & 日收益的标准差乘$\sqrt{252}$是多少？\\[6pt]
+最大回撤 & 从包含初始净值1的历史最高点，最深跌了多少？\\\bottomrule
+\end{tabular}
+\vspace{0.3cm}\par
+两个区段分别重置起点计算；首尾年份不完整。\par
+不报告未经计算的显著性，也不将组间收益差称作alpha。
+\nbref{第8节}
+\end{frame}
+
+\chartpage{先检查五组是否有顺序}{group_profiles.png}{开发段低波动、低换手与合成逐组提高；留出段未延续单调关系。}
+
+\begin{frame}[fragile]{画净值：由日增长因子连乘}
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+wealth = selected_returns.add(1).cumprod()
+ax.plot(wealth.index, wealth["20日动量"])
+ax.plot(wealth.index, wealth["20日反转"])
+ax.plot(wealth.index, wealth["跳月动量"])
+ax.axvspan(SPLIT, wealth.index[-1], alpha=0.08)
+\end{lstlisting}
+\begin{itemize}
+\item 正式图还补上首次建仓日净值1，避免遗漏初始点。
+\item 三种预设方向与ALL共用一个候选池和建仓日期。
+\item 灰色背景是时间留出段；整段图的净值保持连续。
+\end{itemize}
+\nbref{第8.1节；下一页是实际运行图形}
+\end{frame}
+\chartpage{不同窗口与方向：看完整路径}{momentum_nav.png}{本次两段中，20日反转累计收益均高于20日动量；不据此推断未来必然如此。}
+\chartpage{低波动与低换手：同时看风险}{risk_turnover.png}{留出段两者波动小于基准、收益也低于基准；风险与收益分别判断。}
+
+\begin{frame}{开发段结果：完整保留预设方向}
+\centering\small
+\input{development_table.tex}
+\par\raggedright\vspace{0.35cm}
+单位：\%。从\ReturnStart{}至2024年末，各列使用同一区间。\par
+这张表用于理解差异，不用于看完结果后挑选合成权重。\par
+全部结果为理想化毛收益，未计交易限制与成本。
+\nbref{第8节；统计表由Notebook生成}
+\end{frame}
+
+\begin{frame}{时间留出段：允许用哪些信息？}
+\begin{itemize}
+\item 固定2025年为留出起点，方向、窗口和权重在读结果前确定。
+\item 2025年之后每个信号日，都能使用截至当天已经发生的历史。
+\item 可以把所有预设策略一同报告，不只展示表现最好的一个。
+\item 看完后若改窗口、删指标、调权重，就需要新的未查看数据。
+\end{itemize}
+\begin{block}{一次时间切分能说明什么？}
+检查同一规则是否随时间改变表现；不能消除事后研究选择，\par
+也不能证明未来可实现同等收益。
+\end{block}
+\nbref{第9节}
+\end{frame}
+\chartpage{合成是否优于组成它的单指标？}{holdout_combo.png}{留出段合成累计收益低于基准，回撤较浅；没有同时改善收益与风险。}
+
+\begin{frame}{留出段结果：收益与回撤分别报告}
+\centering\small
+\input{holdout_table.tex}
+\par\raggedright\vspace{0.3cm}
+单位：\%；2025年首个交易日至\ReturnEnd{}。\par
+合成累计\ComboTestReturn{}\%，基准累计\BenchmarkTestReturn{}\%；\par
+最大回撤分别为\ComboTestDrawdown{}\%和\BenchmarkTestDrawdown{}\%。
+\nbref{第9节；不是独立的新样本有效性证明}
+\end{frame}
+
+\chartpage{三项排名是否在重复同一信息？}{rank_correlation.png}{低波动与低换手排名相关均值约0.70；三项等权不等于三份独立信息。}
+\chartpage{量价策略是否也有规模暴露？}{size_exposure.png}{本次合成持仓的规模中位数高于同池基准；下一章继续解释风险暴露。}
+
+\section{核验、练习与下一章}
+\begin{frame}{运行成功之后，还要核对什么？}
+\begin{enumerate}
+\item 信号日早于建仓日，建仓日早于持有结束日。
+\item 同期共同池一致，组数差至多1，权重之和为1。
+\item 收益日期无重叠、无缺口；首次建仓当天不计新组合收益。
+\item 首期日收益连乘，与期末价格比乘初始权重独立复核。
+\item 截断到信号日重算动量、波动、换手，与完整计算一致。
+\item 回撤包含初始净值；最后不完整月份单独标记。
+\end{enumerate}
+\nbref{第10节；不是只检查文件是否生成}
+\end{frame}
+
+\begin{frame}{本章回测的解释边界}
+\begin{itemize}
+\item 假设月末能按估值买卖；忽略停牌、涨跌停和成交量限制。
+\item 缺失价格向前填充仅用于理想化估值；退市后延续最后价格会遗漏清算损失。
+\item 数据覆盖尚未证明无幸存者偏差；共同有效池也会改变样本。
+\item 不计成本，不据此推断策略容量或真实可实现业绩。
+\item 排序说明统计关系；尚未分离规模、市场风险及其他暴露。
+\end{itemize}
+\nbref{第1、2、9节；保留这些限制再解释结果}
+\end{frame}
+
+\begin{frame}{课堂练习：先算，再解释}
+\begin{enumerate}
+\item 价格50、60、54分别在$s-120,s-20,s$，两个窗口收益是多少？
+\item 成交200万股、收盘8元、流通市值16万千元，换手率是多少？
+\item 为什么三项原始指标不能直接平均？低波动为什么取负号？
+\item 用留出段表分别报告合成与基准收益、最大回撤。
+\item 将120/20改为252/21，预热期与样本会怎样变化？
+\item 低换手策略净值较好，是否证明能容纳更多资金？
+\end{enumerate}
+\vspace{0.3cm}
+参考答案放在Notebook末尾折叠区域；先独立计算并写出判断依据。
+\nbref{第12节}
+\end{frame}
+
+\begin{frame}{交付给第14章：收益从哪里来？}
+\begin{block}{本章已经得到}
+统一口径的组合日收益、分期绩效、共同池与分组特征记录。
+\end{block}
+\begin{itemize}
+\item 与同日期无风险利率、口径明确的A股因子收益对齐。
+\item 从CAPM到FF三因子，分别讨论市场、规模等风险暴露。
+\item 区分总收益、模型解释部分与剩余alpha。
+\item 保留模型、样本和成本的解释边界。
+\end{itemize}
+\nbref{第11--12节；小减大不是标准SMB，本章五组差也不是标准Mom}
+\end{frame}
+\end{document}

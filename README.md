@@ -18,8 +18,10 @@
 | 第9章 | 模拟与期权定价 | `Chapter9 - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 - 模拟与期权定价/notebooks/09_Monte_Carlo.ipynb` |
 | 第10章 | 统计学与投资组合优化 | `Chapter10 - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 - 统计学与投资组合优化/notebooks/10_Statistics_Portfolio_Optimization.ipynb` |
 | 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
+| 第12章 | 横截面排序与股票组合 | `Chapter12 - 横截面排序与股票组合/latex/chapter12.pdf` | [章节入口](Chapter12%20-%20横截面排序与股票组合/README.md) |
+| 第13章 | 横截面量价策略 | `Chapter13 - 横截面量价策略/latex/chapter13.pdf` | [章节入口](Chapter13%20-%20横截面量价策略/README.md) |
 
-工具篇安排在第1章之后，集中讲授环境配置、VS Code、以 Qoder 为例的 AI 编程及 Git 工作流程；第2—12章编号保持不变。
+工具篇安排在第1章之后，集中讲授环境配置、VS Code、以 Qoder 为例的 AI 编程及 Git 工作流程；第2—13章编号保持不变。
 
 ## 前几章扩充与 pandas 多周教学
 
@@ -31,7 +33,7 @@
 
 ```
 .
-├── ChapterN - 主题/         # 第1–11章统一命名
+├── ChapterN - 主题/         # 第1–13章统一命名
 │   ├── README.md            #   本章入口与运行说明
 │   ├── notebooks/           #   教学Notebook（有代码的章节）
 │   │   └── *.ipynb
