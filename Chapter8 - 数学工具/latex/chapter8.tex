@@ -1,6 +1,6 @@
 % !TeX program = xelatex
 %==============================================================
-%  Python金融数据分析 · 第8章 数学工具
+%  Python金融数据分析 · 第8章 SciPy 与金融数值计算
 %  基于《Python金融大数据分析（第2版）》第11章内容改编
 %  授课对象：本科金融系学生（已学完第2-7章）
 %  编译：xelatex chapter8.tex（编译两遍）
@@ -45,7 +45,7 @@
 	%%%%----短标题[显示在页脚]{封面标题}
 	\title[Python金融数据分析 · 第8章]{\fontsize{16pt}{22pt}\selectfont {Python金融数据分析}}
 	%%%%----副标题（本章主题）
-	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第8章\quad 数学工具}}
+	\subtitle{\fontsize{9pt}{14pt}\selectfont \textit{第8章\quad SciPy 与金融数值计算}}
 	%%%%----个人信息
 	\author[王伟冠, 吕文俊]{%
 		\begin{tabular}{ll}%
@@ -78,29 +78,175 @@
 
 
 %==============================================================
-\section{金融为什么需要数学工具}
+\section{从数组运算到数值算法}
 %==============================================================
 
-\begin{frame}{本章学习目标}
-	\begin{itemize}
-		\item 会用\textbf{回归}（\texttt{np.polyfit}）与\textbf{插值}（样条）逼近函数与数据
-		\item 会用 \texttt{scipy.optimize} 做全局搜索、局部优化与\alert{带约束}优化
-		\item 理解数值积分与蒙特卡洛积分，知道它们与期权定价的关系
-		\item 初步掌握 SymPy 符号计算：解方程、求导、积分
-	\end{itemize}
-	\begin{block}{四大工具与金融应用}
-		\begin{tabular}{ll}
-			逼近（回归/插值） & 收益率曲线补全、美式期权估值 \\
-			凸优化 & 模型校准、投资组合选择 \\
-			积分 & 衍生品定价（期望收益的折现） \\
-			符号计算 & 推导解析公式（如希腊字母） \\
-		\end{tabular}
-	\end{block}
+\begin{frame}{已有 NumPy，为什么还需要 SciPy？}
+\begin{itemize}
+\item NumPy：保存数组、逐元素运算、统计汇总和随机抽样。
+\item SciPy：在数组与函数之上，提供概率计算、求根、插值、优化和积分算法。
+\item 学习顺序：概率与分位点 $\to$ 方程求根 $\to$ 拟合与插值 $\to$ 优化 $\to$ 积分。
+\item 每种工具都要说清输入、输出、单位，并检查计算结果。
+\end{itemize}
+\begin{block}{与后续章节的分工}
+本章学习工具；第9章用于模拟与期权定价，第10章深入统计检验与投资组合优化。SymPy 是独立的符号计算库，放在章末选学。
+\end{block}
 \end{frame}
 
+
+
+
+%==============================================================
+\section{概率分布：从抽样到概率}
+
+\begin{frame}[fragile]{密度与概率：两个不同的问题}
+\small 假设测量误差服从均值为 0、标准差为 1 的正态分布。误差不超过 1 的概率是多少？
+\medskip
+\begin{lstlisting}
+from scipy.stats import norm
+print(round(norm.pdf(0), 4))
+print(round(norm.cdf(1), 4))
+print(round(norm.cdf(1) - norm.cdf(-1), 4))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+0.3989
+0.8413
+0.6827
+\end{lstlisting}
+\end{exampleblock}
+\small pdf 给出密度高度，不是单点概率；cdf(x) 给出不超过 x 的累计概率。最后一行表示误差位于 -1 到 1 的概率，约为 68.27\%。
+\end{frame}
+
+\begin{frame}[fragile]{分位点：由概率反查阈值}
+\small 若希望 95\% 的误差不超过某个阈值，应选择多大的阈值？
+\medskip
+\begin{lstlisting}
+threshold = norm.ppf(0.95)
+print(round(threshold, 4))
+print(round(norm.cdf(threshold), 4))
+print(np.round(norm.ppf([0.025, 0.975]), 4))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+1.6449
+0.95
+[-1.96  1.96]
+\end{lstlisting}
+\end{exampleblock}
+\small ppf 是累计分布函数的反向查询。单侧 95\% 阈值约为 1.645；中央 95\% 区间约为 [-1.96, 1.96]，两者不能混淆。
+\end{frame}
+
+\begin{frame}{看图：密度高度、区间面积与累计概率}
+\includegraphics[width=\textwidth]{mt_distribution}
+\small 左图阴影是区间概率；右图从累计概率 0.95 反查阈值。图形基于标准正态分布的理论计算。
+\end{frame}
+
+\begin{frame}[fragile]{金融迁移：给定分布假设下的收益概率}
+\small 假设日简单收益率服从均值 0.04\%、标准差 1.5\% 的正态分布；收益率用小数表示。
+\medskip
+\begin{lstlisting}
+mu, sigma = 0.0004, 0.015
+down_prob = norm.cdf(-0.03, loc=mu, scale=sigma)
+lower_return = norm.ppf(0.05, loc=mu, scale=sigma)
+print(f"收益低于-3%的概率：{down_prob:.2%}")
+print(f"收益的5%分位点：{lower_return:.2%}")
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+收益低于-3%的概率：2.13%
+收益的5%分位点：-2.43%
+\end{lstlisting}
+\end{exampleblock}
+\small loc 是均值，scale 是标准差。这里计算理论概率，而不是生成随机样本；正态假设仅用于教学，不代表真实市场尾部风险。
+\end{frame}
+
+\begin{frame}{练习：区间概率与阈值}
+标准正态误差位于 -2 到 2 的概率是多少？中央 90\% 区间的两个端点是多少？
+\medskip
+\begin{block}{先预测，再计算}
+参考答案见 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\section{数值求根：从方程到收益率}
+
+\begin{frame}[fragile]{先解一个可手算的方程}
+\small 求 x²=2 的正根。先写成 h(x)=x²−2=0，再找函数值异号的区间。
+\medskip
+\begin{lstlisting}
+from scipy.optimize import root_scalar
+def h(x):
+    return x ** 2 - 2
+print(h(1), h(2))
+root_result = root_scalar(h, bracket=[1, 2], method="brentq")
+print(round(root_result.root, 6), root_result.converged)
+print(f"代回残差：{h(root_result.root):.2e}")
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+-1 2
+1.414214 True
+代回残差：1.17e-13
+\end{lstlisting}
+\end{exampleblock}
+\small bracket 是根所在的区间。此方法要求函数在区间内连续、端点值异号；root 是数值解，converged 是收敛标志，残差检验代回后是否接近零。
+\end{frame}
+
+\begin{frame}[fragile]{债券定价：先明确现金流}
+\small 自编例子：面值 100 元、每年付息 5 元，3 年后还本；恰在付息后估值。价格等于未来现金流的折现和。
+\medskip
+\begin{lstlisting}
+years = np.array([1, 2, 3])
+cashflows = np.array([5., 5., 105.])
+def bond_price(y):
+    return np.sum(cashflows / (1 + y) ** years)
+print(round(bond_price(0.05), 4))
+print(round(bond_price(0.08), 4))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+100.0
+92.2687
+\end{lstlisting}
+\end{exampleblock}
+\small y 是按年复利的到期收益率；每个元素对应一年末的现金流，单位为元。收益率 5\% 时价格为 100 元，收益率升高时价格下降。
+\end{frame}
+
+\begin{frame}[fragile]{由价格反求到期收益率}
+\small 同一债券市场价格为 98 元，求使模型价格等于 98 的年收益率。
+\medskip
+\begin{lstlisting}
+market_price = 98.0
+def price_gap(y):
+    return bond_price(y) - market_price
+ytm = root_scalar(price_gap, bracket=[0, 0.2], method="brentq")
+print(f"年收益率：{ytm.root:.4%}")
+print("收敛：", ytm.converged)
+print(f"价格残差：{price_gap(ytm.root):.2e} 元")
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+年收益率：5.7447%
+收敛： True
+价格残差：-4.95e-11 元
+\end{lstlisting}
+\end{exampleblock}
+\small 先判断 0\% 与 20\% 对应价格是否跨过市场价。98 元低于面值，所以收益率应高于票息率 5\%；还需核对现金流、复利频率和计价时点。
+\end{frame}
+
+\begin{frame}{练习：价格变化后收益率怎样变化？}
+将同一债券价格改成 102 元。先判断收益率相对 5\% 的大小，再求解并检查残差。
+\medskip
+\begin{block}{先预测，再计算}
+参考答案见 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\section{函数逼近：回归}
 \begin{frame}{本章的示例函数}
 	\begin{itemize}
-		\item 教材用一个"正弦+线性"函数贯穿全章：
+		\item 教材用一个"正弦+线性"函数用于后面的拟合、插值与积分：
 	\end{itemize}
 	\begin{equation*}
 		f(x) = \sin(x) + 0.5\,x
@@ -114,10 +260,6 @@
 		数学符号不必害怕：本章重点是"会调用、会读图、会解释"，推导细节留给专门课程。
 	\end{alertblock}
 \end{frame}
-
-
-%==============================================================
-\section{函数逼近：回归}
 %==============================================================
 
 \begin{frame}[fragile]{多项式回归：一行拟合}
@@ -130,7 +272,7 @@ def f(x):
 x = np.linspace(-2 * np.pi, 2 * np.pi, 50)
 reg = np.polyfit(x, f(x), deg=7)   # 7次多项式拟合
 ry  = np.polyval(reg, x)           # 用拟合结果求值
-np.mean((f(x) - ry) ** 2)          # 均方误差 MSE ≈ 0.0018
+np.mean((f(x) - ry) ** 2)          # 均方误差 MSE 约 0.0018
 \end{lstlisting}
 	\begin{itemize}
 		\item \texttt{np.polyfit(x, y, deg)}：找一条 \texttt{deg} 次多项式，
@@ -172,14 +314,14 @@ import scipy.interpolate as spi
 
 xa = np.linspace(-2 * np.pi, 2 * np.pi, 12)  # 12个观测点
 ya = f(xa)
-ipo = spi.splrep(xa, ya, k=3)    # 构造三次样条
+ipo = spi.CubicSpline(xa, ya, extrapolate=False)    # 构造三次样条
 xs = np.linspace(-2 * np.pi, 2 * np.pi, 200)
-iy = spi.splev(xs, ipo)          # 在更密的网格上求值
+iy = ipo(xs)          # 在更密的网格上求值
 \end{lstlisting}
 	\begin{itemize}
-		\item \texttt{splrep}（构造）+ \texttt{splev}（求值），与
+		\item \texttt{CubicSpline}（构造）+ 对象调用（求值），与
 			\texttt{polyfit}+\texttt{polyval} 的分工一模一样。
-		\item \texttt{k=3}：三次样条——分段三次多项式，连接处平滑可导。
+		\item 三次样条——分段三次多项式，连接处一、二阶导数连续。
 	\end{itemize}
 \end{frame}
 
@@ -197,20 +339,40 @@ iy = spi.splev(xs, ipo)          # 在更密的网格上求值
 		\item 定价需要 7.5 年的利率怎么办？——\alert{插值}。
 	\end{itemize}
 	\begin{lstlisting}
-import pandas as pd
 maturity = [1, 3, 5, 10]              # 已知期限（年）
 rate     = [1.5, 2.1, 2.6, 3.2]       # 对应利率（%）
-ipo = spi.splrep(maturity, rate, k=3)
-spi.splev(7.5, ipo).round(3)          # 7.5年期利率 ≈ 3.04%
+ipo = spi.CubicSpline(maturity, rate, extrapolate=False)
+print(round(float(ipo(7.5)), 3))    # 单位：%
 \end{lstlisting}
 	\begin{alertblock}{插值的限制}
-		要求数据\textbf{有序且无噪声}，高维问题不适用——这正是回归的主场。
+		本例要求期限严格递增、输入有限；插值会通过节点，也会保留节点中的噪声。禁止区间外外推；样条不保证单调或无套利。利率是自编教学数据。
 	\end{alertblock}
 \end{frame}
 
 
 %==============================================================
 \section{优化：寻找最优解}
+\begin{frame}[fragile]{先做一元优化：最低点在哪里？}
+\small 求 (x−3)²+2 的最小值。手算知道最低点在 x=3，再用算法核对。
+\medskip
+\begin{lstlisting}
+from scipy.optimize import minimize_scalar
+def bowl(x):
+    return (x - 3) ** 2 + 2
+minimum = minimize_scalar(bowl, bounds=(0, 6), method="bounded")
+print(round(minimum.x, 4), round(minimum.fun, 4))
+print(minimum.success)
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+3.0 2.0
+True
+\end{lstlisting}
+\end{exampleblock}
+\small x 是最优输入，fun 是目标函数值；求根找函数等于零的位置，优化找函数最小的位置。本例最小值为 2，根并不存在。
+\end{frame}
+
+
 %==============================================================
 
 \begin{frame}{优化问题长什么样}
@@ -233,7 +395,7 @@ def fm(p):
     return np.sin(x) + 0.05 * x ** 2 \
          + np.sin(y) + 0.05 * y ** 2
 
-# 1. 全局：网格上逐点尝试（暴力但可靠）
+# 1. 在给定区间的网格上粗搜
 opt1 = sco.brute(fm, ((-10, 10.1, 0.1), (-10, 10.1, 0.1)),
                  finish=None)          # 找到约 (-1.4, -1.4)
 # 2. 局部：从粗搜结果出发精细下降
@@ -242,17 +404,16 @@ opt2.round(4)    # [-1.4274, -1.4279]，f = -1.7757
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}{为什么必须先全局后局部？}
-	\begin{itemize}
-		\item 局部算法（\texttt{fmin}）像"闭眼下山"：从哪出发，就掉进哪个坑。
-		\item 从 $(2, 2)$ 出发只能得到 $f \approx 0.02$ 的"局部最优"，
-			错过真正的全局最小 $-1.78$。
-		\item \texttt{brute} 先在网格上扫一遍，锁定最深的坑，再交给 \texttt{fmin} 精修。
-	\end{itemize}
-	\begin{alertblock}{金融中的教训}
-		模型校准（如用市场报价反推期权模型参数）是典型的优化问题；
-		不加全局搜索，可能校准到一个"局部最优"的错误参数组合。
-	\end{alertblock}
+\begin{frame}{局部优化为什么受初值影响？}
+\begin{itemize}
+\item 对多峰目标，不同初值可能使局部算法找到不同的局部极小值。
+\item 网格粗搜可以提供较好的初值，但有限网格不能保证找到连续问题的全局最优。
+\item 先判断问题结构：凸问题通常不需要先做全局搜索；多峰问题可比较多个初值或使用全局方法。
+\item 收敛标志只说明算法达到停止条件，不等于已经证明全局最优。
+\end{itemize}
+\begin{block}{回到案例}
+比较从网格结果与从 (2, 2) 出发的目标值，再解释差异。Notebook 保留两次运行的实际结果。
+\end{block}
 \end{frame}
 
 \begin{frame}[fragile]{带约束优化：投资组合选择}
@@ -272,13 +433,35 @@ cons = [{"type": "ineq", "fun":
 res = sco.minimize(eu, (5, 5), method="SLSQP",
                    bounds=((0, 10), (0, 10)),
                    constraints=cons)
-res.x.round(2)   # [8.03, 1.97]：花光全部预算
+print(res.success, res.x.round(2))
+print("预算余量：", round(100 - 10 * res.x.sum(), 6))
 \end{lstlisting}
 \end{frame}
 
 
 %==============================================================
 \section{积分：从面积到期权价格}
+\begin{frame}[fragile]{先手算面积，再做数值积分}
+\small 计算 0 到 1 上 x² 的积分，手算为 1/3。算法返回的第二个数是什么？
+\medskip
+\begin{lstlisting}
+from scipy.integrate import quad
+def square(x):
+    return x ** 2
+area, error_est = quad(square, 0, 1)
+print(round(area, 8))
+print(f"误差估计：{error_est:.2e}")
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+0.33333333
+误差估计：3.70e-15
+\end{lstlisting}
+\end{exampleblock}
+\small quad 返回积分值与绝对误差估计；误差估计不是精确误差，也不是数据或模型的不确定性。手算值与数值结果应在合理精度内一致。
+\end{frame}
+
+
 %==============================================================
 
 \begin{frame}{积分 = 曲线下面积}
@@ -294,11 +477,12 @@ res.x.round(2)   # [8.03, 1.97]：花光全部预算
 import scipy.integrate as sci
 
 a, b = 0.5, 9.5
-sci.quad(f, a, b)[0]      # 24.37475...（自适应求积，最常用）
+value, error_est = sci.quad(f, a, b)
+print(round(value, 6), f"{error_est:.2e}")
 \end{lstlisting}
 	\begin{itemize}
-		\item \texttt{quad} 返回 (结果, 误差估计)，通常取第一个元素。
-		\item 数据点形式则用 \texttt{sci.trapz}（梯形法则）。
+		\item \texttt{quad} 返回 (结果, 误差估计)，两者都应检查。
+		\item 数据点形式则用 \texttt{sci.trapezoid}（梯形法则）。
 		\item \textbf{金融意义}：期权在风险中性测度下的价值
 			$=$ 期望折现收益；连续情形下，期望就是一个积分。
 	\end{itemize}
@@ -310,7 +494,7 @@ rng = np.random.default_rng(1000)
 N = 500000
 x = rng.random(N) * (b - a) + a    # 区间内均匀撒点
 np.mean(f(x)) * (b - a)            # 平均函数值 × 区间长度
-# 结果 ≈ 24.36，与 quad 基本一致
+# 结果 约 24.36，与 quad 基本一致
 \end{lstlisting}
 	\begin{itemize}
 		\item 原理：$\int_a^b f(x)dx = (b-a)\cdot E[f(x)]$，用样本均值逼近期望。
@@ -318,7 +502,7 @@ np.mean(f(x)) * (b - a)            # 平均函数值 × 区间长度
 	\end{itemize}
 	\begin{block}{为什么金融偏爱蒙特卡洛？}
 		高维（多资产、多期）积分数值方法会"维度爆炸"，蒙特卡洛的收敛速度却与维度无关——
-		它是复杂衍生品定价的主力工具（下下章的主题）。
+		它是复杂衍生品定价的主力工具（下一章的主题）。
 	\end{block}
 \end{frame}
 
@@ -332,7 +516,28 @@ np.mean(f(x)) * (b - a)            # 平均函数值 × 区间长度
 
 
 %==============================================================
-\section{符号计算：SymPy}
+\section{结果检查}
+\begin{frame}[fragile]{结果检查：数值答案之外还要看什么？}
+\small 回到债券求根例子：收敛并不自动说明模型输入正确。用代回与方向判断共同检查。
+\medskip
+\begin{lstlisting}
+print(ytm.converged)
+print(round(bond_price(ytm.root), 6))
+print(ytm.root > 0.05)
+print(np.isclose(bond_price(ytm.root), 98, rtol=0, atol=1e-6))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+True
+98.0
+True
+True
+\end{lstlisting}
+\end{exampleblock}
+\small 求根看收敛与残差；优化看 success、目标值和约束；积分看误差估计；插值先核对节点，再检查区间内形状。容差应符合单位与用途。
+\end{frame}
+
+\section{选学：符号计算 SymPy}
 %==============================================================
 
 \begin{frame}[fragile]{符号对象：让 x 保持为 x}
@@ -340,7 +545,7 @@ np.mean(f(x)) * (b - a)            # 平均函数值 × 区间长度
 import sympy as sy
 
 x = sy.Symbol("x")        # x 是符号，不是数字
-f = sy.sin(x) + 0.5 * x   # 符号表达式
+f_sym = sy.sin(x) + 0.5 * x   # 符号表达式
 sy.solve(x ** 2 - 1, x)   # 解方程：[-1, 1]
 sy.simplify((x ** 2 - 1) / (x - 1))   # 化简：x + 1
 \end{lstlisting}
@@ -352,12 +557,12 @@ sy.simplify((x ** 2 - 1) / (x - 1))   # 化简：x + 1
 
 \begin{frame}[fragile]{符号微积分}
 	\begin{lstlisting}
-sy.diff(f, x)                  # 求导：cos(x) + 0.5
-sy.integrate(f, x)             # 不定积分：0.25x^2 - cos(x)
-sy.integrate(f, (x, 0.5, 9.5)).evalf()   # 定积分：24.3748
+sy.diff(f_sym, x)                  # 求导：cos(x) + 0.5
+sy.integrate(f_sym, x)             # 不定积分：0.25x^2 - cos(x)
+sy.integrate(f_sym, (x, 0.5, 9.5)).evalf()   # 定积分：24.3748
 \end{lstlisting}
 	\begin{itemize}
-		\item 与数值积分 \texttt{quad} 的结果完全一致——互相验证的好例子。
+		\item 与数值积分 \texttt{quad} 的结果在数值精度内一致——互相验证的好例子。
 		\item 金融应用：期权价格对参数的导数（Delta、Gamma 等"希腊字母"）
 			可用符号求导得到解析式。
 	\end{itemize}
@@ -371,18 +576,15 @@ sy.integrate(f, (x, 0.5, 9.5)).evalf()   # 定积分：24.3748
 \section{小结与练习}
 %==============================================================
 
-\begin{frame}{本章小结}
-	\begin{itemize}
-		\item \textbf{回归}：\texttt{polyfit/polyval}，抗噪声、不要求排序；
-			警惕过拟合。
-		\item \textbf{插值}：\texttt{splrep/splev}，有序无噪声数据的平滑还原；
-			典型应用是收益率曲线。
-		\item \textbf{优化}：\texttt{brute}（全局粗搜）$\to$ \texttt{fmin}（局部精修）；
-			带约束用 \texttt{minimize + constraints}。
-		\item \textbf{积分}：\texttt{quad} 精确快速；蒙特卡洛
-			$\bar{f}\times(b-a)$ 通吃高维问题。
-		\item \textbf{符号}：SymPy 解方程、求导、积分，推导解析公式。
-	\end{itemize}
+\begin{frame}{本章小结：按问题选择工具}
+\begin{itemize}
+\item 概率与阈值：\texttt{stats.norm.pdf/cdf/ppf}；密度高度不是概率。
+\item 方程求根：\texttt{root\_scalar}；看连续性、区间、收敛与残差。
+\item 拟合与插值：\texttt{polyfit} 折中误差，\texttt{CubicSpline} 通过节点。
+\item 优化：\texttt{minimize\_scalar/minimize}；目标值、初值、约束共同检查。
+\item 积分：\texttt{quad} 返回数值与误差估计；蒙特卡洛用抽样均值近似积分。
+\item 选学 SymPy：进行符号运算，注意它与 SciPy 的区别。
+\end{itemize}
 \end{frame}
 
 \begin{frame}{课后任务与下章预告}
@@ -397,8 +599,7 @@ sy.integrate(f, (x, 0.5, 9.5)).evalf()   # 定积分：24.3748
 		\end{enumerate}
 	\end{block}
 	\begin{exampleblock}{下章预告}
-		数学工具让代码表达力倍增，但循环写多了会变慢。下一章讲 \textbf{性能}：
-		为什么向量化比循环快，以及如何科学地计时。
+		下一章学习\textbf{模拟与期权定价}：把概率分布、随机抽样与期望折现用于金融定价。
 	\end{exampleblock}
 	\begin{center}
 		\vspace{0.5em}

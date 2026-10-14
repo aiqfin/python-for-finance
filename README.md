@@ -14,7 +14,7 @@
 | 第5章 | Matplotlib 可视化 | `Chapter5 - Matplotlib可视化/latex/chapter5.pdf` | `Chapter5 - Matplotlib可视化/notebooks/05_Visualization.ipynb` |
 | 第6章 | 金融时间序列 | `Chapter6 - 金融时间序列/latex/chapter6.pdf` | `Chapter6 - 金融时间序列/notebooks/06_Financial_Time_Series.ipynb` |
 | 第7章 | 数据输入输出 | `Chapter7 - 数据输入输出/latex/chapter7.pdf` | `Chapter7 - 数据输入输出/notebooks/07_Input_Output.ipynb` |
-| 第8章 | 数学工具 | `Chapter8 - 数学工具/latex/chapter8.pdf` | `Chapter8 - 数学工具/notebooks/08_Math_Tools.ipynb` |
+| 第8章 | SciPy 与金融数值计算 | `Chapter8 - 数学工具/latex/chapter8.pdf` | `Chapter8 - 数学工具/notebooks/08_Math_Tools.ipynb` |
 | 第9章 | 模拟与期权定价 | `Chapter9 - 模拟与期权定价/latex/chapter9.pdf` | `Chapter9 - 模拟与期权定价/notebooks/09_Monte_Carlo.ipynb` |
 | 第10章 | 统计学与投资组合优化 | `Chapter10 - 统计学与投资组合优化/latex/chapter10.pdf` | `Chapter10 - 统计学与投资组合优化/notebooks/10_Statistics_Portfolio_Optimization.ipynb` |
 | 第11章 | 股票日频收益率分析 | `Chapter11 - 股票日频收益率分析/latex/chapter11.pdf` | `Chapter11 - 股票日频收益率分析/notebooks/11_股票日频收益率分析.ipynb` |
