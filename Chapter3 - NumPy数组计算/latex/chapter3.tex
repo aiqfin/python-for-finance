@@ -88,7 +88,8 @@
 		\item 掌握\textbf{向量化运算}：一行代码对整个数组做计算
 		\item 掌握\textbf{布尔索引}：按条件筛选数据
 		\item 掌握常用统计函数（均值、标准差、累计等）
-		\item 能够用 NumPy 计算收益率序列与波动率等风险指标
+		\item 能够进行排序、缺失值检查与加权计算
+		\item 能用随机数和二维数组重复模拟，解释频率与概率的区别
 	\end{itemize}
 	\vspace{0.3em}
 	\begin{block}{前置知识}
@@ -168,14 +169,11 @@ np.linspace(0, 1, 5)  # array([0., 0.25, 0.5, 0.75, 1.])
 		\item \texttt{arange(起, 止, 步长)}：整数序列，与 \texttt{range} 类似但返回数组。
 		\item \texttt{linspace(起, 止, 个数)}：画利率区间、画函数图像时常用。
 	\end{itemize}
-	\begin{exampleblock}{金融场景}
-		给一组折现率 \texttt{np.linspace(0.01, 0.10, 10)}，批量观察债券价格变化。
-	\end{exampleblock}
 \end{frame}
 
-\begin{frame}[fragile]{二维数组：数据的"表格"形态}
+\begin{frame}[fragile]{二维数组：用股票价格理解 shape 与 axis}
 	\begin{lstlisting}
-# 3天 x 2只股票 的收盘价：每行一天，每列一只股票
+# 3天 x 2只股票 的收盘价（元）：每行一天，每列一只股票
 p = np.array([[25.0, 100.0],
               [25.5,  99.0],
               [26.0, 102.0]])
@@ -183,24 +181,15 @@ p = np.array([[25.0, 100.0],
 p.shape      # (3, 2)   3行2列
 p.ndim       # 2        维度数
 p.size       # 6        元素总数
+p.mean(axis=0)  # [25.5  100.33333333]  每只股票的3日均价
+p.mean(axis=1)  # [62.5  62.25  64.0]   每天两只股票的均价
 \end{lstlisting}
 	\begin{itemize}
-		\item 列表中套列表 $\rightarrow$ 二维数组，可以看作\textbf{表格/矩阵}。
-		\item \texttt{shape} 变为 \texttt{(行数, 列数)}。
-		\item 金融数据的典型形态：\alert{行=日期，列=资产}。
+		\item \texttt{shape=(3, 2)}：\alert{行=日期，列=股票}，两个轴依次编号为 0、1。
+		\item \texttt{axis=0}：沿日期方向求均值，得到 2 只股票各自的均价。
+		\item \texttt{axis=1}：沿股票方向求均值，得到 3 个日期各自的均价。
 	\end{itemize}
-\end{frame}
-
-% 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{2.3A 用成绩表理解 shape 与 axis}
-\small 每行是一名学生，每列是一门课。axis=0 沿学生方向汇总，得到各科均分；axis=1 沿科目方向汇总，得到各学生均分。
-\medskip
-\begin{lstlisting}
-scores = np.array([[80, 90, 70], [60, 75, 90]])
-print(scores.shape)        # 2名学生、3门课
-print(scores.mean(axis=0)) # [70. 82.5 80.]
-print(scores.mean(axis=1)) # [80. 75.]
-\end{lstlisting}
+	{\footnotesize 每日横截面均价仅用于演示计算方向，不代表投资组合收益。}
 \end{frame}
 
 \begin{frame}[fragile]{形状变换与拼接}
@@ -284,6 +273,54 @@ print(independent)   # [20 30]
 \end{block}
 \end{frame}
 
+\begin{frame}[fragile]{3.4 排序：值与位置有什么不同？}
+\small 怎样把三名同学的成绩从低到高排列，同时保留姓名对应关系？
+\medskip
+\begin{lstlisting}
+names = np.array(["小林", "小周", "小王"])
+marks = np.array([80, 95, 70])
+order = np.argsort(marks)
+print(np.sort(marks))
+print(order)
+print(names[order])
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[70 80 95]
+[2 0 1]
+['小王' '小林' '小周']
+\end{lstlisting}
+\end{exampleblock}
+\small sort 返回排序后的值；argsort 返回原位置。用同一组位置索引姓名和成绩，配对关系不会丢失。
+\end{frame}
+
+\begin{frame}[fragile]{3.5 用排名选出收益最高的两只股票}
+\small 沿用位置索引：如何同时取出股票名称和收益率？收益率为小数，0.05 表示 5\%。
+\medskip
+\begin{lstlisting}
+symbols = np.array(["A", "B", "C", "D"])
+stock_returns = np.array([0.03, -0.02, 0.05, 0.01])
+top = np.argsort(stock_returns)[::-1][:2]
+print(symbols[top])
+print(stock_returns[top])
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+['C' 'A']
+[0.05 0.03]
+\end{lstlisting}
+\end{exampleblock}
+\small 先升序排序，再反向取前两项。这是给定样本的收益排名，不是对未来收益的预测。
+\end{frame}
+
+\begin{frame}{练习：找到收益最低的两只股票}
+修改上一例，同时输出收益最低的两只股票名称和收益率。
+\medskip
+\begin{block}{动手检查}
+先预测结果，再运行验证。参考答案见 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
 \section{向量化运算}
 %==============================================================
 
@@ -334,9 +371,14 @@ scores = np.array([[80, 90, 70], [60, 75, 90]])
 bonus = np.array([2, 0, 5])
 adjusted = scores + bonus
 print(adjusted)
+# [[82 90 75]
+#  [62 75 95]]
+
 student_mean = scores.mean(axis=1, keepdims=True)
 print(student_mean.shape)  # (2, 1)
 print(scores - student_mean)
+# [[  0.  10. -10.]
+#  [-15.   0.  15.]]
 \end{lstlisting}
 \end{frame}
 \begin{frame}[fragile]{课堂练习：4.2A 广播：每科加不同的分数}
@@ -473,7 +515,7 @@ ret = np.array([0.02, -0.01, 0.04, -0.03, 0.01])
 
 ret.sum()        # 0.03     求和
 ret.mean()       # 0.006    均值（日均收益率）
-ret.std()        # 0.026... 标准差（波动性）
+ret.std()        # 0.024... 标准差（波动性）
 ret.max()        # 0.04     最大值
 ret.min()        # -0.03    最小值
 ret.argmax()     # 2        最大值的"位置"
@@ -522,25 +564,261 @@ np.cumsum([1, 1, 1, 1])   # array([1, 2, 3, 4]) 累计和
 
 
 %==============================================================
+\begin{frame}[fragile]{6.4 缺失成绩怎样求均值？}
+\small 一人成绩缺失时，能否把缺失当成零分？先检查缺失，再决定统计口径。
+\medskip
+\begin{lstlisting}
+marks_missing = np.array([80., np.nan, 90.])
+print(np.isnan(marks_missing))
+print(marks_missing.mean())
+print(np.nanmean(marks_missing))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[False  True False]
+nan
+85.0
+\end{lstlisting}
+\end{exampleblock}
+\small nan 表示缺失；普通 mean 得到 nan，nanmean 忽略缺失后得到 85。它描述两名有成绩的学生，不是三人的完整均分。
+\end{frame}
+
+\begin{frame}[fragile]{6.5 浮点数：为什么不能总用等号？}
+\small 计算机保存小数时可能产生微小舍入误差。怎样检查计算结果是否足够接近？
+\medskip
+\begin{lstlisting}
+value = 0.1 + 0.2
+print(value)
+print(value == 0.3)
+print(np.isclose(value, 0.3, rtol=0, atol=1e-12))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+0.30000000000000004
+False
+True
+\end{lstlisting}
+\end{exampleblock}
+\small isclose 比较数值是否接近。这里 rtol=0 关闭相对容差，atol=1e-12 允许极小的绝对误差；容差应随实际单位与精度要求选择。
+\end{frame}
+
+\begin{frame}[fragile]{6.6 从平均分到加权平均分}
+\small 两门课成绩为 80、90，权重分别为 40\%、60\%，综合成绩是多少？
+\medskip
+\begin{lstlisting}
+marks_weighted = np.array([80., 90.])
+weights = np.array([0.4, 0.6])
+print(marks_weighted * weights)
+print((marks_weighted * weights).sum())
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[32. 54.]
+86.0
+\end{lstlisting}
+\end{exampleblock}
+\small 先逐项乘权重得到 32、54，再相加得到 86。权重和为 1；等权平均只是加权平均的特殊情形。
+\end{frame}
+
+\begin{frame}[fragile]{6.7 多天、多资产：矩阵乘法做加权汇总}
+\small 每行是一天，每列是一只股票；假设每天期初权重均为 40\%、60\%，忽略交易成本。
+\medskip
+\begin{lstlisting}
+asset_returns = np.array([[0.02, -0.01],
+                          [-0.01, 0.03],
+                          [0.04, 0.01]])
+weights = np.array([0.4, 0.6])
+print((asset_returns * weights).sum(axis=1))
+print(asset_returns @ weights)
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[0.002 0.014 0.022]
+[0.002 0.014 0.022]
+\end{lstlisting}
+\end{exampleblock}
+\small 第一天为 0.02×0.4−0.01×0.6=0.002，即 0.2\%。* 逐元素相乘；@ 在这里把每行与权重相乘再求和：(3, 2) 与 (2,) 得到 (3,)。
+\end{frame}
+
+\begin{frame}{练习：改变持仓权重}
+把两只股票的权重改成 70\%、30\%，计算三天的组合收益率，手算核对第一天。
+\medskip
+\begin{block}{动手检查}
+先预测结果，再运行验证。参考答案见 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\section{随机数与重复模拟}
+
+\begin{frame}[fragile]{7.1 从掷骰子开始}
+\small 怎样模拟掷六面骰子？先创建生成器，再指定整数范围和抽样数量。
+\medskip
+\begin{lstlisting}
+dice_rng = np.random.default_rng(7)
+dice = dice_rng.integers(1, 7, size=8)
+print(dice)
+print(dice.shape)
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[6 4 5 6 4 5 6 2]
+(8,)
+\end{lstlisting}
+\end{exampleblock}
+\small integers(1, 7) 默认包含 1、不包含 7；size=8 生成 8 次结果。种子 7 用于复现课堂实验，不表示掷出 7。
+\end{frame}
+
+\begin{frame}[fragile]{7.2 固定种子不等于每次抽样都相同}
+\small 连续抽样与重新创建同种子的生成器有什么区别？
+\medskip
+\begin{lstlisting}
+seed_rng = np.random.default_rng(7)
+print(seed_rng.integers(1, 7, size=4))
+print(seed_rng.integers(1, 7, size=4))
+seed_rng = np.random.default_rng(7)
+print(seed_rng.integers(1, 7, size=4))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[6 4 5 6]
+[4 5 6 2]
+[6 4 5 6]
+\end{lstlisting}
+\end{exampleblock}
+\small 连续调用会推进生成器状态；重新创建相同种子的生成器会从头开始。在相同环境、相同调用顺序下可复现，不应在每轮模拟中反复重置种子。
+\end{frame}
+
+\begin{frame}[fragile]{7.3 抽签与有偏的左右移动}
+\small 从给定取值中抽样：左右移动概率不相同时，怎样表达？
+\medskip
+\begin{lstlisting}
+choice_rng = np.random.default_rng(7)
+sample_steps = choice_rng.choice([-1, 1], size=8,
+                                 p=[0.3, 0.7])
+print(sample_steps)
+print((sample_steps == 1).mean())
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[ 1  1  1 -1  1  1 -1  1]
+0.75
+\end{lstlisting}
+\end{exampleblock}
+\small p 按取值顺序指定概率，合计为 1；默认有放回抽样，取值可以重复。向右概率 70\% 不保证这 8 次中恰好 70\% 向右。
+\end{frame}
+
+\begin{frame}[fragile]{7.4 连续随机数：均匀分布与正态分布}
+\small 均匀分布可模拟 0 到 10 分钟的等待；正态分布可作为围绕中心波动的简化模型。
+\medskip
+\begin{lstlisting}
+continuous_rng = np.random.default_rng(7)
+waits = continuous_rng.uniform(0, 10, size=5)
+values = continuous_rng.normal(loc=0, scale=1, size=5)
+print(np.round(waits, 2))
+print(np.round(values, 2))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[6.25 8.97 7.76 2.25 3.  ]
+[-0.99  0.06  1.34 -0.49 -0.62]
+\end{lstlisting}
+\end{exampleblock}
+\small uniform 指定区间；normal 的 loc 是均值，scale 是标准差，不是方差。正态分布没有固定上下界；round 这里只用于展示。
+\end{frame}
+
+\begin{frame}[fragile]{7.5 理论均值与样本均值}
+\small 正态分布设置均值为 0，为什么抽出的数据均值不是恰好 0？
+\medskip
+\begin{lstlisting}
+sample_rng = np.random.default_rng(7)
+normal_sample = sample_rng.normal(0, 1, size=10000)
+for count in [10, 100, 10000]:
+    sample = normal_sample[:count]
+    print(count, round(sample.mean(), 3),
+          round(sample.std(), 3))
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+10 -0.202 0.645
+100 -0.173 0.875
+10000 -0.012 0.994
+\end{lstlisting}
+\end{exampleblock}
+\small 每行依次是样本量、样本均值、样本标准差。样本量增大通常使统计量更稳定，但误差不保证每一步都缩小。std 默认 ddof=0；样本标准差常用 ddof=1。
+\end{frame}
+
 % 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{6.4 非金融小案例：左右走动}
+\begin{frame}[fragile]{7.6 非金融小案例：左右走动}
 \small 每步向左或向右移动一格，起点为 0。先生成步长，再用 cumsum 得到位置；随机种子使课堂输出可复现。
 \medskip
 \begin{lstlisting}
 walk_rng = np.random.default_rng(7)
 directions = walk_rng.integers(0, 2, size=12)
 steps = np.where(directions == 0, -1, 1)
-positions = np.r_[0, steps.cumsum()]
+positions = np.concatenate(([0], steps.cumsum()))
 print(steps)
 print(positions)
 print("最远距离：", np.abs(positions).max())
 \end{lstlisting}
 \end{frame}
-\begin{frame}[fragile]{课堂练习：6.4 非金融小案例：左右走动}
+\begin{frame}[fragile]{课堂练习：7.6 非金融小案例：左右走动}
 改成 100 步，并计算走动后位于起点右侧的比例；分母是否包括起点？
 \medskip
 \begin{block}{检查思路}
 先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{7.7 一次模拟多个人走动}
+\small 先看 3 次实验、每次 4 步。每行是一个人的完整实验，每列是一步，单位为格。
+\medskip
+\begin{lstlisting}
+many_rng = np.random.default_rng(7)
+walk_steps = many_rng.choice([-1, 1], size=(3, 4))
+walk_positions = walk_steps.cumsum(axis=1)
+print(walk_steps)
+print(walk_positions)
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+[[ 1  1  1  1]
+ [ 1  1  1 -1]
+ [-1 -1 -1  1]]
+[[ 1  2  3  4]
+ [ 1  2  3  2]
+ [-1 -2 -3 -2]]
+\end{lstlisting}
+\end{exampleblock}
+\small axis=1 沿每行的时间方向累加。位置矩阵未加入起点；第一列是走完第 1 步的位置，最后一列是终点。
+\end{frame}
+
+\begin{frame}[fragile]{7.8 用重复实验估计概率}
+\small 如果 1000 个人各走 10 步，有多少人回到原点、停在右侧？每一步独立且左右等概率。
+\medskip
+\begin{lstlisting}
+many_rng = np.random.default_rng(7)
+walk_steps = many_rng.choice([-1, 1], size=(1000, 10))
+walk_positions = walk_steps.cumsum(axis=1)
+endpoints = walk_positions[:, -1]
+print(walk_positions.shape)
+print("回到原点：", (endpoints == 0).mean())
+print("停在右侧：", (endpoints > 0).mean())
+\end{lstlisting}
+\begin{exampleblock}{运行输出}
+\begin{lstlisting}
+(1000, 10)
+回到原点： 0.24
+停在右侧： 0.359
+\end{lstlisting}
+\end{exampleblock}
+\small 分母是 1000 次实验，不是 10 步。频率是概率的模拟估计；左右对称仍有回到原点的可能，因此停在右侧的概率小于一半。
+\end{frame}
+
+\begin{frame}{练习：步数和移动概率改变后会怎样？}
+先预测：走 11 步能回到原点吗？再模拟 1000 次各走 10 步，向右概率改为 70\%，估计停在右侧的比例。
+\medskip
+\begin{block}{动手检查}
+先预测结果，再运行验证。参考答案见 Notebook 的折叠单元格。
 \end{block}
 \end{frame}
 
@@ -552,19 +830,19 @@ print("最远距离：", np.abs(positions).max())
 rng = np.random.default_rng(8)          # 随机数生成器(固定种子)
 n = 250                                  # 250个交易日
 
-# 模拟日收益率：均值0.04%，日波动1.5%
-rets = 0.0004 + 0.015 * rng.standard_normal(n)
+# 模拟日对数收益率：均值0.04%，标准差1.5%
+rets = rng.normal(loc=0.0004, scale=0.015, size=n)
 
-# 由收益率还原价格曲线（期初100元）
-prices = 100 * np.exp(np.cumsum(rets))
+# 由对数收益率还原价格曲线，包含期初100元
+prices = 100 * np.exp(np.concatenate(([0], rets.cumsum())))
 
-print(f"日均收益率：{rets.mean():.4%}")
+print(f"日均对数收益率：{rets.mean():.4%}")
 print(f"日波动率：  {rets.std():.4%}")
 print(f"年化波动率：{rets.std()*np.sqrt(252):.2%}")
 print(f"最高价/最低价：{prices.max():.2f} / {prices.min():.2f}")
 \end{lstlisting}
 	\begin{itemize}
-		\item \textbf{年化波动率 = 日标准差 $\times\sqrt{252}$}，业界标准做法。
+		\item \textbf{年化波动率 = 日标准差 $\times\sqrt{252}$}，此处采用独立同分布的日收益假设。
 		\item 用到的全部是本章工具：向量化、\texttt{cumsum}、\texttt{exp}、聚合函数。
 	\end{itemize}
 \end{frame}
@@ -574,11 +852,12 @@ print(f"最高价/最低价：{prices.max():.2f} / {prices.min():.2f}")
 # 上涨日占比
 print(f"上涨日占比：{(rets > 0).mean():.2%}")
 
-# 单日跌幅超过3%的"极端日"
-extreme = rets[rets < -0.03]
+# 简单收益率低于-3%的极端日
+simple_rets = np.exp(rets) - 1
+extreme = simple_rets[simple_rets < -0.03]
 print(f"极端下跌天数：{len(extreme)}")
 
-# 最大回撤的粗略观察：历史最高价 vs 当前价
+# 最大回撤：包含期初价格的历史最高价 vs 当前价
 peak = np.maximum.accumulate(prices)
 drawdown = prices / peak - 1
 print(f"最大回撤：{drawdown.min():.2%}")
@@ -588,6 +867,18 @@ print(f"最大回撤：{drawdown.min():.2%}")
 		\item \textbf{最大回撤}是基金与策略最常用的风险指标之一。
 		\item 整段分析没有写一个 \texttt{for} 循环。
 	\end{itemize}
+\end{frame}
+
+\begin{frame}{从数组计算到模拟实验}
+\begin{enumerate}
+\item 创建与索引：说明每行、每列的含义，排序后保持字段配对。
+\item 向量化与统计：检查缺失值，用广播、axis 和权重完成计算。
+\item 随机数：明确分布参数、种子与样本形状，区分理论参数和样本结果。
+\item 重复实验：每行一次实验，提取终点，用布尔均值估计事件概率。
+\end{enumerate}
+\begin{block}{模拟的边界}
+股价案例采用独立同分布的正态对数收益率，只用于教学，不是市场预测模型。年化波动率的平方根换算依赖相应假设。
+\end{block}
 \end{frame}
 
 \begin{frame}{本章小结}
@@ -613,7 +904,7 @@ print(f"最大回撤：{drawdown.min():.2%}")
 		\end{enumerate}
 	\end{block}
 	\begin{exampleblock}{下章预告}
-		数组只装数字，真实行情还有日期、股票代码、公司名。\\
+		NumPy 数组采用统一类型；真实行情还需要日期、列名与表格对齐。\\
 		下一章学习 \textbf{pandas}：带标签的表格数据，金融数据分析的主力工具。
 	\end{exampleblock}
 	\begin{center}

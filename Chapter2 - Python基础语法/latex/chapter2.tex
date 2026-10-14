@@ -747,6 +747,49 @@ future_value(100, rate=0.05, years=3)  # 指明参数名
 \end{frame}
 
 
+\begin{frame}[fragile]{不定参数：用 *args 接收多个数}
+求和时，有时输入两个数，有时输入三个数，能否使用同一个函数？
+\begin{lstlisting}
+def total(*args):
+    print(args)
+    return sum(args)
+
+print(total(10, 20))
+# (10, 20)
+# 30
+print(total(10, 20, 30))
+# (10, 20, 30)
+# 60
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{*args} 把数量不固定的\textbf{位置参数}收集成\textbf{元组}。
+\item \texttt{args} 是惯用名称；也可写 \texttt{*numbers}，函数体相应使用 \texttt{numbers}。
+\item “不定”指\alert{参数数量不固定}，同一个函数可处理不同数量的输入。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{不定参数：用 **kwargs 接收带名称的信息}
+学生信息有时只有姓名和成绩，有时还包含城市。
+\begin{lstlisting}
+def show_info(**kwargs):
+    print(kwargs)
+
+show_info(name="小王", score=90)
+# {'name': '小王', 'score': 90}
+show_info(name="小李", score=85, city="上海")
+# {'name': '小李', 'score': 85, 'city': '上海'}
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{**kwargs} 把数量不固定的\textbf{关键字参数}收集成\textbf{字典}。
+\item 参数用“名称=值”传入；字典的键是参数名，值是传入的信息。
+\item \texttt{kwargs} 是惯用名称，真正起作用的是 \texttt{**}。
+\end{itemize}
+\begin{exampleblock}{课堂练习：汇总多笔现金流}
+编写 \texttt{total\_cashflow(*amounts)}，求现金流金额之和（元）。\\
+分别传入 \texttt{(100, -30)} 和 \texttt{(100, -30, 50)}；说明 \texttt{amounts} 的类型。参考答案见 Notebook 折叠单元格。
+\end{exampleblock}
+\end{frame}
+
 %==============================================================
 % 自编教学补充；阅读来源见本章 README。
 \begin{frame}[fragile]{7.4 print 与 return 的区别}
