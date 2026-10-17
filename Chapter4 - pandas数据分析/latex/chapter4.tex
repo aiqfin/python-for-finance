@@ -84,25 +84,25 @@
 % 多周教学路线
 \begin{frame}{教学路线：可分四个单元推进}
 \begin{enumerate}
-\item 表与索引：选择、赋值、对齐，先说明一行代表什么。
+\item 表与索引：选择、赋值、对齐，再用股票行情理解宽长表转换与分组。
 \item 清洗：类型、重复、缺失、异常，保留处理依据。
-\item 合并与变形：连接关系、行数变化、长表与宽表。
-\item 分组与应用：聚合、组内计算、订单日报与金融迁移。
+\item 合并与变形：连接关系、行数变化、重复键聚合与多层索引。
+\item 金融应用：复用股票行情，检查覆盖范围、计算收益率并选择可比样本。
 \end{enumerate}
 \begin{block}{课堂节奏}
 每单元可安排一周，也可将讲解、上机和讲评分开。完成本单元练习后再推进，不要求一周讲完整章。
 \end{block}
 \end{frame}
-\begin{frame}{配套 Notebook 与学习顺序}
+\begin{frame}{配套 Notebook：按主题练习}
 \begin{itemize}
-\item 单元一：\texttt{04\_pandas} 第1--5节。
-\item 单元二：\texttt{04\_2\_Cleaning}，整理成绩登记。
-\item 单元三：\texttt{04\_3\_Wrangling}，合并订单与商品。
-\item 单元四：\texttt{04\_4\_GroupBy}，完成订单日报；\\
-再回到 \texttt{04\_pandas} 第6--9节，完成金融案例。
+\item 全章使用 \texttt{04\_pandas.ipynb}，小节顺序与课件一致。
+\item 第1--5节：表、索引、筛选与宽长表转换。
+\item 第6--8节：分组、清洗、合并与变形进阶。
+\item 第9--11节：行情样本检查、时间序列与读写数据。
+\item 第12节：成绩清洗综合练习与三股风险统计。
 \end{itemize}
 \begin{block}{运行方式}
-三个补充 Notebook 均可单独从头运行。返回主 Notebook 时从头执行，恢复本文件的变量。
+选择课程 \texttt{.venv} 内核，从头按顺序运行；练习答案放在折叠单元格中，先动手再展开。
 \end{block}
 \end{frame}
 
@@ -203,6 +203,77 @@ s[s > 100]             # 筛选出大于100的
 
 
 %==============================================================
+\begin{frame}[fragile]{关键概念：对齐——索引顺序不同怎么办？}
+\small
+两位同学的基础分与加分分别记录如下，每个标签代表一位同学。\\
+\textbf{问题：}加分表的顺序反了，怎样把加分加给对应的同学？
+\begin{lstlisting}
+base = pd.Series([10, 20], index=["A", "B"])
+bonus = pd.Series([1, 2], index=["B", "A"])
+\end{lstlisting}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\textbf{pandas：按索引标签相加}
+\begin{lstlisting}
+print(base + bonus)
+# A    12
+# B    21
+# dtype: int64
+\end{lstlisting}
+A 找到 A：$10+2=12$；\\
+B 找到 B：$20+1=21$。
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{NumPy：按数组位置相加}
+\begin{lstlisting}
+base_np = np.array([10, 20])
+bonus_np = np.array([1, 2])
+print(base_np + bonus_np)
+# [11 22]
+\end{lstlisting}
+第一个加第一个：$10+1=11$；\\
+第二个加第二个：$20+2=22$。
+\end{column}
+\end{columns}
+\begin{alertblock}{顺序与标签}
+NumPy 按位置运算，需要事先统一数据顺序；pandas \textbf{自动按相同的索引标签匹配}，即使排列顺序不同，也能正确相加。
+\end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{Series 对齐：缺少一个索引标签会怎样？}
+\small
+沿用同学分数的例子：基础分 Series 有 A、B、C，\\
+加分 Series 只有 B、A。\textbf{相加时，找不到对应加分的 C 会得到什么？}
+\begin{lstlisting}
+base = pd.Series([10, 20, 30],
+                 index=["A", "B", "C"])
+bonus = pd.Series([1, 2],
+                  index=["B", "A"])
+\end{lstlisting}
+\begin{columns}[T]
+\begin{column}{0.42\textwidth}
+\begin{lstlisting}
+print(base + bonus)
+# A   12.0
+# B   21.0
+# C    NaN
+# dtype: float64
+\end{lstlisting}
+\end{column}
+\begin{column}{0.54\textwidth}
+\textbf{自动匹配后的计算}
+\begin{itemize}
+\item A：$10+2=12$。
+\item B：$20+1=21$。
+\item C：基础分为 30，但没有对应加分，结果为 \texttt{NaN}（缺失值）。
+\end{itemize}
+\end{column}
+\end{columns}
+\begin{alertblock}{自动对齐不等于自动补零}
+两个 Series 相加时\textbf{自动按索引标签匹配}，保留双方出现的标签；缺少对应值时，结果为 \texttt{NaN}，不会把缺失的加分自动当成 0。
+\end{alertblock}
+\end{frame}
+
 \section{DataFrame：金融数据的"主战场"}
 %==============================================================
 
@@ -222,48 +293,139 @@ df
 	\end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{查看数据的基本动作}
-	\begin{lstlisting}
-df.shape       # (3, 3)      行数、列数
-df.columns     # 列名：Index(['茅台', '五粮液', '平安'])
-df.index       # 行索引（这里是日期）
-df.head(2)     # 前2行（head()默认5行）
-df.tail(1)     # 最后1行
-df.describe()  # 每列的统计摘要：均值、标准差、分位数等
+
+
+\begin{frame}[fragile]{查看股票数据：形状与标签}
+\small 沿用前面的 \texttt{df}：每行是一个交易日，每列是一只股票，数值为教学示例中的收盘价（元）。
+\begin{lstlisting}
+print(df.shape)
+# (3, 3)
+print(df.columns)
+# Index(['茅台', '五粮液', '平安'], dtype='object')
+print(df.index)
+# Index(['2026-07-01', '2026-07-02', '2026-07-03'],
+#       dtype='object')
 \end{lstlisting}
-	\begin{itemize}
-		\item 拿到任何新数据，先把这些"体检动作"做一遍。
-		\item \texttt{describe()} 相当于免费的初步报告，务必常用。
-	\end{itemize}
+\begin{itemize}
+\item \texttt{shape} 表示（行数，列数）：3 个交易日、3 只股票。
+\item \texttt{columns} 是股票名称；\texttt{index} 是日期标签。
+\item 这里日期以字符串创建，因此索引类型是 \texttt{object}，还不是日期时间索引。
+\end{itemize}
 \end{frame}
 
-
-%==============================================================
-% 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{3A 先说明一行代表什么}
-\small 这张表每行代表一次学生成绩记录，学号是标识而非数量。金融表也可以每行代表“股票—日期”，不必总是每列一只股票。
-\medskip
+\begin{frame}[fragile]{查看股票数据：前几行与后几行}
+\small \texttt{head(2)} 查看前两行；\texttt{tail(1)} 查看最后一行。括号中的数字指定行数，省略时默认取 5 行。
 \begin{lstlisting}
-students = pd.DataFrame({
-    "学号": ["001", "002", "003", "004"],
-    "姓名": ["小林", "小周", "小陈", "小许"],
-    "班级": ["A", "A", "B", "B"],
-    "成绩": [82, 95, 68, 88]})
-students.info()
-students.head()
+print(df.head(2))
 \end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+ & 茅台 & 五粮液 & 平安 \\
+\midrule
+2026-07-01 & 1500.0 & 128.0 & 55.0 \\
+2026-07-02 & 1520.0 & 129.5 & 54.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{lstlisting}
+print(df.tail(1))
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+ & 茅台 & 五粮液 & 平安 \\
+\midrule
+2026-07-03 & 1515.0 & 127.0 & 56.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+输出保留原来的日期索引与股票列名，不改变 \texttt{df}。
 \end{frame}
 
-\begin{frame}[fragile]{3B 一列与一列表：维度不同}
-\small 单层方括号取一列得到 Series；列名列表得到 DataFrame。先观察 type 和 shape，再决定后面如何操作。
-\medskip
+\begin{frame}[fragile]{查看股票数据：类型与非缺失数量}
+\small \textbf{问题：}各列是什么类型？每列有多少个非缺失值？
 \begin{lstlisting}
-one_column = students["成绩"]
-one_table = students[["成绩"]]
+df.info()
+\end{lstlisting}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+<class 'pandas.core.frame.DataFrame'>
+Index: 3 entries, 2026-07-01 to 2026-07-03
+Data columns (total 3 columns):
+ #   Column  Non-Null Count  Dtype
+---  ------  --------------  -----
+ 0   茅台      3 non-null      float64
+ 1   五粮液    3 non-null      float64
+ 2   平安      3 non-null      float64
+dtypes: float64(3)
+memory usage: 96.0+ bytes
+\end{lstlisting}
+\begin{itemize}
+\item 3 行数据，每列都有 3 个非缺失值：本例没有缺失价格。
+\item 三列均为 \texttt{float64}，可以进行数值计算。
+\item \texttt{info()} 直接打印概要，不需要外套 \texttt{print()}。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{查看股票数据：统计摘要}
+\begin{lstlisting}
+print(df.describe().round(2))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{lrrrl}
+\toprule
+ & 茅台 & 五粮液 & 平安 & 含义 \\
+\midrule
+count & 3.00 & 3.00 & 3.00 & 非缺失观测数 \\
+mean & 1511.67 & 128.17 & 55.17 & 均值 \\
+std & 10.41 & 1.26 & 0.76 & 样本标准差 \\
+min & 1500.00 & 127.00 & 54.50 & 最小值 \\
+25\% & 1507.50 & 127.50 & 54.75 & 下四分位数 \\
+50\% & 1515.00 & 128.00 & 55.00 & 中位数 \\
+75\% & 1517.50 & 128.75 & 55.50 & 上四分位数 \\
+max & 1520.00 & 129.50 & 56.00 & 最大值 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 每只股票分别沿日期方向统计；\texttt{round(2)} 将结果四舍五入到两位小数。
+\item 茅台这 3 天的平均收盘价为 1511.67 元。
+\item 这里统计的是\textbf{价格}；价格标准差不是收益率波动率，3 天数据也不足以评价长期风险。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{一列与一列表：维度不同}
+\small 同样取出茅台价格，\textbf{一个列名}与\textbf{列名列表}得到的结构有什么不同？
+\begin{lstlisting}
+one_column = df["茅台"]
+one_table = df[["茅台"]]
 print(type(one_column), one_column.shape)
+# <class 'pandas.core.series.Series'> (3,)
 print(type(one_table), one_table.shape)
-print(students.describe())
+# <class 'pandas.core.frame.DataFrame'> (3, 1)
 \end{lstlisting}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{lstlisting}
+print(one_column)
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# 2026-07-03    1515.0
+# Name: 茅台, dtype: float64
+\end{lstlisting}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{lstlisting}
+print(one_table)
+#                 茅台
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# 2026-07-03    1515.0
+\end{lstlisting}
+\end{column}
+\end{columns}
+\texttt{(3,)} 是一维 Series；\texttt{(3, 1)} 是三行一列的二维 DataFrame。两者都保留日期索引。
 \end{frame}
 
 \section{数据选取与筛选}
@@ -323,91 +485,1331 @@ df[(df["茅台"] > 1500) & (df["平安"] > 55)]
 
 %==============================================================
 % 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{4A 标签切片与位置切片}
-\small 学号设为索引后，loc 用学号找人，iloc 按当前位置找人。在此唯一且有序的索引上，loc 切片包括末端标签，iloc 不包括末端位置。
-\medskip
+\begin{frame}[fragile]{日期切片：先建立 DatetimeIndex}
+\small 沿用三只股票的价格表。\textbf{问题：}怎样让 pandas 把索引理解为日期，并支持按月选取？
 \begin{lstlisting}
-by_id = students.set_index("学号")
-print(by_id.loc["001":"003", ["姓名", "成绩"]])
-print(by_id.iloc[0:2, [0, 2]])
-print(by_id.reset_index().columns.tolist())
+df.index = pd.to_datetime(df.index)
+df = df.sort_index()
+print(type(df.index))
+# <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+print(df.index.strftime("%Y-%m-%d").tolist())
+# ['2026-07-01', '2026-07-02', '2026-07-03']
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{pd.to\_datetime} 将日期字符串解析成日期时间，索引成为 \texttt{DatetimeIndex}。
+\item \texttt{sort\_index()} 按日期升序排列；后面都在这个唯一、有序的日期索引上操作。
+\item \texttt{strftime} 仅用于格式化显示，\texttt{df.index} 仍是日期时间索引。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{时间标签切片与位置切片}
+\small \textbf{问题：}取 7 月 1 日到 3 日的茅台价格，与取第 0、1 个位置，有什么不同？
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\textbf{loc：按日期范围}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+print(df.loc["2026-07-01":"2026-07-03",
+             "茅台"])
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# 2026-07-03    1515.0
+# Name: 茅台, dtype: float64
+\end{lstlisting}
+包括起止日期，得到 3 行。
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{iloc：按当前位置}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+print(df.iloc[0:2, 0])
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# Name: 茅台, dtype: float64
+\end{lstlisting}
+包括位置 0，不包括位置 2，得到 2 行。
+\end{column}
+\end{columns}
+\begin{block}{日期范围不是行数}
+\texttt{loc} 根据时间标签确定范围；\texttt{iloc} 根据当前行的位置取值。日期切片只返回已有记录，不会补出周末、节假日或缺失日期。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{按年、按月与开放区间选取}
+\small 有了 \texttt{DatetimeIndex}，可以只写年份或年月，选取该时间段的全部已有记录。
+\begin{lstlisting}
+print(df.loc["2026-07", "茅台"])
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# 2026-07-03    1515.0
+# Name: 茅台, dtype: float64
+print(df.loc[:"2026-07-02", "茅台"])
+# 2026-07-01    1500.0
+# 2026-07-02    1520.0
+# Name: 茅台, dtype: float64
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{df.loc["2026", "茅台"]} 取全年；本例仅有这 3 天，因此结果与按月选取相同。
+\item \texttt{:"2026-07-02"} 表示从开头到该日，包含该日。
+\item \texttt{"2026-07-02":} 表示从该日到末尾，本例得到 1520.0、1515.0 两条记录。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{条件筛选与赋值：标记高价交易日}
+\small \textbf{问题：}怎样标记茅台收盘价高于 1510 元的日期？在副本中增加标记列，价格不变。
+\begin{lstlisting}
+marked = df.copy()
+marked["高价日"] = False
+mask = marked["茅台"] > 1510
+marked.loc[mask, "高价日"] = True
+print(marked[["茅台", "高价日"]])
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+ & 茅台 & 高价日 \\
+\midrule
+2026-07-01 & 1500.0 & False \\
+2026-07-02 & 1520.0 & True \\
+2026-07-03 & 1515.0 & True \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{block}{一次指定行与列}
+\texttt{marked.loc[mask, "高价日"] = True} 明确修改哪些行、哪一列；避免使用 \texttt{marked[mask]["高价日"] = True} 这样的链式赋值。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{课堂练习：时间切片与条件筛选}
+沿用日期索引的股票价格表 \texttt{df}：
+\begin{enumerate}
+\item 选取 2026 年 7 月 2 日至 3 日的五粮液、平安价格。
+\item 在这段日期内，筛选五粮液价格低于 128 元的记录。
+\item 在 \texttt{df} 的副本中增加“关注日”列，将满足上述条件的日期标记为 \texttt{True}，其余为 \texttt{False}。
+\end{enumerate}
+\begin{block}{检查思路}
+先手工确定日期范围，再检查价格条件；比较时间切片和布尔筛选各自保留了哪些行。
+\end{block}
+\end{frame}
+
+\section{宽表与长表：结构与转换}
+
+\begin{frame}[fragile]{本节数据：沿用日期索引的股票宽表}
+\small 将前面的行情扩展到 6 个交易日：\textbf{行是日期，列是股票}，收盘价单位为元。
+\begin{lstlisting}
+dates = pd.to_datetime([
+    "2026-07-01", "2026-07-02", "2026-07-03",
+    "2026-07-06", "2026-07-07", "2026-07-08"])
+prices_wide = pd.DataFrame({
+    "茅台": [1500, 1520, 1515, 1530, 1525, 1545],
+    "五粮液": [128, 129.5, 127, 130, 129, 131.2],
+    "平安": [55, 54.5, 56, np.nan, np.nan, np.nan]},
+    index=dates)
+prices_wide.index.name = "日期"
+print(prices_wide.shape)
+# (6, 3)
+\end{lstlisting}
+\begin{itemize}
+\item 教学合成数据；日期索引是 \texttt{DatetimeIndex}，可继续用 \texttt{loc} 按时间切片。
+\item 平安后 3 天没有报价，用 \texttt{NaN} 表示未知，不填 0。
+\item \texttt{index.name} 只是给索引起名，便于后面将日期转为普通列。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{查看宽表：先看同一天的不同股票}
+\begin{lstlisting}
+print(prices_wide)
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+日期 & 茅台 & 五粮液 & 平安 \\
+\midrule
+2026-07-01 & 1500 & 128.0 & 55.0 \\
+2026-07-02 & 1520 & 129.5 & 54.5 \\
+2026-07-03 & 1515 & 127.0 & 56.0 \\
+2026-07-06 & 1530 & 130.0 & NaN \\
+2026-07-07 & 1525 & 129.0 & NaN \\
+2026-07-08 & 1545 & 131.2 & NaN \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 宽表便于按日期查看多只股票，也便于逐列计算均值、收益率。
+\item \texttt{prices\_wide.mean()} 就能得到各只股票的有效价格均值，不需要先分组。
+\end{itemize}
+\begin{block}{为什么还要转成长表？}
+接下来要逐只股票遍历行情、按记录数筛选整只股票，并应用组内函数。把股票名放进一列，就可以用统一的 \texttt{groupby("股票")} 写法组织这些操作。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{从宽表到长表：把股票列展开为记录}
+\begin{lstlisting}
+long_prices = prices_wide.reset_index().melt(
+    id_vars="日期", var_name="股票", value_name="收盘价")
+print(long_prices.shape)
+# (18, 3)
+market = long_prices[["股票", "日期", "收盘价"]].dropna(
+    subset=["收盘价"])
+print(market.shape)
+# (15, 3)
+\end{lstlisting}
+\begin{enumerate}
+\item \texttt{reset\_index()}：把日期索引变成“日期”列。
+\item \texttt{melt}：保留日期，将股票列名放入“股票”列，将对应数值放入“收盘价”列。
+\item 6 个日期 $\times$ 3 只股票展开为 18 行；\texttt{market} 仅保留其中 15 条有报价的记录。
+\end{enumerate}
+\begin{block}{明确本例的筛选口径}
+\texttt{prices\_wide} 和 \texttt{long\_prices} 保留缺失信息；\texttt{market} 用于后续有效报价的分组分析。删除缺失价格行不等于补齐数据，也不表示对应日期价格为 0。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{查看 market：15 条行情记录}
+\begin{lstlisting}
+print(market)
+\end{lstlisting}
+\begin{columns}[T]
+\begin{column}{0.58\textwidth}
+\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize]
+     股票         日期     收盘价
+0    茅台 2026-07-01  1500.0
+1    茅台 2026-07-02  1520.0
+2    茅台 2026-07-03  1515.0
+3    茅台 2026-07-06  1530.0
+4    茅台 2026-07-07  1525.0
+5    茅台 2026-07-08  1545.0
+6   五粮液 2026-07-01   128.0
+7   五粮液 2026-07-02   129.5
+8   五粮液 2026-07-03   127.0
+9   五粮液 2026-07-06   130.0
+10  五粮液 2026-07-07   129.0
+11  五粮液 2026-07-08   131.2
+12   平安 2026-07-01    55.0
+13   平安 2026-07-02    54.5
+14   平安 2026-07-03    56.0
+\end{lstlisting}
+\end{column}
+\begin{column}{0.38\textwidth}
+\small
+\begin{itemize}
+\item 左侧 0--14 是自动生成的行索引。
+\item 每行对应一只股票在一天的收盘价，单位为元。
+\item 同一日期可以出现多次，因为对应不同股票。
+\item 平安只有前 3 天的记录；后 3 天没有对应行。
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{从长表回到宽表：pivot 重新摆放数据}
+\small \textbf{问题：}怎样让日期重新成为索引、股票重新成为列？
+\begin{lstlisting}
+restored = long_prices.pivot(
+    index="日期", columns="股票", values="收盘价")
+restored = restored.reindex(columns=prices_wide.columns)
+print(restored)
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{l@{\hspace{1em}}rrr}
+\toprule
+ & 茅台 & 五粮液 & 平安 \\
+日期 & & & \\
+\midrule
+2026-07-01 & 1500.0 & 128.0 & 55.0 \\
+2026-07-02 & 1520.0 & 129.5 & 54.5 \\
+2026-07-03 & 1515.0 & 127.0 & 56.0 \\
+2026-07-06 & 1530.0 & 130.0 & NaN \\
+2026-07-07 & 1525.0 & 129.0 & NaN \\
+2026-07-08 & 1545.0 & 131.2 & NaN \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{index/columns/values} 分别指定行标签、列标签、单元格取值；\texttt{reindex} 恢复展示列顺序。\texttt{pivot} 不计算均值或总和，要求每个“日期--股票”组合唯一。
+\end{frame}
+
+\begin{frame}{宽表与长表：按操作选择结构}
+\small
+\begin{center}
+\begin{tabular}{p{0.19\textwidth}p{0.34\textwidth}p{0.34\textwidth}}
+\toprule
+ & 宽表 & 长表 \\
+\midrule
+一行的含义 & 一个日期，多只股票并排 & 一只股票在一个日期的记录 \\[5pt]
+适合查看 & 同一天各股票的价格 & 某只股票的全部观测记录 \\[5pt]
+适合计算 & 按列计算收益率、相关矩阵；价格矩阵运算 & 按股票或日期分组；组内筛选、自定义计算 \\[5pt]
+适合整理 & 固定股票集合的时间序列表 & 追加股票记录、按股票和日期连接其他信息 \\[5pt]
+缺少报价 & 对应单元格通常显示 NaN & 可以是含 NaN 的行，也可以没有该行，需说明口径 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{block}{本章接下来的选择}
+使用长表 \texttt{market} 演示按股票分组；每组仍是一只股票按日期排列的价格记录。需要价格矩阵时，再用 \texttt{pivot} 转回宽表。
+\end{block}
+\end{frame}
+
+\section{排序与分组}
+\begin{frame}[fragile]{排序：先按股票，再按日期}
+\small \textbf{问题：}怎样把同一只股票的记录放在一起，并按时间先后排列？
+\begin{lstlisting}
+market = market.sort_values(["股票", "日期"])
+print(market.head(3))
+#     股票         日期    收盘价
+# 6  五粮液 2026-07-01  128.0
+# 7  五粮液 2026-07-02  129.5
+# 8  五粮液 2026-07-03  127.0
+\end{lstlisting}
+\begin{itemize}
+\item 排序键按先后生效：先按股票名排序，同一股票内再按日期升序。
+\item 日期在这里是\textbf{普通列}，所以用 \texttt{sort\_values}；\texttt{sort\_index} 排的是左侧行索引。
+\item 输出左侧的 6、7、8 是保留的原行索引，不是重新编号。
+\item 排序返回新表，通过赋值更新 \texttt{market}。后面的首末价格计算都使用这一日期顺序。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{groupby：分组、选列、聚合}
+\small \textbf{问题：}每只股票在已有记录中的平均收盘价是多少？
+\begin{lstlisting}
+print(market.groupby("股票")["收盘价"].mean().round(2))
+# 股票
+# 五粮液     129.12
+# 平安        55.17
+# 茅台      1522.50
+# Name: 收盘价, dtype: float64
+\end{lstlisting}
+\begin{enumerate}
+\item \texttt{groupby("股票")}：同一股票在不同日期的记录归入一组。
+\item \texttt{["收盘价"]}：指定要计算的数值列。
+\item \texttt{mean()}：各组分别求均值；\texttt{round(2)} 将结果保留两位小数。
+\end{enumerate}
+\begin{block}{从每日记录到股票汇总}
+输入 15 行行情，输出 3 个股票均值。茅台、五粮液各用 6 天，平安仅用 3 天；这里是各自已有记录的价格均值。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{agg：同时查看数量、均值与范围}
+\small \textbf{问题：}均值由多少天计算？各只股票的价格范围是多少？
+\begin{lstlisting}
+result = market.groupby("股票")["收盘价"].agg(
+    ["count", "mean", "min", "max"])
+print(result.round(2))
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+股票 & count & mean & min & max \\
+\midrule
+五粮液 & 6 & 129.12 & 127.0 & 131.2 \\
+平安 & 3 & 55.17 & 54.5 & 56.0 \\
+茅台 & 6 & 1522.50 & 1500.0 & 1545.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item \texttt{agg} 接受多个聚合方法名；每只股票一行，每个指标一列。
+\item \texttt{count} 统计有效价格数量；本例每天每只股票至多一行，因此也是有报价的日期数。
+\item \texttt{min/max} 给出组内最低、最高收盘价，单位均为元。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{命名聚合：直接生成可读的汇总表}
+\small \textbf{问题：}怎样保留“股票”列，并给汇总指标命名？
+\begin{lstlisting}
+summary = market.groupby("股票", as_index=False).agg(
+    记录数=("日期", "size"),
+    平均收盘价=("收盘价", "mean"))
+print(summary.round(2))
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{rlrr}
+\toprule
+ & 股票 & 记录数 & 平均收盘价 \\
+\midrule
+0 & 五粮液 & 6 & 129.12 \\
+1 & 平安 & 3 & 55.17 \\
+2 & 茅台 & 6 & 1522.50 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 写法为\textbf{新列名 =（输入列名，聚合方法）}，可对不同列采用不同方法。
+\item \texttt{as\_index=False} 让股票名成为普通列，结果使用 0、1、2 的行索引。
+\item \texttt{size} 统计组内记录行数；原表一行是一条行情，所以这里统计的是行情记录数。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{size 与 count：记录存在，但价格缺失}
+\small \textbf{问题：}把茅台 7 月 2 日的价格设为缺失，记录数与有效价格数各是多少？
+\begin{lstlisting}
+missing = market.copy()
+missing.loc[1, "收盘价"] = float("nan")
+counts = missing.groupby("股票").agg(
+    记录数=("收盘价", "size"),
+    有效价格数=("收盘价", "count"),
+    平均收盘价=("收盘价", "mean"))
+print(counts.round(2))
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+股票 & 记录数 & 有效价格数 & 平均收盘价 \\
+\midrule
+五粮液 & 6 & 6 & 129.12 \\
+平安 & 3 & 3 & 55.17 \\
+茅台 & 6 & 5 & 1523.00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{loc[1]} 使用保留的原行标签，对应茅台 7 月 2 日。\texttt{size} 数所有行，\texttt{count} 数非缺失价格；茅台均值只用剩下 5 个有效价格。平安则是后 3 天的记录本身没有出现。
+\end{frame}
+
+\begin{frame}[fragile]{transform：把股票均价对应回每日记录}
+\small \textbf{问题：}每一天的收盘价，比这只股票的样本均价高多少？
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+relative = market.copy()
+relative["样本均价"] = relative.groupby("股票")[
+    "收盘价"].transform("mean")
+relative["偏离均价"] = relative["收盘价"] - relative["样本均价"]
+print(relative.loc[relative["股票"] == "茅台"].round(2))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{rllrrr}
+\toprule
+ & 股票 & 日期 & 收盘价 & 样本均价 & 偏离均价 \\
+\midrule
+0 & 茅台 & 2026-07-01 & 1500.0 & 1522.5 & -22.5 \\
+1 & 茅台 & 2026-07-02 & 1520.0 & 1522.5 & -2.5 \\
+2 & 茅台 & 2026-07-03 & 1515.0 & 1522.5 & -7.5 \\
+3 & 茅台 & 2026-07-06 & 1530.0 & 1522.5 & 7.5 \\
+4 & 茅台 & 2026-07-07 & 1525.0 & 1522.5 & 2.5 \\
+5 & 茅台 & 2026-07-08 & 1545.0 & 1522.5 & 22.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{agg} 每只股票输出一行；\texttt{transform} 将均价对应回原来的 15 行，上表只展示茅台的 6 行。样本均价使用整个区间的信息，适合描述这段数据，不能作为当时已知的交易信号。
+\end{frame}
+
+\begin{frame}[fragile]{课堂练习：生成股票价格汇总表}
+沿用完整的 \texttt{market} 数据：
+\begin{enumerate}
+\item 每只股票输出一行，保留“股票”作为普通列。
+\item 计算记录数、最高收盘价、最低收盘价，并给结果列命名。
+\item 新增“价格差”列，等于最高收盘价减去最低收盘价。
+\end{enumerate}
+\begin{block}{先判断，再运行}
+每只股票用了几天的数据？价格差的单位是什么？只比较价格差的绝对大小，能否判断哪只股票的相对波动更大？
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{分组循环：每次拿到一只股票的小表}
+\begin{lstlisting}
+for name, group in market.groupby("股票", sort=False):
+    print(name, len(group),
+          group["收盘价"].iloc[0],
+          group["收盘价"].iloc[-1])
+# 五粮液 6 128.0 131.2
+# 平安 3 55.0 56.0
+# 茅台 6 1500.0 1545.0
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{name} 是组名，例如“茅台”；\texttt{group} 是该股票全部记录组成的 DataFrame，保留股票、日期、收盘价三列。
+\item 每行输出依次为：股票名、记录数、首日价、末日价。
+\item \texttt{sort=False} 按组名首次出现的顺序遍历；组内行顺序沿用输入，本节开头已按股票和日期排序。
+\end{itemize}
+\begin{block}{什么时候用循环？}
+适合逐组查看数据、画图或保存结果。只是计算均值、最大值等常规统计时，直接使用聚合方法更简洁。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{filtration：按组判断，整组保留或删除}
+\small \textbf{问题：}只研究至少有 5 条价格记录的股票，如何保留它们的全部行情？
+\begin{lstlisting}
+kept = market.groupby("股票", sort=False).filter(
+    lambda group: len(group) >= 5)
+print(kept.groupby("股票", sort=False).size())
+# 股票
+# 五粮液    6
+# 茅台      6
+# dtype: int64
+print(kept.shape)
+# (12, 3)
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{lambda group: ...} 接收一组数据，返回一个布尔值：这一组是否满足条件。
+\item 茅台、五粮液各有 6 条，保留全部记录；平安仅 3 条，整组删除。
+\item 输出仍是原来的三列、共 12 行行情。上方的 \texttt{size()} 只是用来检查筛选结果。
+\end{itemize}
+\textbf{区别：}布尔索引按每行的条件筛选；\texttt{GroupBy.filter} 按整组的条件决定去留。本例数的是记录行数，不是验证所有应有交易日都已齐全。
+\end{frame}
+
+\begin{frame}[fragile]{apply：每组执行自定义函数}
+\small \textbf{问题：}把“取首末价格并计算涨幅”写成函数，如何分别应用于保留下来的股票？
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+def price_summary(group):
+    prices = group["收盘价"]
+    return pd.Series({
+        "首日价": prices.iloc[0],
+        "末日价": prices.iloc[-1],
+        "区间涨幅(%)": (prices.iloc[-1] / prices.iloc[0] - 1) * 100})
+
+result = kept.groupby("股票", sort=False)[["收盘价"]].apply(
+    price_summary)
+print(result.round(2))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+股票 & 首日价 & 末日价 & 区间涨幅(\%) \\
+\midrule
+五粮液 & 128.0 & 131.2 & 2.5 \\
+茅台 & 1500.0 & 1545.0 & 3.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small 每组传入一列价格组成的 DataFrame；函数返回带指标名称的 Series，\texttt{apply} 将它们合成汇总表。本例两组均覆盖 7 月 1--8 日；涨幅是首末价格变化，未计分红与交易成本。
+\end{frame}
+
+\begin{frame}[fragile]{同一项计算：优先考虑内置聚合}
+\small 自定义 \texttt{apply} 很灵活；如果计算能拆成现成的聚合方法，也可以直接写：
+\begin{lstlisting}
+result = kept.groupby("股票", sort=False).agg(
+    首日价=("收盘价", "first"),
+    末日价=("收盘价", "last"))
+result["区间涨幅(%)"] = (
+    result["末日价"] / result["首日价"] - 1) * 100
+print(result.round(2))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+股票 & 首日价 & 末日价 & 区间涨幅(\%) \\
+\midrule
+五粮液 & 128.0 & 131.2 & 2.5 \\
+茅台 & 1500.0 & 1545.0 & 3.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small 本例价格无缺失，两种写法结果相同。\texttt{first/last} 默认取组内首末非缺失值，而 \texttt{iloc[0]/iloc[-1]} 取实际首末位置；有缺失时需明确口径。两种方法都依赖事先排好的日期顺序。
+\end{frame}
+
+\begin{frame}{分组操作：根据需要的结果选择方法}
+\small
+\begin{center}
+\begin{tabular}{p{0.22\textwidth}p{0.31\textwidth}p{0.34\textwidth}}
+\toprule
+方式 & 返回什么 & 股票案例 \\
+\midrule
+分组循环 & 每次一个组名和一张组内表 & 逐只股票查看或绘图 \\[6pt]
+聚合（agg） & 每组一行汇总指标 & 每只股票的首日价、末日价 \\[6pt]
+转换（transform） & 与原数据等长且索引对齐的结果 & 每条行情对应的该股票均价 \\[6pt]
+筛选（filter） & 满足组条件的原始记录 & 保留记录数至少为 5 的股票 \\[6pt]
+应用（apply） & 合并自定义函数的返回值，形状由函数决定 & 自定义计算每组的价格摘要 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{block}{课堂练习}
+把筛选条件改为“至少 3 条记录”，再计算每只股票的区间涨幅。平安的结果对应哪段日期？能否直接与另外两只股票的涨幅比较？
+\end{block}
+\end{frame}
+
+\section{数据清洗基础与缺失值}
+
+\begin{frame}[fragile]{清洗前：先看原始股票报价}
+\small \textbf{问题：}怎样分别处理报价表中的文本、缺失、重复和异常？下面是故意含有问题的教学数据，每行是一条报价登记。
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+raw_quotes = pd.DataFrame({
+    "代码": [" 600519 ", "600519", "000858", "601318", "600036"],
+    "日期": ["2026-07-01"] * 4 + ["待核"],
+    "价格文本": ["1500", "1500", "未披露", "-5", "40"]})
+print(raw_quotes)
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{rlll}
+\toprule
+ & 代码 & 日期 & 价格文本 \\
+\midrule
+0 & \texttt{\textvisiblespace600519\textvisiblespace} & 2026-07-01 & 1500 \\
+1 & 600519 & 2026-07-01 & 1500 \\
+2 & 000858 & 2026-07-01 & 未披露 \\
+3 & 601318 & 2026-07-01 & -5 \\
+4 & 600036 & 待核 & 40 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small 表中首尾空格以可见符号标示。代码保留为字符串，避免丢失前导 0；价格和日期先保留原文，便于核对处理依据。
+\end{frame}
+
+\begin{frame}[fragile]{字符串清理：str 对每个元素执行操作}
+\begin{lstlisting}
+quotes_clean = raw_quotes.copy()
+quotes_clean["代码"] = quotes_clean["代码"].str.strip()
+print(quotes_clean["代码"].tolist())
+# ['600519', '600519', '000858', '601318', '600036']
+print(quotes_clean["代码"].str.startswith("60").tolist())
+# [True, True, False, True, True]
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{str.strip()} 删除每个字符串首尾的空白，统一代码写法。
+\item \texttt{str.startswith("60")} 逐个判断前缀，返回布尔结果，可用于筛选。
+\item \texttt{str.upper()} 可统一英文字母大小写；\texttt{str.contains()} 可查找指定文本。
+\end{itemize}
+\begin{block}{先统一，再识别}
+前两条代码只差首尾空格，统一后才能准确识别重复。\texttt{raw\_quotes} 保留原始文本。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{类型转换：区分已知缺失与解析失败}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+price_text = quotes_clean["价格文本"].replace("未披露", pd.NA)
+quotes_clean["价格"] = pd.to_numeric(price_text, errors="coerce")
+quotes_clean["交易日"] = pd.to_datetime(
+    quotes_clean["日期"], errors="coerce")
+failed = price_text.notna() & quotes_clean["价格"].isna()
+print(failed.tolist())
+# [False, False, False, False, False]
+print(quotes_clean[["价格", "交易日"]])
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{rrl}
+\toprule
+ & 价格 & 交易日 \\
+\midrule
+0 & 1500.0 & 2026-07-01 \\
+1 & 1500.0 & 2026-07-01 \\
+2 & NaN & 2026-07-01 \\
+3 & -5.0 & 2026-07-01 \\
+4 & 40.0 & NaT \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{coerce} 将无法解析的文本转为缺失；日期缺失显示为 \texttt{NaT}。“未披露”已明确作为缺失处理，-5 能成功转为数值，但仍需业务规则检查。
+\end{frame}
+
+\begin{frame}[fragile]{重复记录：整行重复与键冲突不同}
+\begin{lstlisting}
+print(quotes_clean.duplicated().tolist())
+# [False, True, False, False, False]
+print(quotes_clean.duplicated(
+    ["代码", "日期"], keep=False).tolist())
+# [True, True, False, False, False]
+quotes_clean = quotes_clean.drop_duplicates()
+print(quotes_clean.index.tolist())
+# [0, 2, 3, 4]
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{duplicated()} 默认比较所有列，标记重复记录中除第一次以外的行。
+\item 指定“代码、日期”检查组合键；\texttt{keep=False} 标记冲突中的所有行。
+\item 本例确认前两条是同一次报价的重复登记，删除整行重复后保留 4 条。
+\end{itemize}
+\begin{block}{不能直接删除的情况}
+若同一股票、同一日期出现不同价格，应先核查来源或报价时点，不能随意按组合键保留第一条。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{异常值：能转成数字，不代表可以使用}
+\small 本例是股票收盘价，非正价格需要核查。保留问题标记，单独生成用于统计的有效价格列。
+\begin{lstlisting}
+quotes_clean["价格异常"] = quotes_clean["价格"].le(0)
+quotes_clean["有效价格"] = quotes_clean["价格"].mask(
+    quotes_clean["价格异常"])
+print(quotes_clean[["代码", "价格异常", "有效价格"]])
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{rlrr}
+\toprule
+ & 代码 & 价格异常 & 有效价格 \\
+\midrule
+0 & 600519 & False & 1500.0 \\
+2 & 000858 & False & NaN \\
+3 & 601318 & True & NaN \\
+4 & 600036 & False & 40.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{mask} 将条件为真的位置替换为缺失。未披露与异常价格在统计列中都显示为缺失，但原因不同；日期待核的 40 元报价也不能直接用于按日分析。
+\end{frame}
+
+\begin{frame}[fragile]{映射与分段：生成便于分析的标签}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+quotes_clean["名称"] = quotes_clean["代码"].map({
+    "600519": "茅台", "000858": "五粮液",
+    "601318": "平安", "600036": "招行"})
+quotes_clean["价格区间"] = pd.cut(
+    quotes_clean["有效价格"], bins=[0, 100, 1000, float("inf")],
+    right=False, labels=["低于100", "100至不足1000", "至少1000"])
+print(quotes_clean[["名称", "价格区间"]])
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{rll}
+\toprule
+ & 名称 & 价格区间 \\
+\midrule
+0 & 茅台 & 至少1000 \\
+2 & 五粮液 & NaN \\
+3 & 平安 & NaN \\
+4 & 招行 & 低于100 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{map} 按字典映射，未找到对应键时为缺失；\texttt{cut} 按给定边界分段，\texttt{right=False} 表示左闭右开。标签仅描述价格水平，不是估值高低判断。
+\end{frame}
+\begin{frame}[fragile]{认识NaN}
+	\begin{lstlisting}
+import numpy as np
+s = pd.Series([1500.0, np.nan, 1515.0])
+
+s.isna()        # [False, True, False]  找出缺失
+s.dropna()      # 删掉缺失的行
+s.fillna(s.mean())   # 用均值填充
+s.ffill()       # 用前一个有效值填充（金融常用！）
+\end{lstlisting}
+	\begin{itemize}
+		\item \texttt{NaN}（Not a Number）表示缺失：停牌、数据未披露、\texttt{pct\_change} 的第一行。
+		\item \texttt{ffill()}（前向填充）：沿用上次观测值；是否适合需依据数据含义判断。
+		\item 处理前先想：缺失代表什么经济含义？乱填会引入偏差。
+	\end{itemize}
+\end{frame}
+
+
+%==============================================================
+\begin{frame}[fragile]{运算时补零：先确认缺失的含义}
+\small \textbf{问题：}合并两个账户的持股数量。已确认清单完整，未列出的股票表示该账户持有 0 股。
+\begin{lstlisting}
+account_a = pd.Series({"茅台": 100, "平安": 200})
+account_b = pd.Series({"平安": 300, "招行": 400})
+total = account_a.add(account_b, fill_value=0)
+print(total.reindex(["茅台", "平安", "招行"]))
+# 茅台    100.0
+# 平安    500.0
+# 招行    400.0
+# dtype: float64
+\end{lstlisting}
+\begin{itemize}
+\item \texttt{fill\_value=0} 在相加前，将一方缺少的对应值按 0 处理。
+\item 茅台：$100+0=100$ 股；平安：$200+300=500$ 股；招行：$0+400=400$ 股。
+\item \texttt{reindex} 仅指定结果展示的股票顺序。
+\end{itemize}
+\begin{alertblock}{缺失价格不能照此处理}
+未取得报价表示价格未知，不表示价格为 0。只有业务含义支持时才补零；双方都缺失的位置仍为缺失值。
+\end{alertblock}
+\end{frame}
+
+\section{数据合并与变形进阶}
+% 自编教学补充；阅读来源见本章 README。
+\begin{frame}[fragile]{1. 两张表的粒度与键}
+\small 合成订单表每行一笔订单，商品表每行一种商品。同一商品可以出现在多笔订单中，因此合并关系是多对一。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+import pandas as pd
+orders = pd.DataFrame({
+    "订单": [1, 2, 3, 4], "商品": ["T", "C", "T", "X"],
+    "数量": [2, 1, 3, 1]})
+products = pd.DataFrame({
+    "商品": ["T", "C", "J"],
+    "名称": ["茶", "咖啡", "果汁"], "单价": [10, 20, 15]})
+print(orders)
+print(products)
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}[fragile]{4B 条件筛选与安全赋值}
-\small 用 loc 一次指定行与列进行赋值；不要在 df[条件][列名] 的临时结果上修改原表。保留原始成绩，另建调整列。
-\medskip
-\begin{lstlisting}
-students["调整成绩"] = students["成绩"]
-mask = students["班级"].eq("B")
-students.loc[mask, "调整成绩"] = students.loc[mask, "成绩"] + 2
-selected = students.loc[students["成绩"].ge(80),
-                        ["姓名", "班级", "成绩"]].copy()
-print(selected)
+\begin{frame}[fragile]{1. 操作结果：两张表的粒度与键}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+   订单 商品  数量
+0   1  T   2
+1   2  C   1
+2   3  T   3
+3   4  X   1
+  商品  名称  单价
+0  T   茶  10
+1  C  咖啡  20
+2  J  果汁  15
 \end{lstlisting}
+\small 订单中的 T 出现两次；商品表中的 T 只出现一次。X 暂时没有商品信息，J 暂时没有订单。
 \end{frame}
-\begin{frame}[fragile]{课堂练习：4B 条件筛选与安全赋值}
-筛选 A 班且成绩至少为 90 的学生，仅展示姓名与成绩。
+
+\begin{frame}[fragile]{2. 左连接：保留每笔订单}
+\small on 明确匹配键；left 保留左表订单。indicator 标记未匹配行，validate 检查商品表的键唯一，避免合并后订单被复制。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+joined = orders.merge(products, on="商品", how="left",
+    validate="many_to_one", indicator=True)
+print(joined)
+print(joined["_merge"].value_counts())
+print("合并前后行数：", len(orders), len(joined))
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+   订单 商品  数量   名称    单价     _merge
+0   1  T   2    茶  10.0       both
+1   2  C   1   咖啡  20.0       both
+2   3  T   3    茶  10.0       both
+3   4  X   1  NaN   NaN  left_only
+_merge
+both          3
+left_only     1
+right_only    0
+Name: count, dtype: int64
+合并前后行数： 4 4
+\end{lstlisting}
+\small 4 笔订单全部保留。X 的名称与单价缺失，标记为 left\_only；其余 3 行为 both。right\_only 为 0，因为左连接不保留仅右表出现的 J。
+\end{frame}
+
+\begin{frame}[fragile]{3. 内连接与外连接：观察谁消失、谁新增}
+\small inner 只保留双方存在的商品匹配；outer 还会显示没有订单的商品。未匹配不代表金额为零，应单独列出。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+inner = orders.merge(products, on="商品", how="inner")
+outer = orders.merge(products, on="商品", how="outer",
+                     indicator=True)
+print("内连接、外连接行数：", len(inner), len(outer))
+print(inner[["订单", "商品"]])
+print(outer[["订单", "商品", "_merge"]])
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+内连接、外连接行数： 3 5
+   订单 商品
+0   1  T
+1   2  C
+2   3  T
+    订单 商品      _merge
+0  2.0  C        both
+1  NaN  J  right_only
+2  1.0  T        both
+3  3.0  T        both
+4  4.0  X   left_only
+\end{lstlisting}
+\small inner 中订单 4（X）消失；outer 中 X 保留，并新增仅在右表出现的 J，其订单号为 NaN。
+\end{frame}
+\begin{frame}[fragile]{课堂练习：3. 内连接与外连接：观察谁消失、谁新增}
+哪笔订单在 inner 中消失？哪个商品只在右表中？如果要核对全部订单，该选哪种连接？
 \medskip
 \begin{block}{检查思路}
 先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
 \end{block}
 \end{frame}
 
-\begin{frame}[fragile]{4C 对齐：标签相同才相加}
-\small Series 运算按标签匹配。缺少对应项会得到缺失值；fill\_value=0 只适合“未出现确实表示没有”的业务含义。
+\begin{frame}[fragile]{4. 重复键：合并可能让行数变多}
+\small 在商品表中故意重复 T，观察两笔 T 订单各匹配两次。解决方法是核实键与版本，而不是合并后随意去重。
 \medskip
-\begin{lstlisting}
-morning = pd.Series([3, 5], index=["茶", "咖啡"])
-afternoon = pd.Series([2, 4], index=["咖啡", "果汁"])
-print(morning + afternoon)
-print(morning.add(afternoon, fill_value=0))
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+bad_products = pd.concat([products, products.iloc[[0]]],
+                          ignore_index=True)
+expanded = orders.merge(bad_products, on="商品", how="left")
+print("合并前后行数：", len(orders), len(expanded))
+print(expanded[["订单", "商品", "数量", "单价"]])
+print("重复商品键数：", bad_products.duplicated("商品").sum())
+# 加 validate="many_to_one" 将直接报错，课堂可自行尝试。
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+合并前后行数： 4 6
+   订单 商品  数量    单价
+0   1  T   2  10.0
+1   1  T   2  10.0
+2   2  C   1  20.0
+3   3  T   3  10.0
+4   3  T   3  10.0
+5   4  X   1   NaN
+重复商品键数： 1
+\end{lstlisting}
+\small 订单 1、3 都购买 T，各匹配到两条商品记录，因此各出现两次：4 行变为 6 行。
+\end{frame}
+
+\begin{frame}[fragile]{5. concat：把同结构记录上下接起来}
+\small concat 不按商品键寻找匹配。ignore\_index 重建行号，不检查业务编号是否重复；拼接后仍要检查订单号。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+next_orders = pd.DataFrame({
+    "订单": [5, 6], "商品": ["C", "T"], "数量": [2, 1]})
+all_orders = pd.concat([orders, next_orders], ignore_index=True)
+print(all_orders)
+print(all_orders["订单"].is_unique)
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+   订单 商品  数量
+0   1  T   2
+1   2  C   1
+2   3  T   3
+3   4  X   1
+4   5  C   2
+5   6  T   1
+True
+\end{lstlisting}
+\small 前 4 行来自原订单，后 2 行来自新增订单；True 表示订单号仍唯一。
+\end{frame}
+
+\begin{frame}[fragile]{6. concat 的另一方向：横向按索引对齐}
+\small axis=1 横向拼接时按索引标签对齐，不会因为行数相同就按位置贴在一起。先检查索引含义。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+left = pd.Series([80, 90], index=["001", "002"], name="数学")
+right = pd.Series([70, 85], index=["002", "001"], name="英语")
+print(pd.concat([left, right], axis=1))
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+     数学  英语
+001  80  85
+002  90  70
+\end{lstlisting}
+\small 001 的数学 80 与英语 85 对齐；002 的数学 90 与英语 70 对齐。右侧 Series 的原排列顺序不决定拼接位置。
+\end{frame}
+
+\begin{frame}[fragile]{7. 重复组合：先决定是否需要聚合}
+\small 加入一次补考后，同一学生同一课程出现两次。pivot\_table 可以聚合；取最大值代表“保留最高成绩”，这是业务规则。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+long_scores = pd.DataFrame({
+    "学号": ["001", "001", "002", "002"],
+    "课程": ["数学", "英语", "数学", "英语"],
+    "成绩": [80, 90, 70, 85]})
+retake = pd.DataFrame({"学号": ["002"],
+                       "课程": ["数学"], "成绩": [88]})
+attempts = pd.concat([long_scores, retake], ignore_index=True)
+best = attempts.pivot_table(index="学号", columns="课程",
+    values="成绩", aggfunc="max")
+print(best)
 \end{lstlisting}
 \end{frame}
 
-\section{排序与分组}
+\begin{frame}[fragile]{7. 操作结果：重复组合：先决定是否需要聚合}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+课程   数学  英语
+学号
+001  80  90
+002  88  85
+\end{lstlisting}
+\small 002 的数学有 70、88 两次记录，max 得到 88；001 的数学仍为 80。这里的值来自明确的聚合规则。
+\end{frame}
+\begin{frame}[fragile]{课堂练习：7. 重复组合：先决定是否需要聚合}
+将 max 改为 mean，002 的数学成绩变成多少？两种答案分别回答什么问题？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{8. 多层索引：把组合键显式写出来}
+\small MultiIndex 可以表示“学号—课程”这类组合标签。先学 set\_index 和 reset\_index，再选学 stack、unstack。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+indexed = long_scores.set_index(["学号", "课程"]).sort_index()
+print(indexed)
+print(indexed.loc[("001", "数学"), "成绩"])
+print(indexed.unstack("课程"))
+print(indexed.reset_index())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{8. 操作结果：多层索引：把组合键显式写出来}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+        成绩
+学号  课程
+001 数学  80
+    英语  90
+002 数学  70
+    英语  85
+80
+     成绩
+课程   数学  英语
+学号
+001  80  90
+002  70  85
+    学号  课程  成绩
+0  001  数学  80
+1  001  英语  90
+2  002  数学  70
+3  002  英语  85
+\end{lstlisting}
+\small 先显示组合索引表；用（001，数学）定位得到 80。unstack 将课程移到列上，reset\_index 将索引还原为普通列。
+\end{frame}
+
+\begin{frame}[fragile]{9. 综合检查：只汇总匹配成功的金额}
+\small 价格未知的 X 订单不能当作零金额。先列出未匹配订单，再汇总可计算的部分，并说明覆盖范围。
+\medskip
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+matched = joined.loc[joined["_merge"] == "both"].copy()
+matched["金额"] = matched["数量"] * matched["单价"]
+print(matched[["订单", "名称", "金额"]])
+print("已知金额合计：", matched["金额"].sum())  # 70
+print("未匹配订单数：", (joined["_merge"] == "left_only").sum())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+   订单  名称    金额
+0   1   茶  20.0
+1   2  咖啡  20.0
+2   3   茶  30.0
+已知金额合计： 70.0
+未匹配订单数： 1
+\end{lstlisting}
+\small 已知金额合计 70 元仅覆盖匹配成功的 3 笔订单；X 的 1 笔订单仍待补充单价，不能把 70 元称为全部订单总额。
+\end{frame}
+\begin{frame}[fragile]{课堂练习：9. 综合检查：只汇总匹配成功的金额}
+将商品 X 补录为“水”、单价 5，重新合并全部原订单。总金额应是多少？
+\medskip
+\begin{block}{检查思路}
+先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
+\end{block}
+\end{frame}
+
+\section{金融综合应用：行情与样本检查}
+
+\begin{frame}{案例任务：从行情表到可比的收益率样本}
+沿用茅台、五粮液、平安在 7 月 1--8 日的教学行情，不另建数据集。
+\begin{itemize}
+\item \texttt{prices\_wide}：6 个日期 $\times$ 3 只股票，保留缺失价格。
+\item \texttt{long\_prices}：18 行“日期--股票”组合，包括平安后 3 天的缺失报价。
+\item \texttt{market}：15 条有效报价，适合查看已知价格，但不保留完整的日期组合。
+\end{itemize}
+\begin{block}{要完成的分析}
+检查每天的数据覆盖情况；在各只股票内部计算相邻观测日收益率；整理收益率矩阵，并确定三只股票可共同比较的日期。
+\end{block}
+\small 本案例使用 \texttt{long\_prices} 保留缺失位置。提前删掉缺失价格后再错位，可能把跨多日的价格变化误认为相邻观测日变化。
+\end{frame}
+
+\begin{frame}[fragile]{行情覆盖：每天是否都有三只股票的报价？}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+coverage = long_prices.groupby("日期").agg(
+    应有股票数=("股票", "size"), 有效报价数=("收盘价", "count"))
+coverage["缺失报价数"] = coverage["应有股票数"] - coverage["有效报价数"]
+print(coverage)
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+日期 & 应有股票数 & 有效报价数 & 缺失报价数 \\
+\midrule
+2026-07-01 & 3 & 3 & 0 \\
+2026-07-02 & 3 & 3 & 0 \\
+2026-07-03 & 3 & 3 & 0 \\
+2026-07-06 & 3 & 2 & 1 \\
+2026-07-07 & 3 & 2 & 1 \\
+2026-07-08 & 3 & 2 & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 后 3 天各缺少 1 个报价，不能把剩余两只股票当作完整的三股票样本。
+\item 这里能用 \texttt{size} 表示应有数量，是因为宽表展开时保留了全部 18 个日期--股票组合；在 \texttt{market} 上计数只能得到有效报价数。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{组内错位：价格必须与同一股票的前期价格配对}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+quote_panel = long_prices.sort_values(["股票", "日期"]).copy()
+quote_panel["上一观测日价"] = quote_panel.groupby("股票")["收盘价"].shift(1)
+quote_panel["收益率"] = (
+    quote_panel["收盘价"] / quote_panel["上一观测日价"] - 1)
+print(quote_panel.loc[quote_panel["股票"] == "平安",
+    ["日期", "收盘价", "上一观测日价", "收益率"]].round(4))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{rlrrr}
+\toprule
+ & 日期 & 收盘价 & 上一观测日价 & 收益率 \\
+\midrule
+12 & 2026-07-01 & 55.0 & NaN & NaN \\
+13 & 2026-07-02 & 54.5 & 55.0 & -0.0091 \\
+14 & 2026-07-03 & 56.0 & 54.5 & 0.0275 \\
+15 & 2026-07-06 & NaN & 56.0 & NaN \\
+16 & 2026-07-07 & NaN & NaN & NaN \\
+17 & 2026-07-08 & NaN & NaN & NaN \\
+\bottomrule
+\end{tabular}
+\end{center}
+\small \texttt{shift(1)} 在每只股票组内取上一行价格；收益率为 $P_t/P_{t-1}-1$，上表用小数表示。首日没有前期价格；任一端缺失，收益率也缺失。观测日期不是逐个日历日，不能将跨周末变化称为单个日历日变化。
+\end{frame}
+
+\begin{frame}[fragile]{收益率矩阵：同一日期横向查看三只股票}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+returns = quote_panel.pivot(
+    index="日期", columns="股票", values="收益率")
+returns = returns.reindex(columns=prices_wide.columns)
+print((returns * 100).round(2))
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+日期 & 茅台 & 五粮液 & 平安 \\
+\midrule
+2026-07-01 & NaN & NaN & NaN \\
+2026-07-02 & 1.33 & 1.17 & -0.91 \\
+2026-07-03 & -0.33 & -1.93 & 2.75 \\
+2026-07-06 & 0.99 & 2.36 & NaN \\
+2026-07-07 & -0.33 & -0.77 & NaN \\
+2026-07-08 & 1.31 & 1.71 & NaN \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 输出单位为百分比；例如茅台 7 月 2 日上涨约 1.33\%。\texttt{returns} 本身仍保存小数收益率。
+\item 价格缺失产生的收益率缺失继续保留，没有填成 0，也没有沿用前一个收益率。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{可比样本：先统一日期，再比较股票}
+\small \textbf{问题：}若各列直接跳过缺失值，三只股票的统计是否使用了同一段观测？
+\begin{lstlisting}
+print(returns.count().tolist())
+# [5, 5, 2]
+common_returns = returns.dropna(how="any")
+print((common_returns * 100).round(2))
+\end{lstlisting}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+日期 & 茅台 & 五粮液 & 平安 \\
+\midrule
+2026-07-02 & 1.33 & 1.17 & -0.91 \\
+2026-07-03 & -0.33 & -1.93 & 2.75 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item 原矩阵有效收益率数依次为 5、5、2，各列直接取均值会使用不同样本。
+\item \texttt{dropna(how="any")} 保留三列均有值的行，得到 2 个共同日期；原矩阵 \texttt{returns} 不变。
+\item 共同样本便于同日期比较，但会损失数据。这里仅剩两条观测，只用于演示方法，不据此评估长期风险。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{课堂练习：增加报价后，哪些结果会改变？}
+\begin{enumerate}
+\item 在 \texttt{prices\_wide} 的副本中，为平安补入经核实的 7 月 6 日报价 55.5 元；其余报价保持原样。
+\item 从宽表重新生成长表，更新覆盖表、组内收益率和收益率矩阵。
+\item 手算平安 7 月 6 日相对于 7 月 3 日的价格收益率，再与代码核对。
+\item 检查共同样本新增了哪个日期。7 月 7 日是否也能计算收益率？说明原因。
+\end{enumerate}
+\begin{block}{交付结果}
+一张覆盖表、一张收益率矩阵，以及共同样本的日期列表。解释每个新增有效值来自哪两个日期的报价。
+\end{block}
+\end{frame}
+\section{金融时间序列}
 %==============================================================
 
-\begin{frame}[fragile]{排序}
+\begin{frame}[fragile]{本节数据：继续使用三只股票的行情}
+\small 沿用前面的教学合成行情，每行一个观测日期，每列一只股票，价格单位为元。
+\medskip
+\begin{lstlisting}
+pd.set_option("display.unicode.east_asian_width", True)
+ts_prices = prices_wide.copy()
+print(ts_prices.to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            茅台  五粮液  平安
+日期
+2026-07-01  1500   128.0  55.0
+2026-07-02  1520   129.5  54.5
+2026-07-03  1515   127.0  56.0
+2026-07-06  1530   130.0   NaN
+2026-07-07  1525   129.0   NaN
+2026-07-08  1545   131.2   NaN
+\end{lstlisting}
+\small 索引已经是 \texttt{DatetimeIndex}，并按日期升序排列。7月3日之后是7月6日；平安后3个观测日缺报价。本节保留这些缺失值。
+\end{frame}
+
+\begin{frame}[fragile]{日期索引：日期类型与规则日期序列}
+\small 日期字符串转换后才能参与时间运算；工作日序列可以用于检查日期覆盖。
+\medskip
+\begin{lstlisting}
+print(pd.to_datetime(["2026-07-03", "2026-07-06"]))
+bdays = pd.date_range("2026-07-01", periods=6, freq="B")
+print(bdays.strftime("%Y-%m-%d").tolist())
+print(ts_prices.loc["2026-07-02":"2026-07-03"].to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+DatetimeIndex(['2026-07-03', '2026-07-06'], dtype='datetime64[ns]', freq=None)
+['2026-07-01', '2026-07-02', '2026-07-03', '2026-07-06', '2026-07-07', '2026-07-08']
+            茅台  五粮液  平安
+日期
+2026-07-02  1520   129.5  54.5
+2026-07-03  1515   127.0  56.0
+\end{lstlisting}
+\small \texttt{B} 表示周一至周五，不排除交易所节假日；实际交易日应以交易所日历为准。日期标签切片包含两端。
+\end{frame}
+
+\begin{frame}[fragile]{Timedelta：两个观测日之间隔了多久？}
+\small 时间点用 Timestamp 表示；两个时间点之差是 Timedelta，即经过的时间长度。
+\medskip
+\begin{lstlisting}
+gap = pd.Timestamp("2026-07-06") - pd.Timestamp("2026-07-03")
+print(gap)
+print(pd.Timestamp("2026-07-03") + pd.Timedelta(days=1))
+gaps = ts_prices.index.to_series().diff()
+print(gaps.to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+3 days 00:00:00
+2026-07-04 00:00:00
+日期
+2026-07-01      NaT
+2026-07-02   1 days
+2026-07-03   1 days
+2026-07-06   3 days
+2026-07-07   1 days
+2026-07-08   1 days
+\end{lstlisting}
+\small 周五到周一相隔3个日历日，但在本表中只跨一个观测间隔。\texttt{Timedelta(days=1)} 加一天会到周六，并不等于下一个交易日。
+\end{frame}
+
+\begin{frame}[fragile]{shift：移动数值与移动日期标签}
+\small 比较前3条茅台报价：上一行价格与把日期向后推一天，是不同操作。
+\medskip
+\begin{lstlisting}
+s = ts_prices["茅台"].head(3)
+print(pd.DataFrame({"原价": s, "上一行价格": s.shift(1)}).to_string())
+print(s.shift(1, freq="D").to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            原价  上一行价格
+日期
+2026-07-01  1500         NaN
+2026-07-02  1520      1500.0
+2026-07-03  1515      1520.0
+日期
+2026-07-02    1500
+2026-07-03    1520
+2026-07-04    1515
+\end{lstlisting}
+\small \texttt{shift(1)} 保留索引、移动数值，首行缺失；\texttt{shift(1, freq="D")} 保留数值、移动日期标签，最后一个标签变成周六。计算相邻观测收益率用前者。
+\end{frame}
+
+\begin{frame}[fragile]{价格变化与收益率：一次计算整张宽表}
+\small diff 给出价格变动额（元）；pct\_change 给出相对于上一观测价格的变化比例。
+\medskip
+\begin{lstlisting}
+changes = pd.DataFrame({
+    "茅台价差": ts_prices["茅台"].diff(),
+    "茅台收益率(%)": ts_prices["茅台"].pct_change(fill_method=None) * 100,
+    "平安收益率(%)": ts_prices["平安"].pct_change(fill_method=None) * 100})
+print(changes.round(2).to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            茅台价差  茅台收益率(%)  平安收益率(%)
+日期
+2026-07-01       NaN            NaN            NaN
+2026-07-02      20.0           1.33          -0.91
+2026-07-03      -5.0          -0.33           2.75
+2026-07-06      15.0           0.99            NaN
+2026-07-07      -5.0          -0.33            NaN
+2026-07-08      20.0           1.31            NaN
+\end{lstlisting}
+\small 整表计算写作 \texttt{ts\_prices.pct\_change(fill\_method=None)}。首行无前值；任一期价格缺失时收益率也缺失。7月6日的收益率跨周末，不是单个日历日的收益率。
+\end{frame}
+
+\begin{frame}[fragile]{下采样：把多条日度报价汇总为一周}
+\small 下采样把较高频率数据汇总到较低频率。以周五作为每周结束标签，先比较期末价格和平均价格。
+\medskip
+\begin{lstlisting}
+weekly_last = ts_prices.resample("W-FRI").last()
+print(weekly_last.to_string())
+print(ts_prices.resample("W-FRI").mean().round(2).to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            茅台  五粮液  平安
+日期
+2026-07-03  1515   127.0  56.0
+2026-07-10  1545   131.2   NaN
+               茅台  五粮液   平安
+日期
+2026-07-03  1511.67  128.17  55.17
+2026-07-10  1533.33  130.07    NaN
+\end{lstlisting}
+\small \texttt{W-FRI} 默认右闭、标记在周五：7月3日所在组包括截至该日的一周。7月10日只是分组标签，本样本实际仅到7月8日，因此第二组不是完整一周。
+\end{frame}
+
+\begin{frame}[fragile]{下采样选什么聚合：先看业务含义}
+\small 每周有几条有效报价？用日收盘价还能汇总出什么？
+\medskip
+\begin{lstlisting}
+print(ts_prices.resample("W-FRI").count().to_string())
+print(ts_prices["茅台"].resample("W-FRI").ohlc().to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            茅台  五粮液  平安
+日期
+2026-07-03     3       3     3
+2026-07-10     3       3     0
+            open  high   low  close
+日期
+2026-07-03  1500  1520  1500   1515
+2026-07-10  1530  1545  1525   1545
+\end{lstlisting}
+\small \texttt{last} 取每列最后一个非缺失值，\texttt{mean} 取均值，\texttt{count} 数有效值。本例 \texttt{ohlc} 的四列是周内日收盘价的首值、最大、最小、末值，\alert{不是完整周K线}；真正周K线需日开高低收数据。价格通常不求和，成交量才常用 \texttt{sum}。
+\end{frame}
+
+\begin{frame}[fragile]{先下采样，再计算区间收益率}
+\small 期末价格的变化比例，与周内日收益率的简单平均不同。
+\medskip
+\begin{lstlisting}
+weekly_ret = weekly_last.pct_change(fill_method=None)
+print((weekly_ret * 100).round(2).to_string())
+print(ts_prices.resample("ME").last().to_string())
+\end{lstlisting}
+\begin{lstlisting}[language={},numbers=none,basicstyle=\ttfamily\scriptsize]
+            茅台  五粮液  平安
+日期
+2026-07-03   NaN     NaN   NaN
+2026-07-10  1.98    3.31   NaN
+            茅台  五粮液  平安
+日期
+2026-07-31  1545   131.2  56.0
+\end{lstlisting}
+\small 茅台第二组为 $(1545/1515-1)\times100\%\approx1.98\%$，只覆盖7月3日至8日。月末标签7月31日对应的也是样本内最后有效报价，不是真实月末价格。只有一个月分组，无法计算月间收益率。
+\end{frame}
+
+\begin{frame}[fragile]{课堂练习：扩充同一份行情，观察周频结果}
+\begin{enumerate}
+\item 在行情副本中补入7月9日和10日的教学报价：茅台1540、1550；五粮液130.5、132；平安56.5、57。
+\item 打印日期间隔，解释新增观测的 Timedelta。
+\item 重新输出周末价格、有效报价数和周频收益率。
+\item 比较扩充前后的第二周结果：日期标签是否改变？最后有效价格对应的日期是否改变？
+\end{enumerate}
+\begin{block}{提交与解释}
+提交代码和输出。指出平安第二周参与汇总的报价数量，并解释：每周有期末报价，是否意味着周内每天都有报价？
+\end{block}
+\end{frame}
+
+%==============================================================
+\section{读写数据}
+%==============================================================
+
+\begin{frame}[fragile]{read\_csv：读入真实数据}
 	\begin{lstlisting}
-df.sort_values("茅台", ascending=False)  # 按茅台价格降序
-df.sort_index()                          # 按行索引(日期)排序
+df = pd.read_csv("../data/eod_data.csv",       # 文件路径
+                 index_col=0,          # 第0列作为索引
+                 parse_dates=True)     # 把索引解析为日期
 \end{lstlisting}
 	\begin{itemize}
-		\item \texttt{sort\_values(列名)}：按某列的值给\textbf{行}排序。
-		\item \texttt{sort\_index()}：按行索引排序——日期数据常用。
-		\item 排序返回\textbf{新表}，原表不变（除非加 \texttt{inplace=True}）。
+		\item 真实行情/财报数据多以 CSV、Excel 形式存在。
+		\item 读入时顺手完成"第一列当日期索引"，后面全受益。
+		\item 导出同样简单：\texttt{df.to\_csv("../outputs/result.csv")}。
+		\item Excel：\texttt{pd.read\_excel("../data/data.xlsx")}（需安装 openpyxl）。
 	\end{itemize}
-	\begin{alertblock}{习惯}
-		时间序列数据到手先 \texttt{sort\_index()}，保证日期升序，后续计算才安全。
+	\begin{alertblock}{路径小贴士}
+		从 \texttt{notebooks/} 运行时，\texttt{../} 表示本章目录；\\
+		输入放 \texttt{data/}，生成结果放 \texttt{outputs/}。
 	\end{alertblock}
 \end{frame}
 
-\begin{frame}[fragile]{groupby：分组聚合}
-	\begin{lstlisting}
-stocks = pd.DataFrame({
-    "代码":  ["600519", "000858", "601318", "600036"],
-    "行业":  ["白酒", "白酒", "保险", "银行"],
-    "市盈率": [28.5, 18.2, 8.1, 6.3]})
-
-stocks.groupby("行业")["市盈率"].mean()
-\end{lstlisting}
-	\begin{lstlisting}
-行业
-保险     8.10
-银行     6.30
-白酒    23.35
-\end{lstlisting}
-	\begin{itemize}
-		\item 三步走：\textbf{分组（groupby）$\to$ 选列 $\to$ 聚合（mean/sum/max\ldots）}。
-		\item 回答"每个行业的平均市盈率"这类问题，一行搞定。
-	\end{itemize}
-\end{frame}
-
 
 %==============================================================
-\section{数据清洗与输入输出}
-% 自编教学补充；阅读来源见本章 README。
+\section{综合案例与小结}
+%==============================================================
+
+\begin{frame}{综合案例：整理成绩登记表}
+\begin{itemize}
+\item 输入：6 条原始登记，包含文本差异、重复、缺考、异常分数和待核日期。
+\item 任务：应用字符串处理、类型转换、重复检查、异常标记及缺失处理，形成可解释的统计结果。
+\item 输出：保留记录、有效成绩、问题标记与清洗汇总；最后检查导出再读回是否保留学号。
+\end{itemize}
+\begin{block}{练习方式}
+先根据原始表判断问题，再逐步运行并核对结果。配套练习与折叠参考答案见 \texttt{04\_pandas} 第12节。
+\end{block}
+\end{frame}
 \begin{frame}[fragile]{1. 原始登记表：保留文本才能看见问题}
 \small 教学合成数据，每行一次成绩登记。故意保留首尾空格、重复记录、缺考和不合理成绩；学号按字符串读入以保留前导零。
 \medskip
@@ -528,8 +1930,8 @@ assert restored["学号"].iloc[0] == "001"
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}[fragile]{10. 本单元练习：给出可解释的清洗记录}
-\small 交付三项结果：保留几行、排除哪些成绩、哪些日期待核。下一单元学习把这类记录与另一张信息表合并。
+\begin{frame}[fragile]{10. 案例汇总：给出可解释的清洗记录}
+\small 交付三项结果：保留几行、排除哪些成绩、哪些日期待核。结合清洗依据解释各项数量，并检查结果是否符合原始登记。
 \medskip
 \begin{lstlisting}
 audit = pd.Series({
@@ -540,513 +1942,13 @@ audit = pd.Series({
 print(audit)
 \end{lstlisting}
 \end{frame}
-\begin{frame}[fragile]{课堂练习：10. 本单元练习：给出可解释的清洗记录}
+\begin{frame}[fragile]{课堂练习：10. 案例汇总：给出可解释的清洗记录}
 找出有效成绩低于 80 的学生，保留学号、姓名、班级、有效成绩。解释为什么没有把缺考者选进来。
 \medskip
 \begin{block}{检查思路}
 先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
 \end{block}
 \end{frame}
-
-\section{合并与长宽表转换}
-% 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{1. 两张表的粒度与键}
-\small 合成订单表每行一笔订单，商品表每行一种商品。同一商品可以出现在多笔订单中，因此合并关系是多对一。
-\medskip
-\begin{lstlisting}
-import pandas as pd
-orders = pd.DataFrame({
-    "订单": [1, 2, 3, 4], "商品": ["T", "C", "T", "X"],
-    "数量": [2, 1, 3, 1]})
-products = pd.DataFrame({
-    "商品": ["T", "C", "J"],
-    "名称": ["茶", "咖啡", "果汁"], "单价": [10, 20, 15]})
-print(orders)
-print(products)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{2. 左连接：保留每笔订单}
-\small on 明确匹配键；left 保留左表订单。indicator 标记未匹配行，validate 检查商品表的键唯一，避免合并后订单被复制。
-\medskip
-\begin{lstlisting}
-joined = orders.merge(products, on="商品", how="left",
-    validate="many_to_one", indicator=True)
-print(joined)
-print(joined["_merge"].value_counts())
-assert len(joined) == len(orders)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{3. 内连接与外连接：观察谁消失、谁新增}
-\small inner 只保留双方存在的商品匹配；outer 还会显示没有订单的商品。未匹配不代表金额为零，应单独列出。
-\medskip
-\begin{lstlisting}
-inner = orders.merge(products, on="商品", how="inner")
-outer = orders.merge(products, on="商品", how="outer",
-                     indicator=True)
-print(len(inner), len(outer))  # 3, 5
-print(outer[["订单", "商品", "_merge"]])
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：3. 内连接与外连接：观察谁消失、谁新增}
-哪笔订单在 inner 中消失？哪个商品只在右表中？如果要核对全部订单，该选哪种连接？
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\begin{frame}[fragile]{4. 重复键：合并可能让行数变多}
-\small 在商品表中故意重复 T，观察两笔 T 订单各匹配两次。解决方法是核实键与版本，而不是合并后随意去重。
-\medskip
-\begin{lstlisting}
-bad_products = pd.concat([products, products.iloc[[0]]],
-                          ignore_index=True)
-expanded = orders.merge(bad_products, on="商品", how="left")
-print(len(orders), len(expanded))  # 4, 6
-print(bad_products.duplicated("商品").sum())
-# 加 validate="many_to_one" 将直接报错，课堂可自行尝试。
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{5. concat：把同结构记录上下接起来}
-\small concat 不按商品键寻找匹配。ignore\_index 重建行号，不检查业务编号是否重复；拼接后仍要检查订单号。
-\medskip
-\begin{lstlisting}
-next_orders = pd.DataFrame({
-    "订单": [5, 6], "商品": ["C", "T"], "数量": [2, 1]})
-all_orders = pd.concat([orders, next_orders], ignore_index=True)
-print(all_orders)
-print(all_orders["订单"].is_unique)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{6. concat 的另一方向：横向按索引对齐}
-\small axis=1 横向拼接时按索引标签对齐，不会因为行数相同就按位置贴在一起。先检查索引含义。
-\medskip
-\begin{lstlisting}
-left = pd.Series([80, 90], index=["001", "002"], name="数学")
-right = pd.Series([70, 85], index=["002", "001"], name="英语")
-print(pd.concat([left, right], axis=1))
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{7. 长表转宽表：pivot 不做统计}
-\small 长表每行是一名学生的一门课成绩；宽表每行一名学生、每列一门课。pivot 要求“学号—课程”组合唯一。
-\medskip
-\begin{lstlisting}
-long_scores = pd.DataFrame({
-    "学号": ["001", "001", "002", "002"],
-    "课程": ["数学", "英语", "数学", "英语"],
-    "成绩": [80, 90, 70, 85]})
-wide = long_scores.pivot(index="学号", columns="课程", values="成绩")
-print(wide)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{8. 宽表转长表：melt 保留身份列}
-\small id\_vars 指定不被展开的标识列。melt 将列名变成课程字段，将原来的单元格变成成绩字段。
-\medskip
-\begin{lstlisting}
-back = wide.reset_index().melt(id_vars="学号",
-    var_name="课程", value_name="成绩")
-print(back.sort_values(["学号", "课程"]))
-assert len(back) == len(long_scores)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{9. 重复组合：先决定是否需要聚合}
-\small 加入一次补考后，同一学生同一课程出现两次。pivot\_table 可以聚合；取最大值代表“保留最高成绩”，这是业务规则。
-\medskip
-\begin{lstlisting}
-retake = pd.DataFrame({"学号": ["002"],
-                       "课程": ["数学"], "成绩": [88]})
-attempts = pd.concat([long_scores, retake], ignore_index=True)
-best = attempts.pivot_table(index="学号", columns="课程",
-    values="成绩", aggfunc="max")
-print(best)
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：9. 重复组合：先决定是否需要聚合}
-将 max 改为 mean，002 的数学成绩变成多少？两种答案分别回答什么问题？
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\begin{frame}[fragile]{10. 多层索引：把组合键显式写出来}
-\small MultiIndex 可以表示“学号—课程”这类组合标签。先学 set\_index 和 reset\_index，再选学 stack、unstack。
-\medskip
-\begin{lstlisting}
-indexed = long_scores.set_index(["学号", "课程"]).sort_index()
-print(indexed.loc[("001", "数学"), "成绩"])
-print(indexed.unstack("课程"))
-print(indexed.reset_index())
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{11. 综合检查：只汇总匹配成功的金额}
-\small 价格未知的 X 订单不能当作零金额。先列出未匹配订单，再汇总可计算的部分，并说明覆盖范围。
-\medskip
-\begin{lstlisting}
-matched = joined.loc[joined["_merge"] == "both"].copy()
-matched["金额"] = matched["数量"] * matched["单价"]
-print(matched[["订单", "名称", "金额"]])
-print("已知金额合计：", matched["金额"].sum())  # 70
-print("未匹配订单数：", (joined["_merge"] == "left_only").sum())
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：11. 综合检查：只汇总匹配成功的金额}
-将商品 X 补录为“水”、单价 5，重新合并全部原订单。总金额应是多少？
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\section{分组统计与综合应用}
-% 自编教学补充；阅读来源见本章 README。
-\begin{frame}[fragile]{1. 校园饮品订单：一行一笔订单}
-\small 六笔合成订单用于手工核对。金额为数量乘单价；本例价格均已匹配，日期是实际有订单的日期。
-\medskip
-\begin{lstlisting}
-import pandas as pd
-sales = pd.DataFrame({
-    "订单": [1, 2, 3, 4, 5, 6],
-    "日期": ["2026-09-01"] * 3 + ["2026-09-02"] * 3,
-    "门店": ["东", "东", "西", "东", "西", "西"],
-    "商品": ["茶", "咖啡", "茶", "茶", "咖啡", "茶"],
-    "数量": [2, 1, 1, 3, 2, 2], "单价": [10, 20, 10, 10, 20, 10]})
-sales["日期"] = pd.to_datetime(sales["日期"])
-sales["金额"] = sales["数量"] * sales["单价"]
-sales
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{2. groupby：拆分、计算、合并}
-\small 先按门店拆成小表，在各小表内求和，再组成汇总表。as\_index=False 使门店保留为普通列，便于继续合并。
-\medskip
-\begin{lstlisting}
-store_total = sales.groupby("门店", as_index=False)["金额"].sum()
-print(store_total)
-print(sales.groupby(["门店", "商品"])["金额"].sum())
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{3. 命名聚合：明确每个指标的含义}
-\small 总金额、订单数和平均每单金额是不同指标。命名聚合直接给结果列起名；金额均值的分母是订单行数。
-\medskip
-\begin{lstlisting}
-summary = sales.groupby("门店", as_index=False).agg(
-    总金额=("金额", "sum"),
-    订单数=("订单", "size"),
-    总杯数=("数量", "sum"),
-    平均每单金额=("金额", "mean"))
-print(summary)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{4. size 与 count：分母不能混淆}
-\small size 统计组内行数，count 统计某列非缺失值数。先明确要数订单、有效金额还是不同顾客，再选择统计方法。
-\medskip
-\begin{lstlisting}
-with_missing = sales.copy()
-with_missing.loc[0, "金额"] = float("nan")
-counts = with_missing.groupby("门店").agg(
-    行数=("金额", "size"), 有效金额数=("金额", "count"))
-print(counts)
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：4. size 与 count：分母不能混淆}
-东店的行数与有效金额数各是多少？金额缺失能否当作免费订单？
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\begin{frame}[fragile]{5. 加权均值：平均每杯价格}
-\small 平均每单金额不等于平均每杯价格。后者用总金额除以总杯数，相当于按购买数量给单价加权。
-\medskip
-\begin{lstlisting}
-summary["平均每杯价格"] = summary["总金额"] / summary["总杯数"]
-print(summary[["门店", "平均每单金额", "平均每杯价格"]])
-print("全体每杯均价：", sales["金额"].sum() / sales["数量"].sum())
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{6. transform：把组内统计带回原行}
-\small agg 每组输出一行，transform 返回与原表等长且对齐的结果。用每笔金额除以所属门店总金额得到组内占比。
-\medskip
-\begin{lstlisting}
-sales["门店总金额"] = sales.groupby("门店")["金额"].transform("sum")
-sales["门店内占比"] = sales["金额"] / sales["门店总金额"]
-print(sales[["订单", "门店", "金额", "门店内占比"]])
-print(sales.groupby("门店")["门店内占比"].sum())
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{7. 排名与组内前两名}
-\small 先按金额降序，再按订单号升序决定并列次序，组内取前两行。结果是两笔订单，而不一定是两个不同金额档位。
-\medskip
-\begin{lstlisting}
-ordered = sales.sort_values(["门店", "金额", "订单"],
-                             ascending=[True, False, True])
-top2 = ordered.groupby("门店").head(2)
-print(top2[["订单", "门店", "金额"]])
-sales["组内名次"] = sales.groupby("门店")["金额"].rank(
-    ascending=False, method="min")
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{8. 交叉表：计数与金额表不同}
-\small crosstab 默认数记录。pivot\_table 显式指定金额与 sum 才是金额汇总。本例已知交易明细完整，因此没有订单的组合可填零。
-\medskip
-\begin{lstlisting}
-print(pd.crosstab(sales["门店"], sales["商品"]))
-amount_table = sales.pivot_table(index="门店", columns="商品",
-    values="金额", aggfunc="sum", fill_value=0)
-print(amount_table)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{9. 按日汇总与滚动窗口}
-\small 先汇总到“日”，再滚动才是相邻观测日的窗口。rolling(2) 是两行，不自动补齐日历中没有记录的日期。
-\medskip
-\begin{lstlisting}
-daily = sales.groupby("日期")["金额"].sum().sort_index()
-print(daily)
-print(daily.rolling(2, min_periods=2).mean())
-print(sales.set_index("日期")["金额"].resample("D").sum(min_count=1))
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{10. 金融迁移：按股票计算收益率}
-\small 合成长表每行一只股票一天的收盘价。先按股票和日期排序，在每只股票内部错位，避免把另一只股票的价格当作昨日价。
-\medskip
-\begin{lstlisting}
-quotes = pd.DataFrame({
-    "股票": ["A", "B", "A", "B", "A", "B"],
-    "日期": pd.to_datetime(["2026-09-01"] * 2 +
-                          ["2026-09-02"] * 2 + ["2026-09-03"] * 2),
-    "收盘价": [100, 50, 102, 49, 101, 50]})
-quotes = quotes.sort_values(["股票", "日期"])
-quotes["昨日价"] = quotes.groupby("股票")["收盘价"].shift(1)
-quotes["收益率"] = quotes["收盘价"] / quotes["昨日价"] - 1
-print(quotes)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{11. 金融迁移：从长表到收益率矩阵}
-\small pivot 后每列一只股票；pct\_change(fill\_method=None) 不自动填补缺失价格。比较两种写法的同一观测值。
-\medskip
-\begin{lstlisting}
-price_matrix = quotes.pivot(index="日期", columns="股票", values="收盘价")
-return_matrix = price_matrix.pct_change(fill_method=None)
-print(return_matrix)
-expected = quotes.loc[(quotes["股票"] == "A") &
-    (quotes["日期"] == "2026-09-02"), "收益率"].iloc[0]
-assert abs(return_matrix.loc["2026-09-02", "A"] - expected) < 1e-12
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{12. 综合练习与验收}
-\small 先用订单手算，再检查汇总表。全表金额应为 140 元、总杯数为 11；两门店各 70 元，但每杯均价不同。
-\medskip
-\begin{lstlisting}
-assert sales["金额"].sum() == 140
-assert sales["数量"].sum() == 11
-assert summary["总金额"].sum() == sales["金额"].sum()
-print(summary)
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：12. 综合练习与验收}
-按“日期—门店”统计金额与杯数，并计算每杯均价。哪一天全体销售金额更高？
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\begin{frame}[fragile]{13. 综合案例起点：从原始订单到日报}
-\small 下面重新开始一套独立的合成数据。每行原本应是一笔订单，但有重复登记、数量缺失和未知商品；目标是输出可核对的已知金额日报。
-\medskip
-\begin{lstlisting}
-raw_orders = pd.DataFrame({
-    "订单": ["01", "02", "03", "04", "05", "06", "01"],
-    "日期": ["2026-09-01"] * 3 + ["2026-09-02"] * 3 + ["2026-09-01"],
-    "门店": ["东", "东", "西", "东", "西", "西", "东"],
-    "商品": [" t ", "C", "T", "T", "C", "X", " t "],
-    "数量": ["2", "1", "缺失", "3", "2", "1", "2"]})
-catalog = pd.DataFrame({"商品": ["T", "C"], "单价": [10, 20]})
-raw_orders
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{14. 清洗：原始值与统计值并存}
-\small 保留 raw\_orders。先统一商品代码，再删除完全相同的登记，转换日期和数量；原始数量列保留，便于回查缺失原因。
-\medskip
-\begin{lstlisting}
-tidy_orders = raw_orders.copy()
-tidy_orders["商品"] = tidy_orders["商品"].str.strip().str.upper()
-tidy_orders = tidy_orders.drop_duplicates().reset_index(drop=True)
-tidy_orders["日期"] = pd.to_datetime(tidy_orders["日期"])
-tidy_orders["有效数量"] = pd.to_numeric(tidy_orders["数量"], errors="coerce")
-assert tidy_orders["订单"].is_unique
-print(tidy_orders)
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{15. 合并：把待核订单单独列出}
-\small 左连接保留每笔订单。已匹配商品且数量为正才进入本例金额统计；数量缺失和价格未知都保留在待核清单中。
-\medskip
-\begin{lstlisting}
-enriched = tidy_orders.merge(catalog, on="商品", how="left",
-    validate="many_to_one", indicator=True)
-eligible = enriched["_merge"].eq("both") & enriched["有效数量"].gt(0)
-pending = enriched.loc[~eligible].copy()
-known = enriched.loc[eligible].copy()
-known["金额"] = known["有效数量"] * known["单价"]
-print(pending[["订单", "数量", "商品", "_merge"]])
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{16. 汇总：金额与覆盖范围一起报告}
-\small 已知金额日报仅覆盖四笔订单，不能称为全部销售额。汇总前后金额应一致，同时报告两笔待核订单。
-\medskip
-\begin{lstlisting}
-known_report = known.groupby(["日期", "门店"], as_index=False).agg(
-    已知金额=("金额", "sum"), 可计算订单数=("订单", "size"))
-print(known_report)
-print("待核订单数：", len(pending))
-assert len(raw_orders) == 7 and len(tidy_orders) == 6
-assert len(known) == 4 and len(pending) == 2
-assert known_report["已知金额"].sum() == 110
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{17. 变形：缺失单元格不能随意填零}
-\small 日报透视成“日期×门店”方便比较。西店首日有数量待核订单，不能把该格写成零销售；即使已有金额的格子也可能尚未完整。
-\medskip
-\begin{lstlisting}
-known_wide = known_report.pivot(index="日期", columns="门店", values="已知金额")
-pending_wide = pending.groupby(["日期", "门店"]).size().unstack("门店")
-print("已知金额（不是完整销售额）：")
-print(known_wide)
-print("待核订单数：")
-print(pending_wide)
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{课堂练习：17. 变形：缺失单元格不能随意填零}
-核实订单03数量为1、商品X是5元的水。重新清洗合并并汇总，完整金额应为125元。不要在最终报表中直接改金额。
-\medskip
-\begin{block}{检查思路}
-先写出预期结果，再运行。参考答案见配套 Notebook 的折叠单元格。
-\end{block}
-\end{frame}
-
-\section{金融时间序列}
-%==============================================================
-
-\begin{frame}[fragile]{把字符串变成日期}
-	\begin{lstlisting}
-df.index = pd.to_datetime(df.index)
-df.index       # DatetimeIndex(['2026-07-01', ...])
-
-pd.date_range("2026-01-01", periods=5, freq="B")
-# 从1月1日起的5个工作日（B = Business day）
-\end{lstlisting}
-	\begin{itemize}
-		\item \texttt{pd.to\_datetime()}：把字符串转成真正的日期类型。
-		\item 变成日期后，可以按年、月、星期\alert{智能取值与聚合}。
-		\item \texttt{date\_range} 生成规则日期序列，\texttt{freq="B"} 表示周一至周五，不排除交易所节假日。
-	\end{itemize}
-	\begin{exampleblock}{日期索引的威力}
-		\texttt{df.loc["2026-07"]}：直接取出2026年7月的全部数据。
-	\end{exampleblock}
-\end{frame}
-
-\begin{frame}[fragile]{收益率计算：pct\_change 与 shift}
-	\begin{lstlisting}
-df.pct_change(fill_method=None)        # 每列的日收益率：(今日-昨日)/昨日
-df.shift(1)            # 整表向下错位一行 -> 昨日价格
-df.diff()              # 价格变动额（今日-昨日）
-\end{lstlisting}
-	\begin{itemize}
-		\item \texttt{pct\_change()}：把第3章的手写公式封装成了一个方法，\\
-			整张表所有列\alert{一次全算}。
-		\item \texttt{shift(1)}：错位是金融计算的核心技巧——
-			"昨日收益""信号与次日收益配对"都靠它。
-		\item 第一行没有昨日数据，结果自动为 \texttt{NaN}（缺失）。
-	\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{重采样：日频转月频}
-	\begin{lstlisting}
-df.resample("ME").last()    # 每月最后一个交易日的价格
-df.resample("ME").mean()    # 每月平均价格
-\end{lstlisting}
-	\begin{itemize}
-		\item \texttt{resample(频率)}：把时间序列改换频率，像"汇总报表"。
-		\item 常用频率：\texttt{"D"} 日、\texttt{"W"} 周、\texttt{"ME"} 月末、\texttt{"YE"} 年末。
-		\item 后面必须接聚合方式：\texttt{last/mean/sum} 等。
-	\end{itemize}
-	\begin{exampleblock}{典型应用}
-		把日度净值换算成月度收益报告；把分钟线合成日线。
-	\end{exampleblock}
-\end{frame}
-
-
-%==============================================================
-\section{缺失值处理}
-%==============================================================
-
-\begin{frame}[fragile]{认识NaN}
-	\begin{lstlisting}
-import numpy as np
-s = pd.Series([1500.0, np.nan, 1515.0])
-
-s.isna()        # [False, True, False]  找出缺失
-s.dropna()      # 删掉缺失的行
-s.fillna(s.mean())   # 用均值填充
-s.ffill()       # 用前一个有效值填充（金融常用！）
-\end{lstlisting}
-	\begin{itemize}
-		\item \texttt{NaN}（Not a Number）表示缺失：停牌、数据未披露、\texttt{pct\_change} 的第一行。
-		\item \texttt{ffill()}（前向填充）：沿用上次观测值；是否适合需依据数据含义判断。
-		\item 处理前先想：缺失代表什么经济含义？乱填会引入偏差。
-	\end{itemize}
-\end{frame}
-
-
-%==============================================================
-\section{读写数据}
-%==============================================================
-
-\begin{frame}[fragile]{read\_csv：读入真实数据}
-	\begin{lstlisting}
-df = pd.read_csv("../data/eod_data.csv",       # 文件路径
-                 index_col=0,          # 第0列作为索引
-                 parse_dates=True)     # 把索引解析为日期
-\end{lstlisting}
-	\begin{itemize}
-		\item 真实行情/财报数据多以 CSV、Excel 形式存在。
-		\item 读入时顺手完成"第一列当日期索引"，后面全受益。
-		\item 导出同样简单：\texttt{df.to\_csv("../outputs/result.csv")}。
-		\item Excel：\texttt{pd.read\_excel("../data/data.xlsx")}（需安装 openpyxl）。
-	\end{itemize}
-	\begin{alertblock}{路径小贴士}
-		从 \texttt{notebooks/} 运行时，\texttt{../} 表示本章目录；\\
-		输入放 \texttt{data/}，生成结果放 \texttt{outputs/}。
-	\end{alertblock}
-\end{frame}
-
-
-%==============================================================
-\section{综合案例与小结}
-%==============================================================
 
 \begin{frame}[fragile]{综合案例：三股风险分析（构造数据）}
 	\begin{lstlisting}

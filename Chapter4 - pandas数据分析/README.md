@@ -17,16 +17,18 @@
 
 ## 多周教学安排
 
-本章按四个教学单元组织，不要求一周讲完。每单元可用一周；若每周课时少，可把讲解、上机和讲评拆开。
+全章使用一份 `04_pandas.ipynb`，按课件12节顺序组织，可分多周学习，不需要切换文件。每次从头运行到当前学习位置；练习答案放在折叠单元格中。
 
 | 单元 | 内容与 Notebook | 学生应完成的任务 |
 |---|---|---|
-| 一：表与索引 | [04_pandas 第1—5节](notebooks/04_pandas.ipynb) | 说明每行含义，选择、筛选、赋值，解释标签对齐 |
-| 二：清洗 | [04_2_Cleaning](notebooks/04_2_Cleaning.ipynb) | 保留原始记录，处理类型、重复、缺失和异常，给出清洗记录 |
-| 三：合并与变形 | [04_3_Wrangling](notebooks/04_3_Wrangling.ipynb) | 解释连接前后行数、识别未匹配项，完成长宽表转换 |
-| 四：分组与应用 | [04_4_GroupBy](notebooks/04_4_GroupBy.ipynb)，再回到 04_pandas 第6—9节 | 区分 size/count、agg/transform、简单与加权平均，完成订单报表和金融迁移 |
+| 一：表与索引 | 第1—5节 | 说明每行含义，选择、筛选、赋值、自动对齐，完成宽长表转换 |
+| 二：分组与整理 | 第6—8节 | 区分 agg/transform/filter/apply，处理报价问题，解释连接前后行数 |
+| 三：金融应用 | 第9—11节 | 检查报价覆盖与共同样本，计算收益率，理解时间差、下采样及文件读写 |
+| 四：综合练习 | 第12节 | 整理成绩登记；选做三股风险统计，解释年化口径与样本范围 |
 
-新增三个 Notebook 均可在独立内核中从头运行，不依赖前一单元的文件或变量。返回主 Notebook 时从头运行恢复状态。全部新增小数据为课程自编合成数据，不需联网下载。原有 eod_data.csv 保留。
+主线沿用茅台、五粮液和平安的教学合成行情，从3个日期扩充到6个日期；保留课件中的订单合并与成绩清洗案例，避免重复开展订单分组日报。风险统计选做部分使用同三只股票的250期合成价格。教材配套 `eod_data.csv` 在第11节预览，均无需联网下载。
+
+Notebook 已保存代码运行输出，打开即可查看；重新运行会在 `outputs/` 写入 `demo_prices.csv`。需要的库为课程环境已有的 NumPy、pandas、IPython 和 Jupyter 内核。
 
 每节采用“问题—代码—输出—练习”组织，参考答案放在折叠单元格。建议先让学生手算小表，再运行；合并前必须说清粒度、键和预期行数。每单元以独立完成任务为结束条件，不以讲完 API 为结束条件。
 
@@ -37,4 +39,4 @@
 - Wes McKinney, *Python for Data Analysis*, 3rd ed.：[pandas基础](https://wesmckinney.com/book/pandas-basics)、[清洗](https://wesmckinney.com/book/data-cleaning)、[合并与变形](https://wesmckinney.com/book/data-wrangling)、[分组统计](https://wesmckinney.com/book/data-aggregation)。
 - [pandas merge 文档](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.merge.html)：连接关系、validate 与 indicator 参数。
 
-新增中文说明、数据与练习由本课程自行编写，参考上述主题组织而未转载书稿。新增代码面向课程本地 pandas 2.x 环境；不要为了使用在线文档默认展示的新版本接口而升级课程环境。
+中文说明、教学数据与练习由本课程自行编写，参考上述主题组织而未转载书稿。代码使用课程本地 pandas 环境；不需要为此升级依赖。
